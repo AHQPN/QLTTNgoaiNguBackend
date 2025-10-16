@@ -1,0 +1,196 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20251016-01
+      author: nguyen
+      changes:
+        # -------------------------------
+        # Bảng KHOAHOC
+        # -------------------------------
+        - createTable:
+            tableName: khoahoc
+            columns:
+              - column:
+                  name: makhoahoc
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: tenkhoahoc
+                  type: NVARCHAR(255)
+              - column:
+                  name: sogiohoc
+                  type: INT
+              - column:
+                  name: hocphi
+                  type: DECIMAL(15,2)
+              - column:
+                  name: sobuoihoc
+                  type: INT
+              - column:
+                  name: video
+                  type: VARCHAR(255)
+              - column:
+                  name: trangthai
+                  type: BOOLEAN
+              - column:
+                  name: ngaytao
+                  type: DATETIME
+              - column:
+                  name: nguoitao
+                  type: NVARCHAR(100)
+
+        # -------------------------------
+        # Bảng MUCTIEUKH
+        # -------------------------------
+        - createTable:
+            tableName: muctieukh
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: tenmuctieu
+                  type: NVARCHAR(MAX)
+              - column:
+                  name: makhoahoc
+                  type: INT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_muctieukh_khoahoc
+                    references: khoahoc(makhoahoc)
+
+        # -------------------------------
+        # Bảng MODULE
+        # -------------------------------
+        - createTable:
+            tableName: module
+            columns:
+              - column:
+                  name: mamodule
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: makhoahoc
+                  type: INT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_module_khoahoc
+                    references: khoahoc(makhoahoc)
+              - column:
+                  name: tenmodule
+                  type: NVARCHAR(200)
+              - column:
+                  name: thoiluong
+                  type: INT
+
+        # -------------------------------
+        # Bảng NOIDUNG
+        # -------------------------------
+        - createTable:
+            tableName: noidung
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: tennoidung
+                  type: NVARCHAR(MAX)
+              - column:
+                  name: mamodule
+                  type: INT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_noidung_module
+                    references: module(mamodule)
+
+        # -------------------------------
+        # Bảng TAILIEU
+        # -------------------------------
+        - createTable:
+            tableName: tailieu
+            columns:
+              - column:
+                  name: matailieu
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: mamodule
+                  type: INT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_tailieu_module
+                    references: module(mamodule)
+              - column:
+                  name: tenfile
+                  type: VARCHAR(200)
+              - column:
+                  name: link
+                  type: VARCHAR(255)
+              - column:
+                  name: mota
+                  type: NVARCHAR(MAX)
+              - column:
+                  name: hinh
+                  type: VARCHAR(255)
+
+        # -------------------------------
+        # Bảng NGUOIDUNG (User)
+        # -------------------------------
+        - createTable:
+            tableName: nguoidung
+            columns:
+              - column:
+                  name: manguoidung
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: PK_NguoiDung
+              - column:
+                  name: email
+                  type: NVARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: sdt
+                  type: NVARCHAR(10)
+                  constraints:
+                    unique: true
+              - column:
+                  name: matkhau
+                  type: NVARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: vaitro
+                  type: NVARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: ngaytao
+                  type: DATETIME2
+                  constraints:
+                    nullable: false
+              - column:
+                  name: daxacthuc
+                  type: BIT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: maxacthuc
+                  type: NVARCHAR(36)
+              - column:
+                  name: mahethan
+                  type: DATETIME2

@@ -1,0 +1,206 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20251016-02
+      author: nguyen
+      changes:
+        # -------------------------------
+        # Seed data cho bảng KHOAHOC
+        # -------------------------------
+        - insert:
+            tableName: khoahoc
+            columns:
+              - column: { name: tenkhoahoc, value: "Khóa học Tiếng Anh Cơ Bản" }
+              - column: { name: sogiohoc, valueNumeric: 40 }
+              - column: { name: hocphi, valueNumeric: 5000000.00 }
+              - column: { name: sobuoihoc, valueNumeric: 20 }
+              - column: { name: video, value: "https://example.com/video/basic-english.mp4" }
+              - column: { name: trangthai, valueBoolean: true }
+              - column: { name: ngaytao, valueDate: "2025-10-16 00:00:00" }
+              - column: { name: nguoitao, value: "admin" }
+        - insert:
+            tableName: khoahoc
+            columns:
+              - column: { name: tenkhoahoc, value: "Khóa học Tiếng Anh Nâng Cao" }
+              - column: { name: sogiohoc, valueNumeric: 60 }
+              - column: { name: hocphi, valueNumeric: 8000000.00 }
+              - column: { name: sobuoihoc, valueNumeric: 30 }
+              - column: { name: video, value: "https://example.com/video/advanced-english.mp4" }
+              - column: { name: trangthai, valueBoolean: true }
+              - column: { name: ngaytao, valueDate: "2025-10-16 00:00:00" }
+              - column: { name: nguoitao, value: "admin" }
+        - insert:
+            tableName: khoahoc
+            columns:
+              - column: { name: tenkhoahoc, value: "Khóa học Tiếng Anh Giao Tiếp" }
+              - column: { name: sogiohoc, valueNumeric: 50 }
+              - column: { name: hocphi, valueNumeric: 6000000.00 }
+              - column: { name: sobuoihoc, valueNumeric: 25 }
+              - column: { name: video, value: "https://example.com/video/conversational-english.mp4" }
+              - column: { name: trangthai, valueBoolean: true }
+              - column: { name: ngaytao, valueDate: "2025-10-16 00:00:00" }
+              - column: { name: nguoitao, value: "admin" }
+
+        # -------------------------------
+        # Seed data cho bảng MUCTIEUKH
+        # -------------------------------
+        - insert:
+            tableName: muctieukh
+            columns:
+              - column: { name: tenmuctieu, value: "Hiểu và sử dụng từ vựng cơ bản trong tiếng Anh hàng ngày." }
+              - column: { name: makhoahoc, valueNumeric: 1 }
+        - insert:
+            tableName: muctieukh
+            columns:
+              - column: { name: tenmuctieu, value: "Nắm vững ngữ pháp cơ bản và cấu trúc câu đơn giản." }
+              - column: { name: makhoahoc, valueNumeric: 1 }
+        - insert:
+            tableName: muctieukh
+            columns:
+              - column: { name: tenmuctieu, value: "Thảo luận các chủ đề nâng cao như kinh doanh và du lịch bằng tiếng Anh." }
+              - column: { name: makhoahoc, valueNumeric: 2 }
+        - insert:
+            tableName: muctieukh
+            columns:
+              - column: { name: tenmuctieu, value: "Cải thiện kỹ năng viết luận và báo cáo bằng tiếng Anh." }
+              - column: { name: makhoahoc, valueNumeric: 2 }
+        - insert:
+            tableName: muctieukh
+            columns:
+              - column: { name: tenmuctieu, value: "Thực hành giao tiếp tự tin trong các tình huống hàng ngày." }
+              - column: { name: makhoahoc, valueNumeric: 3 }
+        - insert:
+            tableName: muctieukh
+            columns:
+              - column: { name: tenmuctieu, value: "Học cách diễn đạt ý kiến và tranh luận bằng tiếng Anh." }
+              - column: { name: makhoahoc, valueNumeric: 3 }
+
+        # -------------------------------
+        # Seed data cho bảng MODULE
+        # -------------------------------
+        - insert:
+            tableName: module
+            columns:
+              - column: { name: makhoahoc, valueNumeric: 1 }
+              - column: { name: tenmodule, value: "Module 1: Từ Vựng Cơ Bản" }
+              - column: { name: thoiluong, valueNumeric: 10 }
+        - insert:
+            tableName: module
+            columns:
+              - column: { name: makhoahoc, valueNumeric: 1 }
+              - column: { name: tenmodule, value: "Module 2: Ngữ Pháp Cơ Bản" }
+              - column: { name: thoiluong, valueNumeric: 15 }
+        - insert:
+            tableName: module
+            columns:
+              - column: { name: makhoahoc, valueNumeric: 2 }
+              - column: { name: tenmodule, value: "Module 1: Chủ Đề Kinh Doanh" }
+              - column: { name: thoiluong, valueNumeric: 20 }
+        - insert:
+            tableName: module
+            columns:
+              - column: { name: makhoahoc, valueNumeric: 2 }
+              - column: { name: tenmodule, value: "Module 2: Viết Luận Nâng Cao" }
+              - column: { name: thoiluong, valueNumeric: 25 }
+        - insert:
+            tableName: module
+            columns:
+              - column: { name: makhoahoc, valueNumeric: 3 }
+              - column: { name: tenmodule, value: "Module 1: Giao Tiếp Hàng Ngày" }
+              - column: { name: thoiluong, valueNumeric: 15 }
+        - insert:
+            tableName: module
+            columns:
+              - column: { name: makhoahoc, valueNumeric: 3 }
+              - column: { name: tenmodule, value: "Module 2: Thảo Luận Nhóm" }
+              - column: { name: thoiluong, valueNumeric: 20 }
+
+        # -------------------------------
+        # Seed data cho bảng NOIDUNG
+        # -------------------------------
+        - insert:
+            tableName: noidung
+            columns:
+              - column: { name: tennoidung, value: "Bài học về từ vựng gia đình và bạn bè." }
+              - column: { name: mamodule, valueNumeric: 1 }
+        - insert:
+            tableName: noidung
+            columns:
+              - column: { name: tennoidung, value: "Thực hành câu hỏi và câu trả lời cơ bản." }
+              - column: { name: mamodule, valueNumeric: 1 }
+        - insert:
+            tableName: noidung
+            columns:
+              - column: { name: tennoidung, value: "Cấu trúc thì hiện tại đơn và quá khứ đơn." }
+              - column: { name: mamodule, valueNumeric: 2 }
+        - insert:
+            tableName: noidung
+            columns:
+              - column: { name: tennoidung, value: "Từ vựng kinh doanh và đàm phán." }
+              - column: { name: mamodule, valueNumeric: 3 }
+        - insert:
+            tableName: noidung
+            columns:
+              - column: { name: tennoidung, value: "Kỹ năng viết email và báo cáo." }
+              - column: { name: mamodule, valueNumeric: 4 }
+        - insert:
+            tableName: noidung
+            columns:
+              - column: { name: tennoidung, value: "Đối thoại tại nhà hàng và khách sạn." }
+              - column: { name: mamodule, valueNumeric: 5 }
+        - insert:
+            tableName: noidung
+            columns:
+              - column: { name: tennoidung, value: "Thảo luận về chủ đề xã hội." }
+              - column: { name: mamodule, valueNumeric: 6 }
+
+        # -------------------------------
+        # Seed data cho bảng TAILIEU
+        # -------------------------------
+        - insert:
+            tableName: tailieu
+            columns:
+              - column: { name: mamodule, valueNumeric: 1 }
+              - column: { name: tenfile, value: "TuVungCoBan.pdf" }
+              - column: { name: link, value: "https://example.com/docs/basic-vocab.pdf" }
+              - column: { name: mota, value: "Tài liệu từ vựng cơ bản cho người mới bắt đầu." }
+              - column: { name: hinh, value: "https://example.com/images/basic-vocab.jpg" }
+        - insert:
+            tableName: tailieu
+            columns:
+              - column: { name: mamodule, valueNumeric: 2 }
+              - column: { name: tenfile, value: "NguPhapCoBan.docx" }
+              - column: { name: link, value: "https://example.com/docs/basic-grammar.docx" }
+              - column: { name: mota, value: "Hướng dẫn ngữ pháp cơ bản với ví dụ." }
+              - column: { name: hinh, value: "https://example.com/images/basic-grammar.jpg" }
+        - insert:
+            tableName: tailieu
+            columns:
+              - column: { name: mamodule, valueNumeric: 3 }
+              - column: { name: tenfile, value: "KinhDoanhTiengAnh.pdf" }
+              - column: { name: link, value: "https://example.com/docs/business-english.pdf" }
+              - column: { name: mota, value: "Tài liệu về tiếng Anh trong kinh doanh." }
+              - column: { name: hinh, value: "https://example.com/images/business-english.jpg" }
+        - insert:
+            tableName: tailieu
+            columns:
+              - column: { name: mamodule, valueNumeric: 4 }
+              - column: { name: tenfile, value: "VietLuanNangCao.ppt" }
+              - column: { name: link, value: "https://example.com/docs/advanced-writing.ppt" }
+              - column: { name: mota, value: "Slide hướng dẫn viết luận nâng cao." }
+              - column: { name: hinh, value: "https://example.com/images/advanced-writing.jpg" }
+        - insert:
+            tableName: tailieu
+            columns:
+              - column: { name: mamodule, valueNumeric: 5 }
+              - column: { name: tenfile, value: "GiaoTiepHangNgay.pdf" }
+              - column: { name: link, value: "https://example.com/docs/daily-conversation.pdf" }
+              - column: { name: mota, value: "Tài liệu giao tiếp hàng ngày." }
+              - column: { name: hinh, value: "https://example.com/images/daily-conversation.jpg" }
+        - insert:
+            tableName: tailieu
+            columns:
+              - column: { name: mamodule, valueNumeric: 6 }
+              - column: { name: tenfile, value: "ThaoLuanNhom.docx" }
+              - column: { name: link, value: "https://example.com/docs/group-discussion.docx" }
+              - column: { name: mota, value: "Hướng dẫn thảo luận nhóm bằng tiếng Anh." }
+              - column: { name: hinh, value: "https://example.com/images/group-discussion.jpg" }
