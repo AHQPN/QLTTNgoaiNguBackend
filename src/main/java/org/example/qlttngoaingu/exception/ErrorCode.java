@@ -76,6 +76,8 @@ public enum ErrorCode {
     INVALID_EMAIL_OR_PHONE_NUMBER(HttpStatus.BAD_REQUEST, 12004, "Invalid email or phone number "),
     INVALID_PRICE(HttpStatus.BAD_REQUEST, 12005, "Price cannot be negative"),
     INVALID_CODE(HttpStatus.BAD_REQUEST, 12006, "Invalid verification code"),
+    INVALID_DURATION(HttpStatus.BAD_REQUEST, 12005, "Duration cannot be negative"),
+    IMAGE_MISSING(HttpStatus.BAD_REQUEST, 12007, "Image missing"),
 
     // Course request validation errors
     COURSE_NAME_NOT_BLANK(HttpStatus.BAD_REQUEST, 7000, "Course name cannot be blank"),
@@ -85,8 +87,9 @@ public enum ErrorCode {
     COURSE_NUMBER_OF_SESSIONS_INVALID(HttpStatus.BAD_REQUEST, 7004, "Number of sessions must be positive"),
     COURSE_VIDEO_INVALID(HttpStatus.BAD_REQUEST, 7005, "Video URL is invalid"),
     COURSE_OBJECTIVES_EMPTY(HttpStatus.BAD_REQUEST, 7006, "Course objectives cannot be empty"),
-    COURSE_MODULES_EMPTY(HttpStatus.BAD_REQUEST, 7007, "Course modules cannot be empty");
+    COURSE_MODULES_EMPTY(HttpStatus.BAD_REQUEST, 7007, "Course modules cannot be empty"),
 
+    DURATION_TOO_LONG(HttpStatus.BAD_REQUEST,7008,"Duration of all modules must be less than number of session");
 
     private HttpStatus httpStatus;
     private final int code;

@@ -1,6 +1,5 @@
 package org.example.qlttngoaingu.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -9,7 +8,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "muctieukh")
 @Getter @Setter
-public class Goal {
+public class Objective {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")

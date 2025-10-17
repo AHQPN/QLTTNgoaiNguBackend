@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20251017-01
+      author: nguyen
+      changes:
+        - sqlFile:
+            path: seed_data.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true

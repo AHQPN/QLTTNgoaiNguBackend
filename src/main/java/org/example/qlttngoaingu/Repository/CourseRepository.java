@@ -13,4 +13,8 @@ import java.util.List;
 public interface CourseRepository extends JpaRepository<Course, Integer> {
     List<Course> findByCourseName(String name);
     Page<Course> findAll(Pageable pageable);
+    List<Course> findByStatusTrue();
+
+    List<Course> findTop3ByCourseIdNot(Integer courseId);
+
 }

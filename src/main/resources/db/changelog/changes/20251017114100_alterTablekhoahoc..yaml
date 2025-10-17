@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20251017-01
+      author: nguyen
+      changes:
+        - addColumn:
+            tableName: khoahoc
+            columns:
+              - column:
+                  name: mota
+                  type: NVARCHAR(MAX)
+              - column:
+                  name: dauvao
+                  type: NVARCHAR(MAX)
+              - column:
+                  name: daura
+                  type: NVARCHAR(MAX)

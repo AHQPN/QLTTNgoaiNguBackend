@@ -5,10 +5,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 
@@ -37,7 +35,7 @@ public class Course {
     @Column(name = "video", length = 255)
     private String video;
 
-    @Column(name = "trangthai", length = 50)
+    @Column(name = "trangthai")
     private Boolean status;
 
     @Column(name = "ngaytao")
@@ -46,9 +44,21 @@ public class Course {
     @Column(name = "nguoitao", length = 100)
     private String createdBy;
 
+    @Column(name = "mota",columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "dauvao")
+    private String entryLevel;
+
+    @Column(name = "daura")
+    private String targetLevel;
+
+    @Column(name = "hinhanh")
+    private String image;
+
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private List<Goal> objectives = new ArrayList<>();
+    private List<Objective> objectives = new ArrayList<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference

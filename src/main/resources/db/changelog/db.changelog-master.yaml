@@ -2,4 +2,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/20251009131100_db.changelog-init.yaml
   - include:
-      file: db/changelog/changes/20251009141500_seed_data.yaml
+      file: db/changelog/changes/20251017114100_alterTablekhoahoc..yaml
+  - include:
+      file: db/changelog/changes/20251017121900_insert_seed_data.yaml

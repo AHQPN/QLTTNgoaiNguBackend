@@ -1,10 +1,9 @@
 package org.example.qlttngoaingu.Dto.Request;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.example.qlttngoaingu.entity.Goal;
-import org.example.qlttngoaingu.entity.Module;
 import org.hibernate.validator.constraints.URL;
 
 import java.util.List;
@@ -15,21 +14,30 @@ public class CourseCreateRequest {
     @Size(min = 3, message = "COURSE_NAME_TOO_SHORT")
     private String courseName;
 
-    @Min(value = 1, message = "COURSE_STUDY_HOURS_INVALID")
-    private Integer studyHours;
-
     @DecimalMin(value = "0.0", inclusive = false, message = "COURSE_TUITION_FEE_INVALID")
     private Double tuitionFee;
-
-    @Min(value = 1, message = "COURSE_NUMBER_OF_SESSIONS_INVALID")
-    private Integer numberOfSessions;
 
     @URL(message = "COURSE_VIDEO_INVALID")
     private String video;
 
+    @NotBlank(message = "FIELD_NOT_BLANK")
+    private String description;
+
+    @NotBlank(message = "FIELD_NOT_BLANK")
+    private String entryLevel;
+
+    @NotBlank(message = "FIELD_NOT_BLANK")
+    private String targetLevel;
+
+    @NotEmpty(message = "IMAGE_MISSING")
+    private String image;
+
     @NotEmpty(message = "COURSE_OBJECTIVES_EMPTY")
-    private List<Goal> objectives;
+    @Valid
+    private List<ObjectiveRequest> objectives;
 
     @NotEmpty(message = "COURSE_MODULES_EMPTY")
-    private List<Module> modules;
+    @Valid
+    private List<ModuleRequest> modules;
+
 }

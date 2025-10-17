@@ -39,6 +39,9 @@ databaseChangeLog:
               - column:
                   name: nguoitao
                   type: NVARCHAR(100)
+              - column:
+                  name: hinhanh
+                  type: VARCHAR(150)
 
         # -------------------------------
         # Bảng MUCTIEUKH

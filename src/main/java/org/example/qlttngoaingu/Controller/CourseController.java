@@ -5,7 +5,8 @@ import lombok.AllArgsConstructor;
 import org.example.qlttngoaingu.Dto.Request.CourseCreateRequest;
 import org.example.qlttngoaingu.Dto.Response.ApiResponse;
 import org.example.qlttngoaingu.Dto.Response.CourseDetailResponse;
-import org.example.qlttngoaingu.Dto.Response.CourseResponse;
+import org.example.qlttngoaingu.Dto.Response.ActiveCourseResponse;
+import org.example.qlttngoaingu.Dto.Response.CoursePageResponse;
 import org.example.qlttngoaingu.Service.CourseService;
 import org.example.qlttngoaingu.entity.Course;
 import org.springframework.http.ResponseEntity;
@@ -21,22 +22,29 @@ public class CourseController {
     private CourseService courseService;
 
     // Get all courses (overview)
-    @GetMapping
-    public ResponseEntity<ApiResponse> getAllCourses() { // Thay đổi kiểu trả về tường minh
-        List<CourseResponse> lstCourses = courseService.getAllCourses();
+    @GetMapping("/activecourses")
+    public ResponseEntity<ApiResponse> getAllActiveCourses() {
+        List<ActiveCourseResponse> lstCourses = courseService.getAllActiveCourses();
         return ResponseEntity.ok().body(ApiResponse.builder().data(lstCourses).build());
     }
+    @GetMapping
+    public ResponseEntity<?> getAllCourses(@RequestParam(defaultValue = "0") int page,
+                                      @RequestParam(defaultValue = "15") int size)
+    {
+        CoursePageResponse coursePageResponse = courseService.getAllCourses(page,size);
+        return ResponseEntity.ok().body(ApiResponse.builder().data(coursePageResponse).build());
+    }
 
-    // Get course details by ID
+
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse> getCourseById(@PathVariable Integer id) { // Thay đổi kiểu trả về tường minh
+    public ResponseEntity<ApiResponse> getCourseById(@PathVariable Integer id) {
         CourseDetailResponse courseDetailResponse = courseService.getCourseDetailById(id);
         return ResponseEntity.ok().body(ApiResponse.builder().data(courseDetailResponse).build());
     }
 
     // Create a new course
     @PostMapping
-    public ResponseEntity<ApiResponse> createCourse( // Thay đổi kiểu trả về tường minh
+    public ResponseEntity<ApiResponse> createCourse(
                                                      @Valid @RequestBody CourseCreateRequest request) {
 
         Course createdCourse = courseService.createCourse(request);
