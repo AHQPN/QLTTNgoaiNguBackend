@@ -1,9 +1,11 @@
 package org.example.qlttngoaingu.exception;
 
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import org.example.qlttngoaingu.Dto.Response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -52,5 +54,25 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleUnsupportedEncodingException(UnsupportedEncodingException ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Email encoding error: " + ex.getMessage());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse> handleInvalidEnumValue(HttpMessageNotReadableException ex) {
+        Throwable cause = ex.getCause();
+        if (cause instanceof InvalidFormatException invalidFormatException) {
+
+            if (invalidFormatException.getTargetType().isEnum()) {
+                ApiResponse response = new ApiResponse();
+                ErrorCode errorCode = ErrorCode.INVALID_ACTION;
+                response.setCode(errorCode.getCode());
+                response.setMessage(errorCode.getMessage());
+                return ResponseEntity.badRequest().body(response);
+            }
+        }
+
+        ApiResponse apiResponse = new ApiResponse();
+        apiResponse.setCode(ErrorCode.UNCATEGORIZED.getCode());
+        apiResponse.setMessage("Lỗi đọc dữ liệu: " + ex.getMessage());
+        return ResponseEntity.badRequest().body(apiResponse);
     }
 }

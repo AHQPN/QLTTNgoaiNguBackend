@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
     // General
     UNCATEGORIZED(HttpStatus.INTERNAL_SERVER_ERROR, 9999, "Uncategorized error"),
-
+    INVALID_ACTION(HttpStatus.BAD_REQUEST, 9998, "Invalid action, must be ADD or DELETE or UPDATE"),
     // User errors
     USER_EXIST(HttpStatus.BAD_REQUEST, 1001, "User already exists"),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, 1002, "User not found"),
@@ -20,16 +20,16 @@ public enum ErrorCode {
     FAIL_TO_VERIFY_EMAIL(HttpStatus.INTERNAL_SERVER_ERROR, 1007, "Failed to send verification email"),
 
 
-    // Book errors
-    BOOK_NOT_FOUND(HttpStatus.NOT_FOUND, 2000, "Book not found"),
+    // Course errors
+    COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, 2000, "Course not found"),
     BOOK_EXIST(HttpStatus.BAD_REQUEST, 2001, "Book already exists"),
     BOOK_OUT_OF_STOCK(HttpStatus.BAD_REQUEST, 2002, "Book out of stock"),
     BOOK_INVALID_GENRE(HttpStatus.BAD_REQUEST, 2003, "Invalid book genre"),
     BOOK_INVALID_PUBLISHER(HttpStatus.BAD_REQUEST, 2004, "Invalid book publisher"),
 
-    // Author errors
-    AUTHOR_NOT_FOUND(HttpStatus.NOT_FOUND, 3000, "Author not found"),
-    AUTHOR_EXIST(HttpStatus.BAD_REQUEST, 3001, "Author already exists"),
+    // Module
+    MISS_MATCH_COURSE(HttpStatus.NOT_FOUND, 3000, "Not found this module in course"),
+    MODULE_NOT_FOUND(HttpStatus.BAD_REQUEST, 3001, "Module not found"),
 
     // Genre errors
     GENRE_NOT_FOUND(HttpStatus.NOT_FOUND, 4000, "Genre not found"),

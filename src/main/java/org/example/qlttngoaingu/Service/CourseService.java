@@ -133,7 +133,7 @@ public class CourseService {
     // Get course by ID (details)
     public CourseDetailResponse getCourseDetailById(Integer id) {
         Course course = courseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Course not found with id " + id));
+                .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
         return mapToDetailResponse(course);
     }
@@ -172,9 +172,35 @@ public class CourseService {
         });
     }
 
-    // Delete a course
-    public void deleteCourse(Integer id) {
-        courseRepository.deleteById(id);
+
+    // Disable a course
+    public void disableCourse(Integer id) {
+        Optional<Course> cs = courseRepository.findById(id);
+        cs.ifPresent(course -> {
+            course.setStatus(false);
+            courseRepository.save(course);
+        });
+    }
+    public List<ActiveCourseResponse>  getRecommendCourses(Integer id)
+    {
+        List<Course> cs = courseRepository.findTop3ByCourseIdNotAndStatusTrue(id);
+        return  cs.stream()
+            .map(course -> {
+                ActiveCourseResponse dto = new ActiveCourseResponse();
+                // Ánh xạ các thuộc tính từ Course sang CourseResponse
+                dto.setCourseId(course.getCourseId());
+                dto.setCourseName(course.getCourseName());
+                dto.setImage(course.getImage());
+                dto.setTuitionFee(course.getTuitionFee());
+                dto.setEntryLevel(course.getEntryLevel());
+                dto.setTargetLevel(course.getTargetLevel());
+                dto.setDescription(course.getDescription());
+                return dto;
+            })
+            .toList();
+
+
+
     }
 
     // Additional method for overview summary (e.g., count of courses)

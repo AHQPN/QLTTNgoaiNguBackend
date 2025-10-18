@@ -3,10 +3,7 @@ package org.example.qlttngoaingu.Controller;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.example.qlttngoaingu.Dto.Request.CourseCreateRequest;
-import org.example.qlttngoaingu.Dto.Response.ApiResponse;
-import org.example.qlttngoaingu.Dto.Response.CourseDetailResponse;
-import org.example.qlttngoaingu.Dto.Response.ActiveCourseResponse;
-import org.example.qlttngoaingu.Dto.Response.CoursePageResponse;
+import org.example.qlttngoaingu.Dto.Response.*;
 import org.example.qlttngoaingu.Service.CourseService;
 import org.example.qlttngoaingu.entity.Course;
 import org.springframework.http.ResponseEntity;
@@ -51,5 +48,16 @@ public class CourseController {
 
         // Nên trả về HTTP 201 Created cho hành động POST/Create
         return ResponseEntity.ok().body(ApiResponse.builder().message("Tạo khóa học thành công").build());
+    }
+    @PutMapping
+    public ResponseEntity<ApiResponse> updateCourse(@Valid @RequestBody CourseCreateRequest request)
+    {
+        return ResponseEntity.ok().body(ApiResponse.builder().message("Hoàn tất chỉnh sửa").build());
+    }
+    @GetMapping("/recommedcousres/{id}")
+    public ResponseEntity<ApiResponse> recommendCourses(@PathVariable Integer id) {
+        List<ActiveCourseResponse> courseResponse = courseService.getRecommendCourses(id);
+        return ResponseEntity.ok().body(ApiResponse.builder().data(courseResponse).build());
+
     }
 }

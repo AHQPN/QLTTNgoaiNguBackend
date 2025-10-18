@@ -15,6 +15,6 @@ public interface CourseRepository extends JpaRepository<Course, Integer> {
     Page<Course> findAll(Pageable pageable);
     List<Course> findByStatusTrue();
 
-    List<Course> findTop3ByCourseIdNot(Integer courseId);
+    List<Course> findTop3ByCourseIdNotAndStatusTrue(Integer id);
 
 }
