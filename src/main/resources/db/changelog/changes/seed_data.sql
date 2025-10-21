@@ -2,7 +2,7 @@
 -- Khóa 1: IELTS Writing (makhoahoc=1)
 -- ==========================
 INSERT INTO khoahoc (tenkhoahoc, sogiohoc, hocphi, sobuoihoc, video, trangthai, ngaytao, nguoitao,hinhanh, mota, dauvao, daura)
-VALUES (N'Khóa IELTS Writing', 50, 8500000.00, 25, 'https://example.com/video/ielts-writing.mp4', 1, '2025-10-17 00:00:00', 'admin','khoahoc1.jpg' ,N'Khóa học tập trung vào kỹ năng viết IELTS, giúp học viên đạt band 7+ qua thực hành và feedback.', N'IELTS 5.0+', N'Đạt band 7.0+ Writing, kỹ năng viết luận chuyên sâu.');
+VALUES (N'Khóa IELTS Writing', 50, 8500000.00, 25, 'https://example.com/video/ielts-writing.mp4', 1, '2025-10-17 00:00:00', 'admin','khoahoc1.png' ,N'Khóa học tập trung vào kỹ năng viết IELTS, giúp học viên đạt band 7+ qua thực hành và feedback.', N'IELTS 5.0+', N'Đạt band 7.0+ Writing, kỹ năng viết luận chuyên sâu.');
 INSERT INTO muctieukh (tenmuctieu, makhoahoc) VALUES
                                                   (N'Nắm vững cấu trúc bài Writing Task 1 & 2, bao gồm cách giới thiệu đề bài, mô tả biểu đồ, phát triển ý chính và kết luận hợp lý, giúp học viên tự tin phân tích và trình bày thông tin.', 1),
                                                   (N'Phát triển vốn từ vựng học thuật và ngữ pháp nâng cao, bao gồm các collocation, linking words, và cấu trúc câu phức, nhằm nâng cao điểm Writing và tránh lỗi ngữ pháp cơ bản.', 1),
@@ -111,7 +111,7 @@ INSERT INTO tailieu (mamodule, tenfile, link, mota, hinh) VALUES
 -- Khóa 3: IELTS Listening (makhoahoc=3)
 -- ==========================
 INSERT INTO khoahoc (tenkhoahoc, sogiohoc, hocphi, sobuoihoc, video, trangthai, ngaytao, nguoitao,hinhanh, mota, dauvao, daura)
-VALUES (N'Khóa IELTS Listening', 45, 8200000.00, 22, 'https://example.com/video/ielts-listening.mp4', 1, '2025-10-17 00:00:00', 'admin','khoahoc3.jpg',N'Khóa học cải thiện kỹ năng nghe IELTS qua audio thực tế và chiến lược.', N'IELTS 5.0+', N'Đạt band 7.0+ Listening, nắm bắt thông tin chính xác.');
+VALUES (N'Khóa IELTS Listening', 45, 8200000.00, 22, 'https://example.com/video/ielts-listening.mp4', 1, '2025-10-17 00:00:00', 'admin','khoahoc3.png',N'Khóa học cải thiện kỹ năng nghe IELTS qua audio thực tế và chiến lược.', N'IELTS 5.0+', N'Đạt band 7.0+ Listening, nắm bắt thông tin chính xác.');
 INSERT INTO muctieukh (tenmuctieu, makhoahoc) VALUES
                                                   (N'Nâng cao kỹ năng nghe hiểu các đoạn hội thoại và bài giảng, tập trung vào việc nắm bắt thông tin chính xác và chi tiết.', 3),
                                                   (N'Luyện tập các dạng câu hỏi Listening như multiple choice, matching, note completion để cải thiện tốc độ và độ chính xác.', 3),
@@ -220,7 +220,7 @@ INSERT INTO tailieu (mamodule, tenfile, link, mota, hinh) VALUES
 -- Khóa 5: IELTS Vocabulary (makhoahoc=5)
 -- ==========================
 INSERT INTO khoahoc (tenkhoahoc, sogiohoc, hocphi, sobuoihoc, video, trangthai, ngaytao, nguoitao,hinhanh, mota, dauvao, daura)
-VALUES (N'Khóa IELTS Vocabulary', 35, 7500000.00, 18, 'https://example.com/video/ielts-vocabulary.mp4', 1, '2025-10-17 00:00:00', 'admin','khoahoc5.jpg', N'Khóa học mở rộng từ vựng cho IELTS, tập trung vào chủ đề phổ biến.', N'IELTS 4.0+', N'Từ vựng phong phú, áp dụng linh hoạt trong thi.');
+VALUES (N'Khóa IELTS Vocabulary', 35, 7500000.00, 18, 'https://example.com/video/ielts-vocabulary.mp4', 1, '2025-10-17 00:00:00', 'admin','khoahoc5.png', N'Khóa học mở rộng từ vựng cho IELTS, tập trung vào chủ đề phổ biến.', N'IELTS 4.0+', N'Từ vựng phong phú, áp dụng linh hoạt trong thi.');
 INSERT INTO muctieukh (tenmuctieu, makhoahoc) VALUES
                                                   (N'Xây dựng vốn từ vựng học thuật phong phú cho tất cả kỹ năng IELTS, tập trung vào các chủ đề phổ biến như môi trường, giáo dục.', 5),
                                                   (N'Học cách sử dụng collocations, idioms và phrasal verbs để nâng cao điểm số trong Writing và Speaking.', 5),
@@ -273,7 +273,7 @@ INSERT INTO tailieu (mamodule, tenfile, link, mota, hinh) VALUES
 -- Khóa 6: IELTS Grammar (makhoahoc=6)
 -- ==========================
 INSERT INTO khoahoc (tenkhoahoc, sogiohoc, hocphi, sobuoihoc, video, trangthai, ngaytao, nguoitao,hinhanh, mota, dauvao, daura)
-VALUES (N'Khóa IELTS Grammar', 40, 7800000.00, 20, 'https://example.com/video/ielts-grammar.mp4', 1, '2025-10-17 00:00:00', 'admin', 'khoahoc6.jpg',N'Khóa học củng cố ngữ pháp cho IELTS, tránh lỗi phổ biến.', N'IELTS 4.5+', N'Ngữ pháp nâng cao, đạt band 7.0+ ở Writing và Speaking.');
+VALUES (N'Khóa IELTS Grammar', 40, 7800000.00, 20, 'https://example.com/video/ielts-grammar.mp4', 1, '2025-10-17 00:00:00', 'admin', 'khoahoc6.png',N'Khóa học củng cố ngữ pháp cho IELTS, tránh lỗi phổ biến.', N'IELTS 4.5+', N'Ngữ pháp nâng cao, đạt band 7.0+ ở Writing và Speaking.');
 INSERT INTO muctieukh (tenmuctieu, makhoahoc) VALUES
                                                   (N'Nắm vững ngữ pháp nâng cao như thì phức tạp, câu điều kiện, và cấu trúc câu phức để tránh lỗi trong Writing và Speaking.', 6),
                                                   (N'Luyện tập áp dụng ngữ pháp vào các bài thi IELTS thực tế để nâng cao độ chính xác và fluency.', 6),
@@ -327,7 +327,7 @@ INSERT INTO tailieu (mamodule, tenfile, link, mota, hinh) VALUES
 -- Khóa 7: IELTS Full Preparation (makhoahoc=7)
 -- ==========================
 INSERT INTO khoahoc (tenkhoahoc, sogiohoc, hocphi, sobuoihoc, video, trangthai, ngaytao, nguoitao, hinhanh,mota, dauvao, daura)
-VALUES (N'Khóa IELTS Full Preparation', 60, 9500000.00, 30, 'https://example.com/video/ielts-full-prep.mp4', 1, '2025-10-17 00:00:00', 'admin','khoahoc7.jpg', N'Khóa học chuẩn bị toàn diện cho kỳ thi IELTS, luyện 4 kỹ năng.', N'IELTS 5.5+', N'Đạt band 7.0+ tổng thể, sẵn sàng cho kỳ thi thực tế.');
+VALUES (N'Khóa IELTS Full Preparation', 60, 9500000.00, 30, 'https://example.com/video/ielts-full-prep.mp4', 1, '2025-10-17 00:00:00', 'admin','khoahoc7.png', N'Khóa học chuẩn bị toàn diện cho kỳ thi IELTS, luyện 4 kỹ năng.', N'IELTS 5.5+', N'Đạt band 7.0+ tổng thể, sẵn sàng cho kỳ thi thực tế.');
 INSERT INTO muctieukh (tenmuctieu, makhoahoc) VALUES
                                                   (N'Chuẩn bị toàn diện cho kỳ thi IELTS với luyện tập tất cả 4 kỹ năng, tập trung vào điểm yếu cá nhân hóa.', 7),
                                                   (N'Thực hành full test IELTS thật, phân tích kết quả và áp dụng chiến lược để đạt band mục tiêu.', 7),

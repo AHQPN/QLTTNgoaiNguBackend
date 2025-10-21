@@ -2,15 +2,17 @@ package org.example.qlttngoaingu.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-
 
 @Getter
 @AllArgsConstructor
 public enum ErrorCode {
+
     // General
     UNCATEGORIZED(HttpStatus.INTERNAL_SERVER_ERROR, 9999, "Uncategorized error"),
     INVALID_ACTION(HttpStatus.BAD_REQUEST, 9998, "Invalid action, must be ADD or DELETE or UPDATE"),
+
     // User errors
     USER_EXIST(HttpStatus.BAD_REQUEST, 1001, "User already exists"),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, 1002, "User not found"),
@@ -18,7 +20,6 @@ public enum ErrorCode {
     USER_INVALID_PASSWORD(HttpStatus.BAD_REQUEST, 1004, "Password must be at least 6 characters"),
     USER_PHONE_OR_EMAIL_EXIST(HttpStatus.BAD_REQUEST, 1005, "Phone number or email already exists"),
     FAIL_TO_VERIFY_EMAIL(HttpStatus.INTERNAL_SERVER_ERROR, 1007, "Failed to send verification email"),
-
 
     // Course errors
     COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, 2000, "Course not found"),
@@ -67,17 +68,16 @@ public enum ErrorCode {
     UNAUTHENTICATED(HttpStatus.UNAUTHORIZED, 11004, "Unauthenticated"),
     EXPIRED_VERIFICATION_CODE(HttpStatus.GONE, 11005, "Expired verification code"),
 
-    // VALID FIELD
-
+    // Field validation
     FIELD_NOT_BLANK(HttpStatus.BAD_REQUEST, 12000, "Field not blank"),
     INVALID_EMAIL(HttpStatus.BAD_REQUEST, 12001, "Invalid email"),
     INVALID_PHONE_NUMBER(HttpStatus.BAD_REQUEST, 12002, "Invalid phone number"),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, 12003, "Password must be at least 6 characters"),
-    INVALID_EMAIL_OR_PHONE_NUMBER(HttpStatus.BAD_REQUEST, 12004, "Invalid email or phone number "),
+    INVALID_EMAIL_OR_PHONE_NUMBER(HttpStatus.BAD_REQUEST, 12004, "Invalid email or phone number"),
     INVALID_PRICE(HttpStatus.BAD_REQUEST, 12005, "Price cannot be negative"),
     INVALID_CODE(HttpStatus.BAD_REQUEST, 12006, "Invalid verification code"),
-    INVALID_DURATION(HttpStatus.BAD_REQUEST, 12005, "Duration cannot be negative"),
-    IMAGE_MISSING(HttpStatus.BAD_REQUEST, 12007, "Image missing"),
+    INVALID_DURATION(HttpStatus.BAD_REQUEST, 12008, "Duration cannot be negative"),
+    IMAGE_MISSING(HttpStatus.BAD_REQUEST, 12009, "Image missing"),
 
     // Course request validation errors
     COURSE_NAME_NOT_BLANK(HttpStatus.BAD_REQUEST, 7000, "Course name cannot be blank"),
@@ -88,12 +88,11 @@ public enum ErrorCode {
     COURSE_VIDEO_INVALID(HttpStatus.BAD_REQUEST, 7005, "Video URL is invalid"),
     COURSE_OBJECTIVES_EMPTY(HttpStatus.BAD_REQUEST, 7006, "Course objectives cannot be empty"),
     COURSE_MODULES_EMPTY(HttpStatus.BAD_REQUEST, 7007, "Course modules cannot be empty"),
+    DURATION_TOO_LONG(HttpStatus.BAD_REQUEST, 7008, "Duration of all modules must be less than number of sessions"),
+    DURATION_MUST_POSITIVE(HttpStatus.BAD_REQUEST, 7009, "Duration must be positive");
 
-    DURATION_TOO_LONG(HttpStatus.BAD_REQUEST,7008,"Duration of all modules must be less than number of session");
 
-    private HttpStatus httpStatus;
+    private final HttpStatus httpStatus;
     private final int code;
     private final String message;
-
-
 }

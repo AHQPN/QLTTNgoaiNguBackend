@@ -1,24 +1,26 @@
 package org.example.qlttngoaingu.Service;
 
 import lombok.AllArgsConstructor;
-import org.example.qlttngoaingu.Dto.Request.ContentRequest;
-import org.example.qlttngoaingu.Dto.Request.DocumentRequest;
-import org.example.qlttngoaingu.Dto.Request.ModuleUpdateRequest;
+import org.example.qlttngoaingu.Dto.Request.*;
 import org.example.qlttngoaingu.Repository.ContentRepository;
 import org.example.qlttngoaingu.Repository.DocumentRepository;
 import org.example.qlttngoaingu.Service.enums.ActionEnum;
 import org.example.qlttngoaingu.entity.Content;
 import org.example.qlttngoaingu.entity.Document;
 import org.example.qlttngoaingu.entity.Module;
-import org.example.qlttngoaingu.Dto.Request.ModuleRequest;
 import org.example.qlttngoaingu.Repository.CourseRepository;
 import org.example.qlttngoaingu.Repository.ModuleRepository;
 import org.example.qlttngoaingu.entity.Course;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @AllArgsConstructor
+@Service
 public class ModuleService {
     private final CourseRepository courseRepository;
     private final ModuleRepository moduleRepository;
@@ -26,7 +28,7 @@ public class ModuleService {
     private final DocumentRepository documentRepository;
     // Thêm module
     @Transactional
-    public void addModule(Integer courseId, ModuleRequest request) {
+    public Module addModule(Integer courseId, ModuleRequest request) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
@@ -34,19 +36,45 @@ public class ModuleService {
         module.setModuleName(request.getModuleName());
         module.setDuration(request.getDuration());
         module.setCourse(course);
-
         moduleRepository.save(module);
+
+
+        if (request.getDocuments() != null) {
+            List<Document> docs = request.getDocuments().stream().map(docReq -> {
+                Document doc = new Document();
+                doc.setFileName(docReq.getFileName());
+                doc.setModule(module);
+                doc.setLink(docReq.getLink());
+                doc.setImage(docReq.getImage());
+                doc.setDescription(docReq.getDescription());
+                return doc;
+            }).collect(Collectors.toList());
+            documentRepository.saveAll(docs);
+        }
+
+
+        // Thêm locations nếu có
+        if (request.getContents() != null) {
+            List<Content> contents = request.getContents().stream().map(contentRequest -> {
+                Content content = new Content();
+                content.setContentName(contentRequest.getContentName());
+                content.setModule(module);
+
+                return content;
+            }).toList();
+            contentRepository.saveAll(contents);
+        }
+
+        return module; // trả về module vừa tạo
     }
+
 
     // Cập nhật module
     @Transactional
-    public void updateModule(Integer courseId, Integer moduleId, ModuleRequest request) {
+    public void updateModule(Integer moduleId, ModuleRequest request) {
         Module module = moduleRepository.findById(moduleId)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
-        if (!module.getCourse().getCourseId().equals(courseId)) {
-            throw new AppException(ErrorCode.MISS_MATCH_COURSE);
-        }
 
         if (request.getModuleName() != null) {
             module.setModuleName(request.getModuleName());
@@ -63,13 +91,10 @@ public class ModuleService {
 
     // Xóa module
     @Transactional
-    public void deleteModule(Integer courseId, Integer moduleId) {
+    public void deleteModule(Integer moduleId) {
         Module module = moduleRepository.findById(moduleId)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
-        if (!module.getCourse().getCourseId().equals(courseId)) {
-            throw new AppException(ErrorCode.MISS_MATCH_COURSE);
-        }
 
         moduleRepository.delete(module);
     }
@@ -86,18 +111,10 @@ public class ModuleService {
 
         // ---- 1️⃣ Xử lý TÀI LIỆU ----
         if (request.getDocuments() != null) {
-            for (DocumentRequest tl : request.getDocuments()) {
+            for (DocumentUpdateRequest tl : request.getDocuments()) {
                 ActionEnum action = tl.getAction();
                 switch (action.name()) {
-                    case "ADD":
-                        Document newTL = new Document();
-                        newTL.setFileName(tl.getFileName());
-                        newTL.setLink(tl.getLink());
-                        newTL.setDescription(tl.getDescription());
-                        newTL.setImage(tl.getImage());
-                        newTL.setModule(module);
-                        documentRepository.save(newTL);
-                        break;
+
                     case "UPDATE":
                         Document existing = documentRepository.findById(tl.getId())
                                 .orElseThrow(() -> new RuntimeException("File not found"));
@@ -116,7 +133,7 @@ public class ModuleService {
 
         // ---- 2️⃣ Xử lý NỘI DUNG ----
         if (request.getContents() != null) {
-            for (ContentRequest nd : request.getContents()) {
+            for (ContentUpdateRequest nd : request.getContents()) {
                 ActionEnum action = nd.getAction();
 
                 switch (action.name()) {
@@ -138,6 +155,11 @@ public class ModuleService {
                 }
             }
         }
+    }
+
+    public List<Module> getmodules(Integer courseId) {
+        return moduleRepository.findByCourse_CourseId(courseId);
+
     }
 
 }

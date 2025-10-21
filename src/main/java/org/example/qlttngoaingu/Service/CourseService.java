@@ -2,19 +2,22 @@ package org.example.qlttngoaingu.Service;
 
 import lombok.AllArgsConstructor;
 import org.example.qlttngoaingu.Dto.Request.CourseCreateRequest;
+import org.example.qlttngoaingu.Dto.Request.CourseUpdateRequest;
 import org.example.qlttngoaingu.Dto.Response.CourseDetailResponse;
 import org.example.qlttngoaingu.Dto.Response.ActiveCourseResponse;
 import org.example.qlttngoaingu.Dto.Response.CoursePageResponse;
 import org.example.qlttngoaingu.Dto.Response.CourseResponse;
-import org.example.qlttngoaingu.Repository.ContentRepository;
+import org.example.qlttngoaingu.entity.Course;
+import org.example.qlttngoaingu.entity.Document;
+import org.example.qlttngoaingu.entity.Content;
 import org.example.qlttngoaingu.Repository.CourseRepository;
-import org.example.qlttngoaingu.Repository.GoalRepository;
-import org.example.qlttngoaingu.Repository.ModuleRepository;
+
 import org.example.qlttngoaingu.entity.Course;
 import org.example.qlttngoaingu.entity.Objective;
 import org.example.qlttngoaingu.entity.Module;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
+import org.example.qlttngoaingu.mapper.CourseMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -32,17 +36,16 @@ public class CourseService {
 
 
     private final CourseRepository courseRepository;
-    private final ModuleRepository moduleRepository;
-    private final GoalRepository goalRepository;
-    private final ContentRepository contentRepository;
+
+    private final ModuleService moduleService;
+    private final CourseMapper courseMapper;
 
     // Get all courses (overview)
     public List<ActiveCourseResponse> getAllActiveCourses() {
         return courseRepository.findByStatusTrue()
                 .stream()
-                .map(this::mapToResponse)
+                .map(courseMapper::toActiveResponse)
                 .collect(Collectors.toList());
-
     }
 
     public CoursePageResponse getAllCourses(int page, int size)
@@ -80,23 +83,17 @@ public class CourseService {
         return response;
     }
 
+
     @Transactional
     public Course createCourse(CourseCreateRequest request) {
-        Course course = new Course();
-        course.setCourseName(request.getCourseName());
-        course.setTuitionFee(request.getTuitionFee());
-
-        course.setVideo(request.getVideo());
-        course.setStatus(true);
+        // Map course cơ bản từ mapper
+        Course course = courseMapper.toNewCourse(request);
+        course.setStatus(false);
         course.setCreatedDate(LocalDateTime.now());
-        course.setDescription(request.getDescription());
-        course.setEntryLevel(request.getEntryLevel());
-        course.setTargetLevel(request.getTargetLevel());
-        course.setImage(request.getImage());
         course.setCreatedBy("admin");
 
-        // ✅ Map danh sách mục tiêu học tập (objectives)
-        if (request.getObjectives() != null) {
+        // 1️⃣ Thêm Objectives
+        if (request.getObjectives() != null && !request.getObjectives().isEmpty()) {
             List<Objective> objectives = request.getObjectives().stream()
                     .map(obj -> {
                         Objective objective = new Objective();
@@ -108,76 +105,90 @@ public class CourseService {
             course.setObjectives(objectives);
         }
 
-        if (request.getModules() != null) {
-            List<Module> modules = request.getModules().stream()
-                    .map(m -> {
-                        Module module = new Module();
-                        module.setModuleName(m.getModuleName());
-                        module.setDuration(m.getDuration());
-                        module.setCourse(course);
-                        return module;
-                    })
-                    .collect(Collectors.toList());
+        // 2️⃣ Thêm Modules, Documents, Contents
+        if (request.getModules() != null && !request.getModules().isEmpty()) {
+            List<Module> modules = request.getModules().stream().map(mReq -> {
+                Module module = new Module();
+                module.setModuleName(mReq.getModuleName());
+                module.setDuration(mReq.getDuration());
+                module.setCourse(course);
+
+                // 2.1️⃣ Documents
+                if (mReq.getDocuments() != null && !mReq.getDocuments().isEmpty()) {
+                    List<Document> documents = mReq.getDocuments().stream()
+                            .map(dReq -> {
+                                Document doc = new Document();
+                                doc.setFileName(dReq.getFileName());
+                                doc.setLink(dReq.getLink());
+                                doc.setDescription(dReq.getDescription());
+                                doc.setImage(dReq.getImage());
+                                doc.setModule(module);
+                                return doc;
+                            })
+                            .collect(Collectors.toList());
+                    module.setDocuments(documents);
+                }
+
+                // 2.2️⃣ Contents
+                if (mReq.getContents() != null && !mReq.getContents().isEmpty()) {
+                    List<Content> contents = mReq.getContents().stream()
+                            .map(cReq -> {
+                                Content content = new Content();
+                                content.setContentName(cReq.getContentName());
+                                content.setModule(module);
+                                return content;
+                            })
+                            .collect(Collectors.toList());
+                    module.setContents(contents);
+                }
+
+                return module;
+            }).collect(Collectors.toList());
+
             course.setModules(modules);
+
+            // 3️⃣ Tính tổng thời lượng
             int totalDuration = modules.stream()
                     .filter(m -> m.getDuration() != null)
                     .mapToInt(Module::getDuration)
                     .sum();
-            course.setNumberOfSessions(totalDuration);
-            course.setStudyHours(2*totalDuration);
-        }
-        return courseRepository.save(course);
 
+            course.setNumberOfSessions(totalDuration);
+            course.setStudyHours(totalDuration * 2);
+        }
+
+        // 4️⃣ Lưu toàn bộ
+        courseRepository.save(course);
+
+        return course; // ✅ trả về Course thay vì List<Module>
     }
+
 
     // Get course by ID (details)
     public CourseDetailResponse getCourseDetailById(Integer id) {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
-
-        return mapToDetailResponse(course);
-    }
-
-    private CourseDetailResponse mapToDetailResponse(Course course) {
-        CourseDetailResponse response = new CourseDetailResponse();
-        response.setCourseId(course.getCourseId());
-        response.setCourseName(course.getCourseName());
-        response.setStudyHours(course.getStudyHours());
-        response.setTuitionFee(course.getTuitionFee());
-        response.setNumberOfSessions(course.getNumberOfSessions());
-        response.setVideo(course.getVideo());
-        response.setObjectives(course.getObjectives());
-        response.setModules(course.getModules());
-        response.setDescription(course.getDescription());
-        response.setEntryLevel(course.getEntryLevel());
-        response.setTargetLevel(course.getTargetLevel());
-        response.setImage(course.getImage());
+        CourseDetailResponse response = courseMapper.toResponse(course);
         return response;
     }
 
 
+
+
     // Update an existing course
-    public Optional<Course> updateCourse(Integer id, Course updatedCourse) {
-        return courseRepository.findById(id).map(course -> {
-            course.setCourseName(updatedCourse.getCourseName());
-            course.setStudyHours(updatedCourse.getStudyHours());
-            course.setTuitionFee(updatedCourse.getTuitionFee());
-            course.setNumberOfSessions(updatedCourse.getNumberOfSessions());
-            course.setVideo(updatedCourse.getVideo());
-            course.setStatus(updatedCourse.getStatus());
-            course.setDescription(updatedCourse.getDescription());
-            course.setEntryLevel(updatedCourse.getEntryLevel());
-            course.setTargetLevel(updatedCourse.getTargetLevel());
-            return courseRepository.save(course);
-        });
+    public Course updateCourse(Integer id, CourseUpdateRequest updatedCourse) {
+
+        Course cs  = courseRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+        courseMapper.toExistingCourse(cs, updatedCourse);
+        return courseRepository.save(cs);
     }
 
 
-    // Disable a course
-    public void disableCourse(Integer id) {
+    // Change status of course
+    public void changeStatus(Integer id) {
         Optional<Course> cs = courseRepository.findById(id);
         cs.ifPresent(course -> {
-            course.setStatus(false);
+            course.setStatus(!course.getStatus());
             courseRepository.save(course);
         });
     }

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.validator.constraints.URL;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 @Getter @Setter
@@ -29,7 +30,6 @@ public class CourseCreateRequest {
     @NotBlank(message = "FIELD_NOT_BLANK")
     private String targetLevel;
 
-    @NotEmpty(message = "IMAGE_MISSING")
     private String image;
 
     @NotEmpty(message = "COURSE_OBJECTIVES_EMPTY")

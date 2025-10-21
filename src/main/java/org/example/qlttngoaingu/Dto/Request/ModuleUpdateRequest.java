@@ -9,6 +9,6 @@ import java.util.List;
 public class ModuleUpdateRequest {
     private String moduleName;
     private Integer duration;
-    private List<DocumentRequest> documents;
-    private List<ContentRequest> contents;
+    private List<DocumentUpdateRequest> documents;
+    private List<ContentUpdateRequest> contents;
 }
