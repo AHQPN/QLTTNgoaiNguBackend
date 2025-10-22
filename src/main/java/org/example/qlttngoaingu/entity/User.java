@@ -3,12 +3,14 @@ package org.example.qlttngoaingu.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.example.qlttngoaingu.Service.enums.RoleEnum;
+import org.example.qlttngoaingu.service.enums.RoleEnum;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter @Setter
+@Table(name = "nguoidung")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,7 +27,7 @@ public class User {
     private String passwordHash;
 
     @Column(name = "vaitro", nullable = false)
-    private RoleEnum role;
+    private String role;
 
     @Column(name = "ngaytao", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -33,11 +35,9 @@ public class User {
     @Column(name = "daxacthuc", nullable = false)
     private Boolean isVerified = false;
 
-    @Column(name = "maxacthuc", nullable = true)
-    private String verificationCode;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<VerificationCode> verificationCodes;
 
-    @Column(name = "mahethan")
-    private LocalDateTime codeExpiration;
 
 
 }

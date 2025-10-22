@@ -1,0 +1,50 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20251022-03
+      author: nguyenphuc
+      changes:
+        # -------------------------------
+        # Bảng REFRESH_TOKENS
+        # -------------------------------
+        - createTable:
+            tableName: refresh_tokens
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_refresh_tokens
+              - column:
+                  name: refresh_token
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: hethan
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: manguoidung
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: dathuhoi
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+
+        # -------------------------------
+        # Khóa ngoại: refresh_tokens → user
+        # -------------------------------
+        - addForeignKeyConstraint:
+            baseTableName: refresh_tokens
+            baseColumnNames: manguoidung
+            referencedTableName: nguoidung
+            referencedColumnNames: manguoidung
+            constraintName: fk_refresh_user
+            onDelete: CASCADE

@@ -2,7 +2,7 @@ package org.example.qlttngoaingu.exception;
 
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import org.example.qlttngoaingu.Dto.Response.ApiResponse;
+import org.example.qlttngoaingu.dto.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.file.AccessDeniedException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -25,6 +26,15 @@ public class GlobalExceptionHandler {
         apiResponse.setMessage(errorCode.getMessage());
 
         return ResponseEntity.badRequest().body(apiResponse);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse> handleAccessDeniedExceptions(AccessDeniedException ex) {
+        ApiResponse apiResponse = new ApiResponse();
+        apiResponse.setCode(HttpStatus.FORBIDDEN.value());
+        apiResponse.setMessage(HttpStatus.FORBIDDEN.getReasonPhrase());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(apiResponse);
+
     }
 
     @ExceptionHandler(AppException.class)

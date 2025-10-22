@@ -1,9 +1,9 @@
 package org.example.qlttngoaingu.mapper;
 
-import org.example.qlttngoaingu.Dto.Request.CourseCreateRequest;
-import org.example.qlttngoaingu.Dto.Request.CourseUpdateRequest;
-import org.example.qlttngoaingu.Dto.Response.ActiveCourseResponse;
-import org.example.qlttngoaingu.Dto.Response.CourseDetailResponse;
+import org.example.qlttngoaingu.dto.request.CourseCreateRequest;
+import org.example.qlttngoaingu.dto.request.CourseUpdateRequest;
+import org.example.qlttngoaingu.dto.response.ActiveCourseResponse;
+import org.example.qlttngoaingu.dto.response.CourseDetailResponse;
 import org.example.qlttngoaingu.entity.Course;
 import org.mapstruct.Mapper;
 

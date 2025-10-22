@@ -1,0 +1,102 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20251022-01
+      author: nguyenphuc
+      changes:
+        # -------------------------------
+        # Bảng USER
+        # -------------------------------
+        - createTable:
+            tableName: nguoidung
+            columns:
+              - column:
+                  name: manguoidung
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_user
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: sdt
+                  type: VARCHAR(10)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: matkhau
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: vaitro
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: ngaytao
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: daxacthuc
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 20251022-02
+      author: nguyenphuc
+      changes:
+        # -------------------------------
+        # Bảng VERIFICATION_CODES
+        # -------------------------------
+        - createTable:
+            tableName: maxacthuc
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_verification_codes
+              - column:
+                  name: manguoidung
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: maxacthuc
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: loaixacthuc
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: ngaytao
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: hethan
+                  type: DATETIME
+
+        # -------------------------------
+        # Khóa ngoại từ verification_codes → user
+        # -------------------------------
+        - addForeignKeyConstraint:
+            baseTableName: maxacthuc
+            baseColumnNames: manguoidung
+            referencedTableName: nguoidung
+            referencedColumnNames: manguoidung
+            constraintName: fk_verification_user
+            onDelete: CASCADE

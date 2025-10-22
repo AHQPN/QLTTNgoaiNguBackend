@@ -89,7 +89,10 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/users/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/courses/**").permitAll()
                         .requestMatchers("/courses/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/modules/**").permitAll()
+                        .requestMatchers("/modules/**").authenticated()
                         .requestMatchers("files/**").permitAll()
                         .anyRequest().authenticated()
                 )

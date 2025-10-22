@@ -5,3 +5,9 @@ databaseChangeLog:
       file: db/changelog/changes/20251017114100_alterTablekhoahoc..yaml
   - include:
       file: db/changelog/changes/20251017121900_insert_seed_data.yaml
+  - include:
+      file: db/changelog/changes/20252210071300_drop_table.yaml
+  - include:
+      file: db/changelog/changes/20251022075800_create_table_user_and_verfication_code.yaml
+  - include:
+      file: db/changelog/changes/20251022075900_create_table_refreshtoken.yaml

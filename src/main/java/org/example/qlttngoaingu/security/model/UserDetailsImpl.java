@@ -28,7 +28,7 @@ public class UserDetailsImpl implements UserDetails {
     // build từ entity User
     public static UserDetailsImpl build(User user) {
         String roleName = "";
-        if (user.getRole() != null) roleName += user.getRole().name();
+        if (user.getRole() != null) roleName += user.getRole();
         else roleName += "Reader";
 
         SimpleGrantedAuthority authority = new SimpleGrantedAuthority(roleName);

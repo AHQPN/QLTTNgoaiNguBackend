@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20251022-01
+      author: nguyenphuc
+      changes:
+        # -------------------------------
+        # XÓA BẢNG CŨ (NẾU CÓ)
+        # -------------------------------
+        - dropTable:
+            tableName: nguoidung
+            cascadeConstraints: true
+            ifExists: true

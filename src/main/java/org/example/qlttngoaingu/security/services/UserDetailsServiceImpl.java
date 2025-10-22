@@ -2,7 +2,7 @@ package org.example.qlttngoaingu.security.services;
 
 
 
-import org.example.qlttngoaingu.Repository.UserRepository;
+import org.example.qlttngoaingu.repository.UserRepository;
 import org.example.qlttngoaingu.entity.User;
 import org.example.qlttngoaingu.security.model.UserDetailsImpl;
 import org.springframework.security.core.userdetails.UserDetails;
