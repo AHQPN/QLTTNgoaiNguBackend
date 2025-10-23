@@ -4,6 +4,8 @@ package org.example.qlttngoaingu.security.jwt;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.example.qlttngoaingu.exception.AppException;
+import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.security.model.UserDetailsImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +35,8 @@ public class JwtUtils {
 
         return Jwts.builder()
                 .setSubject((userPrincipal.getUsername()))
+                .claim("userId", userPrincipal.getId())
+                .claim("role", userPrincipal.getRole())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
                 .signWith(key(), SignatureAlgorithm.HS256)
@@ -58,15 +62,16 @@ public class JwtUtils {
             Jwts.parserBuilder().setSigningKey(key()).build().parse(authToken);
             return true;
         } catch (MalformedJwtException e) {
-            logger.error("Invalid JWT token: {}", e.getMessage());
-        } catch (ExpiredJwtException e) {
-            logger.error("JWT token is expired: {}", e.getMessage());
-        } catch (UnsupportedJwtException e) {
-            logger.error("JWT token is unsupported: {}", e.getMessage());
-        } catch (IllegalArgumentException e) {
-            logger.error("JWT claims string is empty: {}", e.getMessage());
-        }
+            throw  new AppException(ErrorCode.INVALID_JWT_TOKEN);
 
-        return false;
+        } catch (ExpiredJwtException e) {
+            throw new AppException(ErrorCode.EXPIRED_JWT_TOKEN);
+
+        } catch (UnsupportedJwtException e) {
+            throw new AppException(ErrorCode.UNSUPPORT_TOKEN);
+
+        } catch (IllegalArgumentException e) {
+            throw new AppException(ErrorCode.JWT_CLAIMS_EMPTY);
+        }
     }
 }

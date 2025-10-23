@@ -89,8 +89,13 @@ public enum ErrorCode {
     COURSE_OBJECTIVES_EMPTY(HttpStatus.BAD_REQUEST, 7006, "Course objectives cannot be empty"),
     COURSE_MODULES_EMPTY(HttpStatus.BAD_REQUEST, 7007, "Course modules cannot be empty"),
     DURATION_TOO_LONG(HttpStatus.BAD_REQUEST, 7008, "Duration of all modules must be less than number of sessions"),
-    DURATION_MUST_POSITIVE(HttpStatus.BAD_REQUEST, 7009, "Duration must be positive");
+    DURATION_MUST_POSITIVE(HttpStatus.BAD_REQUEST, 7009, "Duration must be positive"),
 
+    //JWT TOKEN
+    INVALID_JWT_TOKEN(HttpStatus.UNAUTHORIZED, 8001, "Invalid JWT token"),
+    EXPIRED_JWT_TOKEN(HttpStatus.UNAUTHORIZED, 8002, "JWT token is expired"),
+    UNSUPPORT_TOKEN(HttpStatus.BAD_REQUEST, 8003, "JWT token is unsupported"),
+    JWT_CLAIMS_EMPTY(HttpStatus.BAD_REQUEST, 8004, "JWT claims string is empty");
 
     private final HttpStatus httpStatus;
     private final int code;

@@ -61,6 +61,8 @@ public class AuthController {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
+
+
         String accessToken = jwtUtils.generateJwtToken(authentication);
 
         // Tạo refresh token

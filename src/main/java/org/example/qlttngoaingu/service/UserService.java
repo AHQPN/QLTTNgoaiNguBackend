@@ -54,15 +54,14 @@ public class UserService {
         if (!user.getIsVerified())
         {
             Optional<VerificationCode>  verificationCode = generateNewVerificationCode(user, VerificationCodeEnum.EMAIL_VERIFICATION);
-            sendVerificationEmail(user,siteURL,verificationCode.get());
+            verificationCode.ifPresent(code -> sendVerificationEmail(user, siteURL, code));
         }
 
         return user;
     }
 
     public Optional<User> getUserByIdentifier(String identifier) {
-        Optional<User> usr = userRepository.findByPhoneNumberOrEmail(identifier,identifier);
-        return usr;
+        return userRepository.findByPhoneNumberOrEmail(identifier,identifier);
     }
 
 
@@ -179,7 +178,6 @@ public class UserService {
                 return ApiResponse.builder().code(1000).message("Your email was verified").build();
             }
             case PASSWORD_RESET, CHANGE_MAIL -> {
-                break;
             }
             default -> {
 
@@ -188,6 +186,10 @@ public class UserService {
         }
         verificationCodeRepository.delete(verificationCode1);
         return ApiResponse.builder().code(1000).message("Your email was verified").build();
+
+    }
+
+    public void UpdateUserProfile(User user) {
 
     }
 
