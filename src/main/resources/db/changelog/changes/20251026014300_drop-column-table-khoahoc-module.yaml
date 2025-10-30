@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0
+      author: admin
+      changes:
+
+        # Xoá cột
+        - dropColumn:
+            columnName: sobuoihoc
+            tableName: khoahoc
+
+        - dropColumn:
+            columnName: thoiluong
+            tableName: module
+
+        # Thêm cột madm vào bảng khoahoc
+        - addColumn:
+            tableName: khoahoc
+            columns:
+              - column:
+                  name: madm
+                  type: INT
+                  constraints:
+                    nullable: true
+
+        # Tạo khóa ngoại madm tham chiếu bảng danh mục
+        - addForeignKeyConstraint:
+            baseTableName: khoahoc
+            baseColumnNames: madm
+            referencedTableName: danhmuc
+            referencedColumnNames: madanhmuc
+            constraintName: fk_khoahoc_danhmuc
+            onDelete: SET NULL

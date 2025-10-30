@@ -29,8 +29,7 @@ public class Module {
     @Column(name = "tenmodule", length = 200)
     private String moduleName;
 
-    @Column(name = "thoiluong")
-    private Integer duration;
+
 
     @OneToMany(mappedBy = "module", cascade = CascadeType.ALL, orphanRemoval = true)
 

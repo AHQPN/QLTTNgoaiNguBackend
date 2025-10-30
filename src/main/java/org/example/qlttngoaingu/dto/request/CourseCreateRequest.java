@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.qlttngoaingu.entity.CourseCategory;
 import org.hibernate.validator.constraints.URL;
 
 import java.util.List;
@@ -22,6 +23,12 @@ public class CourseCreateRequest {
 
     @NotBlank(message = "FIELD_NOT_BLANK")
     private String description;
+
+    @NotNull
+    private Integer studyHours;
+
+    @NotNull
+    private Integer courseCategoryId;
 
     @NotBlank(message = "FIELD_NOT_BLANK")
     private String entryLevel;

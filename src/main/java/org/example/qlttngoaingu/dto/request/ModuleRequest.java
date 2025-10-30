@@ -14,8 +14,7 @@ public class ModuleRequest {
     @NotBlank(message = "FIELD_NOT_BLANK")
     private String moduleName;
     @NotNull(message = "FIELD_NOT_BLANK")
-    @Positive(message = "DURATION_MUST_POSITIVE")
-    private Integer duration;
+
 
     private List<DocumentRequest> documents;
     private List<ContentRequest> contents;

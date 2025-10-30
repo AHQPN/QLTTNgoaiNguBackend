@@ -32,6 +32,7 @@ public enum ErrorCode {
     MISS_MATCH_COURSE(HttpStatus.NOT_FOUND, 3000, "Not found this module in course"),
     MODULE_NOT_FOUND(HttpStatus.BAD_REQUEST, 3001, "Module not found"),
 
+    OBJECTIVE_NOT_FOUND(HttpStatus.NOT_FOUND, 3002, "Objective not found"),
     // Genre errors
     GENRE_NOT_FOUND(HttpStatus.NOT_FOUND, 4000, "Genre not found"),
     GENRE_EXIST(HttpStatus.BAD_REQUEST, 4001, "Genre already exists"),

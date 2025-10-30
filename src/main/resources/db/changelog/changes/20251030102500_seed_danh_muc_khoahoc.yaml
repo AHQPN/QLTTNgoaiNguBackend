@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20250101-01-seed-danhmuc
+      author: admin
+      changes:
+        - insert:
+            tableName: danhmuc
+            columns:
+              - column:
+                  name: tendm
+                  value: "IELTS Foundation"
+              - column:
+                  name: level
+                  value: "4.5+"
+
+        - insert:
+            tableName: danhmuc
+            columns:
+              - column:
+                  name: tendm
+                  value: "IELTS Advanced"
+              - column:
+                  name: level
+                  value: "6.0+"
+
+  - changeSet:
+      id: 20250101-02-update-khoahoc-madm
+      author: admin
+      changes:
+        - update:
+            tableName: khoahoc
+            columns:
+              - column:
+                  name: madm
+                  valueNumeric: 1
+            where: "makhoahoc IN (1, 2, 3)"
+
+        - update:
+            tableName: khoahoc
+            columns:
+              - column:
+                  name: madm
+                  valueNumeric: 2
+            where: "makhoahoc IN (4, 5, 6, 7)"
+

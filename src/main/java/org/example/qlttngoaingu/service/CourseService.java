@@ -108,7 +108,6 @@ public class CourseService {
             List<Module> modules = request.getModules().stream().map(mReq -> {
                 Module module = new Module();
                 module.setModuleName(mReq.getModuleName());
-                module.setDuration(mReq.getDuration());
                 module.setCourse(course);
 
                 // 2.1️⃣ Documents
@@ -146,19 +145,15 @@ public class CourseService {
             course.setModules(modules);
 
             // 3️⃣ Tính tổng thời lượng
-            int totalDuration = modules.stream()
-                    .filter(m -> m.getDuration() != null)
-                    .mapToInt(Module::getDuration)
-                    .sum();
+            int totalDuration = 0;
 
-            course.setNumberOfSessions(totalDuration);
-            course.setStudyHours(totalDuration * 2);
+            course.setStudyHours(totalDuration);
         }
 
         // 4️⃣ Lưu toàn bộ
         courseRepository.save(course);
 
-        return course; // ✅ trả về Course thay vì List<Module>
+        return course;
     }
 
 
@@ -167,6 +162,8 @@ public class CourseService {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
         CourseDetailResponse response = courseMapper.toResponse(course);
+        response.setCategory(course.getCourseCategory().getName());
+        response.setLevel(course.getCourseCategory().getLevel());
         return response;
     }
 

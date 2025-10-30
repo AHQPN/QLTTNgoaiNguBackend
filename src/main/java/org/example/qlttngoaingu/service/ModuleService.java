@@ -34,7 +34,6 @@ public class ModuleService {
 
         Module module = new Module();
         module.setModuleName(request.getModuleName());
-        module.setDuration(request.getDuration());
         module.setCourse(course);
         moduleRepository.save(module);
 
@@ -79,9 +78,7 @@ public class ModuleService {
         if (request.getModuleName() != null) {
             module.setModuleName(request.getModuleName());
         }
-        if (request.getDuration() != null) {
-            module.setDuration(request.getDuration());
-        }
+
 
         moduleRepository.save(module);
     }
@@ -105,7 +102,6 @@ public class ModuleService {
                 .orElseThrow(() -> new RuntimeException("Module not found"));
 
         module.setModuleName(request.getModuleName());
-        module.setDuration(request.getDuration());
 
         // ---- 1️⃣ Xử lý TÀI LIỆU ----
         if (request.getDocuments() != null) {

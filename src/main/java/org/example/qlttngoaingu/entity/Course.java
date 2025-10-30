@@ -1,5 +1,6 @@
 package org.example.qlttngoaingu.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -29,8 +30,6 @@ public class Course {
     @Column(name = "hocphi")
     private Double tuitionFee;
 
-    @Column(name = "sobuoihoc")
-    private Integer numberOfSessions;
 
     @Column(name = "video", length = 255)
     private String video;
@@ -40,6 +39,11 @@ public class Course {
 
     @Column(name = "ngaytao")
     private LocalDateTime createdDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "madanhmuc")
+    @JsonBackReference
+    private CourseCategory courseCategory;
 
     @Column(name = "nguoitao", length = 100)
     private String createdBy;
@@ -55,6 +59,8 @@ public class Course {
 
     @Column(name = "hinhanh")
     private String image;
+
+
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference

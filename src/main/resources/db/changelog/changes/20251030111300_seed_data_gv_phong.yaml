@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20251030-05-06-seed-giangvien-phong-gop-chung
+      author: admin
+      changes:
+        # --- SEED DATA CHO BẢNG PHONG ---
+        - insert:
+            tableName: phong
+            columns:
+              - column: { name: tenphong, value: N'A101' }
+              - column: { name: succhua, value: 20 }
+              - column: { name: trangthai, value: N'Hoạt động' }
+        - insert:
+            tableName: phong
+            columns:
+              - column: { name: tenphong, value: N'A102' }
+              - column: { name: succhua, value: 15 }
+              - column: { name: trangthai, value: N'Hoạt động' }
+        - insert:
+            tableName: phong
+            columns:
+              - column: { name: tenphong, value: N'A103' }
+              - column: { name: succhua, value: 10 }
+              - column: { name: trangthai, value: N'Bảo trì' }
+
+        # --- SEED DATA CHO BẢNG GIANGVIEN ---
+        # (Giả định manguoidung 1, 2, 3 đã tồn tại trong bảng nguoidung)
+        - insert:
+            tableName: giangvien
+            columns:
+              - column: { name: hoten, value: N'Nguyễn Văn A' }
+              - column: { name: ngaysinh, value: '1985-05-15' }
+              - column: { name: sodienthoai, value: '0901234567' }
+              - column: { name: email, value: 'vana@edu.vn' }
+              - column: { name: hinhanh, value: 'vana.jpg' }
+              - column: { name: manguoidung, value: 1 }
+        - insert:
+            tableName: giangvien
+            columns:
+              - column: { name: hoten, value: N'Trần Thị B' }
+              - column: { name: ngaysinh, value: '1990-11-20' }
+              - column: { name: sodienthoai, value: '0919876543' }
+              - column: { name: email, value: 'thib@edu.vn' }
+              - column: { name: hinhanh, value: 'path/thib.jpg' }
+              - column: { name: manguoidung, value: 2 }

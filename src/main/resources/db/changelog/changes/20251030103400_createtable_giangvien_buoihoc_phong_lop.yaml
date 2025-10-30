@@ -1,0 +1,164 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 20251030-04-create-phong
+      author: admin
+      changes:
+        - createTable:
+            tableName: phong
+            columns:
+              - column:
+                  name: maphong
+                  type: INTEGER
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenphong
+                  type: NVARCHAR(255)
+              - column:
+                  name: succhua
+                  type: INTEGER
+              - column:
+                  name: trangthai
+                  type: NVARCHAR(50)
+
+  # ----------------------------------------------------
+  # BƯỚC 2: TẠO BẢNG VAI TRÒ (GIANGVIEN)
+  # ----------------------------------------------------
+  - changeSet:
+      id: 20251030-01-create-giangvien
+      author: admin
+      changes:
+        - createTable:
+            tableName: giangvien
+            columns:
+              - column:
+                  name: magv
+                  type: INTEGER
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: hoten 
+                  type: NVARCHAR(200)
+              - column:
+                  name: ngaysinh 
+                  type: DATE
+              - column:
+                  name: sodienthoai 
+                  type: VARCHAR(10)
+              - column:
+                  name: email
+                  type: VARCHAR(100)
+              - column:
+                  name: hinhanh 
+                  type: VARCHAR(255)
+              - column:
+                  name: manguoidung 
+                  type: INTEGER
+        - addForeignKeyConstraint:
+            baseTableName: giangvien
+            baseColumnNames: manguoidung
+            referencedTableName: nguoidung
+            referencedColumnNames: manguoidung
+            constraintName: fk_giangviennguoidung
+        - addUniqueConstraint:
+            columnNames: manguoidung
+            tableName: giangvien
+            constraintName: uq_giangvienmanguoidung
+
+  # ----------------------------------------------------
+  # BƯỚC 3: TẠO BẢNG CHÍNH (LOP)
+  # ----------------------------------------------------
+  - changeSet:
+      id: 20251030-02-create-lop
+      author: admin
+      changes:
+        - createTable:
+            tableName: lop
+            columns:
+              - column:
+                  name: malop 
+                  type: INTEGER
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: ngaylap 
+                  type: DATETIME
+              - column:
+                  name: ghichu
+                  type: TEXT
+              - column:
+                  name: trangthai 
+                  type: NVARCHAR(255)
+              - column:
+                  name: makhoahoc 
+                  type: INTEGER
+              - column:
+                  name: magiangvien 
+                  type: INTEGER
+              - column:
+                  name: ngaybatdau 
+                  type: DATE
+              - column:
+                  name: sogiohocmoibuoi 
+                  type: INTEGER
+              - column:
+                  name: maphong 
+                  type: INTEGER
+              - column:
+                  name: lich
+                  type: VARCHAR(100)
+        - addForeignKeyConstraint:
+            baseTableName: lop
+            baseColumnNames: magiangvien
+            referencedTableName: giangvien
+            referencedColumnNames: magv
+            constraintName: fk_lopgiangvien
+        - addForeignKeyConstraint:
+            baseTableName: lop
+            baseColumnNames: maphong
+            referencedTableName: phong
+            referencedColumnNames: maphong
+            constraintName: fk_lopphong
+
+  # ----------------------------------------------------
+  # BƯỚC 4: TẠO BẢNG CHI TIẾT (BUOIHOC)
+  # ----------------------------------------------------
+  - changeSet:
+      id: 20251030-03-create-buoihoc
+      author: admin
+      changes:
+        - createTable:
+            tableName: buoihoc
+            columns:
+              - column:
+                  name: mabuoihoc 
+                  type: INTEGER
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: ngayhoc 
+                  type: DATETIME
+              - column:
+                  name: trangthai 
+                  type: BOOLEAN
+              - column:
+                  name: ghichu
+                  type: TEXT
+              - column:
+                  name: malop 
+                  type: INTEGER
+        - addForeignKeyConstraint:
+            baseTableName: buoihoc
+            baseColumnNames: malop
+            referencedTableName: lop
+            referencedColumnNames: malop
+            constraintName: fk_buoihoclop

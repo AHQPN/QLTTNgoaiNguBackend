@@ -1,0 +1,27 @@
+databaseChangeLog:
+  - changeSet:
+      id: 00009
+      author: phuc nguyen
+      changes:
+        - createTable:
+            tableName: danhmuc
+            columns:
+              - column:
+                  name: madanhmuc
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: tendm
+                  type: NVARCHAR(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: level
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: true

@@ -23,4 +23,7 @@ public class CourseUpdateRequest {
     private String targetLevel;
 
     private String image;
+
+    private Integer studyHours;
+
 }
