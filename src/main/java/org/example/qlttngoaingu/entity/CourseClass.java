@@ -17,6 +17,9 @@ public class CourseClass {
     @Column(name = "malop")
     private Integer classId;
 
+    @Column(name = "tenlop")
+    private String className;
+
     @Column(name = "ngaylap")
     private LocalDateTime dateCreated;
 
@@ -31,6 +34,7 @@ public class CourseClass {
 
     @Column(name = "sogiohocmoibuoi")
     private Integer hoursPerSession;
+
 
     @Column(name = "lich", length = 100)
     private String schedule;

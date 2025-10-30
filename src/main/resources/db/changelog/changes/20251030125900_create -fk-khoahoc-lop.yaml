@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0
+      author: admin
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: lop
+            baseColumnNames: makhoahoc
+            referencedTableName: khoahoc
+            referencedColumnNames: makhoahoc
+            constraintName: fk_lop_khoahoc
+
+        - addColumn:
+            tableName: lop
+            columns:
+              - column:
+                  name: tenlop
+                  type: NVARCHAR(255)
