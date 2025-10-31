@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.util.List;
 @Entity
+@Table(name = "danhmuc")
 @Data
 public class CourseCategory {
     @Id
@@ -12,7 +13,7 @@ public class CourseCategory {
     @Column(name = "madanhmuc")
     private Integer id;
 
-    @Column(name = "tendanhmuc", nullable = false, unique = true)
+    @Column(name = "tendm", nullable = false, unique = true)
     private String name;
 
     @Column(name = "capdo")

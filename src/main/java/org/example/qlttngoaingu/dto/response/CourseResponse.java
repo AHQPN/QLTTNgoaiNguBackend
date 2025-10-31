@@ -11,5 +11,6 @@ public class CourseResponse {
     private Double tuitionFee;
     private LocalDateTime createdDate;
     private Boolean isActive;
+    private Integer courseCategoryId;
 
 }

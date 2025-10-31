@@ -41,7 +41,7 @@ public class Course {
     private LocalDateTime createdDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "madanhmuc")
+    @JoinColumn(name = "madm")
     @JsonBackReference
     private CourseCategory courseCategory;
 

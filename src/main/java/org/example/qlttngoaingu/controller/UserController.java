@@ -6,11 +6,13 @@ import org.example.qlttngoaingu.dto.request.UserCreateRequest;
 import org.example.qlttngoaingu.dto.request.UserUpdateRequest;
 import org.example.qlttngoaingu.dto.response.ApiResponse;
 import org.example.qlttngoaingu.entity.User;
+import org.example.qlttngoaingu.security.model.UserDetailsImpl;
 import org.example.qlttngoaingu.service.UserService;
 import org.example.qlttngoaingu.service.enums.RoleEnum;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -34,7 +36,8 @@ public class UserController {
     public ResponseEntity<ApiResponse> createSeedUser(@RequestBody UserCreateRequest user,@Value("${APP_SITE_URL}") String siteUrl) {
         SignupRequest signupRequest = new SignupRequest();
         signupRequest.setEmail(user.getEmail());
-        signupRequest.setPassword(user.getPhoneNumber());
+        signupRequest.setPhoneNumber(user.getPhoneNumber());
+        signupRequest.setPassword("123456");
         userService.createUser(signupRequest,RoleEnum.ADMIN,false,siteUrl);
 
         return ResponseEntity.ok().body(ApiResponse.builder().message("User has been created").build());
@@ -44,4 +47,8 @@ public class UserController {
     {
         return ResponseEntity.ok().body(ApiResponse.builder().message("User has been updated").build());
     }
+//    @PostMapping("/get-user-info")
+//    public ResponseEntity<ApiResponse> getUserInfo(@AuthenticationPrincipal UserDetailsImpl principal)
+//    {
+//    }
 }

@@ -11,6 +11,7 @@ import org.example.qlttngoaingu.service.CourseService;
 import org.example.qlttngoaingu.entity.Course;
 import org.example.qlttngoaingu.service.ObjectiveService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public class CourseController {
         return ResponseEntity.ok().body(ApiResponse.builder().data(lstCourses).build());
     }
     @GetMapping
-//    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getAllCourses(@RequestParam(defaultValue = "0") int page,
                                       @RequestParam(defaultValue = "15") int size)
     {
