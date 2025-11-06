@@ -1,6 +1,7 @@
 package org.example.qlttngoaingu.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.qlttngoaingu.dto.request.RoomRequest;
 import org.example.qlttngoaingu.dto.response.AvailableRoomResponse;
 import org.example.qlttngoaingu.entity.Course;
 import org.example.qlttngoaingu.entity.CourseClass;
@@ -129,6 +130,49 @@ public class RoomService {
         }
 
         return date.minusDays(1);
+    }
+
+    public List<AvailableRoomResponse> getAllRooms() {
+        return roomRepository.findAll()
+                .stream()
+                .map(r -> {
+                    AvailableRoomResponse dto = new AvailableRoomResponse();
+                    dto.setRoomId(r.getRoomId());
+                    dto.setRoomName(r.getRoomName());
+                    dto.setCapacity(r.getCapacity());
+                    return dto;
+                })
+                .toList();
+    }
+
+
+    public Room getRoomById(Integer id) {
+        return roomRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Room Not Found"));
+    }
+
+    public Room createRoom(RoomRequest request) {
+        Room room = new Room();
+        room.setRoomName(request.getRoomName());
+        room.setCapacity(request.getCapacity());
+        return roomRepository.save(room);
+    }
+
+    public Room updateRoom(Integer id, RoomRequest request) {
+        Room room = roomRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Room Not Found"));
+
+        room.setRoomName(request.getRoomName());
+        room.setCapacity(request.getCapacity());
+
+        return roomRepository.save(room);
+    }
+
+    public void deleteRoom(Integer id) {
+        if (!roomRepository.existsById(id)) {
+            throw new RuntimeException("Room Not Found");
+        }
+        roomRepository.deleteById(id);
     }
 
 }

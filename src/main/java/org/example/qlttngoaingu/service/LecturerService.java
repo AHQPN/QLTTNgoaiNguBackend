@@ -2,17 +2,31 @@ package org.example.qlttngoaingu.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.qlttngoaingu.dto.request.LecturerCreationRequest;
+import org.example.qlttngoaingu.dto.response.AvailableLecturerResponse;
+import org.example.qlttngoaingu.dto.response.AvailableRoomResponse;
+import org.example.qlttngoaingu.entity.Course;
+import org.example.qlttngoaingu.entity.CourseClass;
 import org.example.qlttngoaingu.entity.Lecturer;
+import org.example.qlttngoaingu.repository.CourseClassRepository;
 import org.example.qlttngoaingu.repository.LecturerRepository;
 import org.example.qlttngoaingu.repository.UserRepository;
+import org.example.qlttngoaingu.service.enums.SchedulePattern;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class LecturerService {
     private final LecturerRepository lecturerRepository;
     private final UserRepository userRepository;
+    private final CourseClassRepository classRepository;
 
     @Transactional
     public void addLecturerInfo(LecturerCreationRequest request,Integer userId) {
@@ -23,5 +37,130 @@ public class LecturerService {
         lecturer.setUser(userRepository.findById(userId).get());
         // 2. Lưu vào database
         lecturerRepository.save(lecturer);
+    }
+
+
+    public List<AvailableLecturerResponse> getAvailableLecturers(
+            String schedulePattern,
+            LocalTime startTime,
+            Integer durationMinutes,
+            LocalDate startDate
+    ) {
+        // Lấy tất cả giảng viên
+        List<Lecturer> lecturers = lecturerRepository.findAll();
+
+        // Parse pattern
+        SchedulePattern pattern;
+        try {
+            pattern = SchedulePattern.fromPattern(schedulePattern);
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+
+        LocalTime endTime = startTime.plusMinutes(durationMinutes);
+
+        List<AvailableLecturerResponse> result = new ArrayList<>();
+
+        for (Lecturer lecturer : lecturers) {
+            boolean isAvailable = checkLecturerAvailability(
+                    lecturer.getLecturerId(),
+                    pattern,
+                    startTime,
+                    endTime,
+                    startDate
+            );
+
+            if (isAvailable) {
+                AvailableLecturerResponse dto = new AvailableLecturerResponse();
+                dto.setLecturerId(lecturer.getLecturerId());
+                dto.setLecturerName(lecturer.getFullName());
+
+                result.add(dto);
+            }
+        }
+
+        return result;
+    }
+
+    private boolean checkLecturerAvailability(
+            Integer lecturerId,
+            SchedulePattern pattern,
+            LocalTime startTime,
+            LocalTime endTime,
+            LocalDate startDate
+    ) {
+        // Tìm các lớp giảng viên đang dạy và còn hoạt động
+        List<CourseClass> classes = classRepository.findByLecturer_LecturerIdAndStatusTrue(lecturerId);
+
+        for (CourseClass courseClass : classes) {
+
+            LocalDate classEndDate = calculateClassEndDate(courseClass);
+
+            if (classEndDate.isBefore(startDate)) continue;
+
+            // Pattern của lớp cũ
+            SchedulePattern classPattern = SchedulePattern.fromPattern(courseClass.getSchedule());
+
+            Set<DayOfWeek> commonDays = new HashSet<>(pattern.getDaysOfWeek());
+            commonDays.retainAll(classPattern.getDaysOfWeek());
+
+            if (commonDays.isEmpty()) continue; // không trùng ngày
+
+            if (courseClass.getStartTime() != null) {
+                LocalTime classEndTime = courseClass.getStartTime()
+                        .plusMinutes(courseClass.getMinutesPerSession());
+
+                boolean overlap = !(endTime.isBefore(courseClass.getStartTime()) ||
+                        startTime.isAfter(classEndTime));
+
+                if (overlap) return false;
+            }
+        }
+
+        return true;
+    }
+
+    private LocalDate calculateClassEndDate(CourseClass cls) {
+        Course course = cls.getCourse();
+        SchedulePattern pattern = SchedulePattern.fromPattern(cls.getSchedule());
+
+        // Tổng phút học
+        BigDecimal totalMinutes = BigDecimal.valueOf(course.getStudyHours())
+                .multiply(BigDecimal.valueOf(60));
+
+        // Số buổi cần học
+        int totalSessions = totalMinutes
+                .divide(BigDecimal.valueOf(cls.getMinutesPerSession()), 0, RoundingMode.CEILING)
+                .intValue();
+
+        LocalDate date = cls.getStartDate();
+        int created = 0;
+
+        // Lặp qua từng ngày, tạo buổi theo pattern
+        while (created < totalSessions) {
+            if (pattern.getDaysOfWeek().contains(date.getDayOfWeek())) {
+                created++;
+            }
+            date = date.plusDays(1);
+        }
+
+        return date.minusDays(1);
+    }
+
+    public List<AvailableLecturerResponse> getAllLecturers() {
+        return lecturerRepository.findAll()
+                .stream()
+                .map(r -> {
+                    AvailableLecturerResponse dto = new AvailableLecturerResponse();
+                    dto.setLecturerId(r.getLecturerId());
+                    dto.setLecturerName(r.getFullName());
+                    return dto;
+                })
+                .toList();
+    }
+
+    public Lecturer getLecturerById(Integer id) {
+        return lecturerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Lecturer not found"));
     }
 }

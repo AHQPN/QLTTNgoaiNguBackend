@@ -11,5 +11,4 @@ public class CheckConflictRequest {
     LocalTime startTime;
     Integer durationMinutes;
     LocalDate startDate;
-    Integer excludedClassId;
 }

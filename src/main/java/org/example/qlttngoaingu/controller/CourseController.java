@@ -29,6 +29,11 @@ public class CourseController {
         List<ActiveCourseResponse> lstCourses = courseService.getAllActiveCourses();
         return ResponseEntity.ok().body(ApiResponse.builder().data(lstCourses).build());
     }
+    @GetMapping("/activecourses-name")
+    public ResponseEntity<ApiResponse> getAllActiveCoursesName() {
+        List<ActiveCourseNameResponse> lstCourses = courseService.getAllActiveCourseNames();
+        return ResponseEntity.ok().body(ApiResponse.builder().data(lstCourses).build());
+    }
     @GetMapping
     public ResponseEntity<?> getAllCourses(@RequestParam(defaultValue = "0") int page,
                                       @RequestParam(defaultValue = "15") int size)

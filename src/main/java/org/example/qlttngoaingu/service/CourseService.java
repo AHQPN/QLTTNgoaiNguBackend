@@ -3,10 +3,7 @@ package org.example.qlttngoaingu.service;
 import lombok.AllArgsConstructor;
 import org.example.qlttngoaingu.dto.request.CourseCreateRequest;
 import org.example.qlttngoaingu.dto.request.CourseUpdateRequest;
-import org.example.qlttngoaingu.dto.response.CourseDetailResponse;
-import org.example.qlttngoaingu.dto.response.ActiveCourseResponse;
-import org.example.qlttngoaingu.dto.response.CoursePageResponse;
-import org.example.qlttngoaingu.dto.response.CourseResponse;
+import org.example.qlttngoaingu.dto.response.*;
 import org.example.qlttngoaingu.entity.Course;
 import org.example.qlttngoaingu.entity.Document;
 import org.example.qlttngoaingu.entity.Content;
@@ -43,6 +40,13 @@ public class CourseService {
         return courseRepository.findByStatusTrue()
                 .stream()
                 .map(courseMapper::toActiveResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<ActiveCourseNameResponse> getAllActiveCourseNames() {
+        return courseRepository.findByStatusTrue()
+                .stream()
+                .map(courseMapper::toActiveNameResponse)
                 .collect(Collectors.toList());
     }
 
@@ -162,6 +166,7 @@ public class CourseService {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
         CourseDetailResponse response = courseMapper.toResponse(course);
+        response.setEntryLevel(course.getEntryLevel());
         response.setStatus(course.getStatus());
         response.setCategory(course.getCourseCategory().getName());
         response.setLevel(course.getCourseCategory().getLevel());

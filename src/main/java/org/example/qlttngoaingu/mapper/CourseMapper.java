@@ -2,6 +2,7 @@ package org.example.qlttngoaingu.mapper;
 
 import org.example.qlttngoaingu.dto.request.CourseCreateRequest;
 import org.example.qlttngoaingu.dto.request.CourseUpdateRequest;
+import org.example.qlttngoaingu.dto.response.ActiveCourseNameResponse;
 import org.example.qlttngoaingu.dto.response.ActiveCourseResponse;
 import org.example.qlttngoaingu.dto.response.CourseDetailResponse;
 import org.example.qlttngoaingu.entity.Course;
@@ -28,4 +29,6 @@ public interface CourseMapper {
     CourseDetailResponse toResponse(Course course);
 
     ActiveCourseResponse toActiveResponse(Course course);
+
+    ActiveCourseNameResponse toActiveNameResponse(Course course);
 }

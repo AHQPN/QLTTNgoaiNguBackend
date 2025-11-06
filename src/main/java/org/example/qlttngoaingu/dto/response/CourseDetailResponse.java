@@ -14,6 +14,7 @@ public class CourseDetailResponse {
     private String video;
     private Boolean status;
     private String description;
+    private String entryLevel;
     private String targetLevel;
     private String image;
     private String category;
