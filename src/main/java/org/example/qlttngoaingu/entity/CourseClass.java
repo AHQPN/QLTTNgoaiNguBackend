@@ -3,8 +3,10 @@ package org.example.qlttngoaingu.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Entity
@@ -33,8 +35,10 @@ public class CourseClass {
     private LocalDate startDate;
 
     @Column(name = "sogiohocmoibuoi")
-    private Integer hoursPerSession;
+    private Integer minutesPerSession;
 
+    @Column(name = "giobatdau")
+    private LocalTime startTime;
 
     @Column(name = "lich", length = 100)
     private String schedule;

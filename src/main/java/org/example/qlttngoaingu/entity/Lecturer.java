@@ -1,12 +1,14 @@
 package org.example.qlttngoaingu.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Entity
-@Table(name = "giangvien") // Maps to Vietnamese table name
+@Table(name = "giangvien")
+@Data
 public class Lecturer {
 
     @Id
@@ -15,16 +17,10 @@ public class Lecturer {
     private Integer lecturerId;
 
     @Column(name = "hoten", length = 200)
-    private String fullName; // Maps to hoten
+    private String fullName;
 
     @Column(name = "ngaysinh")
     private LocalDate dateOfBirth;
-
-    @Column(name = "sodienthoai", length = 10)
-    private String phoneNumber;
-
-    @Column(name = "email", length = 100)
-    private String email;
 
     @Column(name = "hinhanh", length = 255)
     private String imagePath;

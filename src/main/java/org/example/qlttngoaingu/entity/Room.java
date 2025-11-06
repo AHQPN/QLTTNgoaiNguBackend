@@ -1,10 +1,13 @@
 package org.example.qlttngoaingu.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
+
 import java.util.List;
 
 @Entity
 @Table(name = "phong")
+@Data
 public class Room {
 
     @Id

@@ -2,6 +2,7 @@ package org.example.qlttngoaingu.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.example.qlttngoaingu.dto.request.LecturerCreationRequest;
 import org.example.qlttngoaingu.dto.request.SignupRequest;
 import org.example.qlttngoaingu.dto.response.ApiResponse;
 import org.example.qlttngoaingu.entity.User;
@@ -31,7 +32,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final VerificationCodeRepository verificationCodeRepository;
     private final JavaMailSender mailSender;
-
+    LecturerService lecturerService;
     @Transactional
     public User createUser(SignupRequest signupRequest, RoleEnum userType, Boolean sendVerification, String siteURL) {
 
@@ -190,6 +191,19 @@ public class UserService {
     }
 
     public void UpdateUserProfile(User user) {
+
+    }
+
+    @Transactional
+    public void AddLecturerUser(LecturerCreationRequest lecturerCreationRequest) {
+        SignupRequest signupRequest = new SignupRequest();
+        signupRequest.setPassword("123456");
+        signupRequest.setEmail(lecturerCreationRequest.getEmail());
+        signupRequest.setPhoneNumber(lecturerCreationRequest.getPhoneNumber());
+
+        User user = createUser(signupRequest,RoleEnum.TEACHER,false,"abc");
+
+        lecturerService.addLecturerInfo(lecturerCreationRequest,user.getUserId());
 
     }
 

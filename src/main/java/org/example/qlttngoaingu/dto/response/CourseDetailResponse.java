@@ -11,13 +11,11 @@ public class CourseDetailResponse {
     private String courseName;
     private Integer studyHours;
     private Double tuitionFee;
-    private Integer numberOfSessions;
     private String video;
+    private Boolean status;
     private String description;
-    private String entryLevel;
     private String targetLevel;
     private String image;
-    private Boolean active;
     private String category;
     private String level;
     private List<Objective> objectives;

@@ -30,7 +30,6 @@ public class CourseController {
         return ResponseEntity.ok().body(ApiResponse.builder().data(lstCourses).build());
     }
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getAllCourses(@RequestParam(defaultValue = "0") int page,
                                       @RequestParam(defaultValue = "15") int size)
     {

@@ -1,12 +1,14 @@
 package org.example.qlttngoaingu.controller;
 
 import lombok.AllArgsConstructor;
+import org.example.qlttngoaingu.dto.request.LecturerCreationRequest;
 import org.example.qlttngoaingu.dto.request.SignupRequest;
 import org.example.qlttngoaingu.dto.request.UserCreateRequest;
 import org.example.qlttngoaingu.dto.request.UserUpdateRequest;
 import org.example.qlttngoaingu.dto.response.ApiResponse;
 import org.example.qlttngoaingu.entity.User;
 import org.example.qlttngoaingu.security.model.UserDetailsImpl;
+import org.example.qlttngoaingu.service.LecturerService;
 import org.example.qlttngoaingu.service.UserService;
 import org.example.qlttngoaingu.service.enums.RoleEnum;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @AllArgsConstructor
 public class UserController {
     private final UserService userService;
-
+    private final LecturerService lecturerService;
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse> createUser(@RequestBody UserCreateRequest user, @Value("${APP_SITE_URL}") String siteUrl) {
@@ -47,6 +49,16 @@ public class UserController {
     {
         return ResponseEntity.ok().body(ApiResponse.builder().message("User has been updated").build());
     }
+
+    @PostMapping("/add-lecturer")
+    public ResponseEntity<ApiResponse> addLectureUser(@RequestBody LecturerCreationRequest lecturerCreationRequest)
+    {
+        userService.AddLecturerUser(lecturerCreationRequest);
+        return ResponseEntity.ok().body(ApiResponse.builder().message("User has been created").build());
+    }
+
+
+
 //    @PostMapping("/get-user-info")
 //    public ResponseEntity<ApiResponse> getUserInfo(@AuthenticationPrincipal UserDetailsImpl principal)
 //    {

@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: admin
+      changes:
+        - modifyDataType:
+            tableName: lop
+            columnName: ghichu
+            newDataType: nvarchar(255)
+        - modifyDataType:
+            tableName: lop
+            columnName: trangthai
+            newDataType: bit

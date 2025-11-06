@@ -1,0 +1,50 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-start-time-to-lop
+      author: nguyen
+      changes:
+        - addColumn:
+            tableName: lop
+            columns:
+              - column:
+                  name: giobatdau
+                  type: TIME
+
+  # 1. ChangeSet: Xóa cột sodienthoai và email khỏi bảng giangvien
+  - changeSet:
+      id: remove-phone-and-email-from-giangvien
+      author: nguyen
+      comment: Remove sodienthoai and email columns from giangvien table as they might be stored in the User table.
+      changes:
+        - dropColumn:
+            tableName: giangvien
+            columnName: sodienthoai
+        - dropColumn:
+            tableName: giangvien
+            columnName: email
+
+  # 2. ChangeSet: Thêm seed data cho bảng phong
+  # Cấu trúc bảng phong: maphong (INT, PK, Identity), tenphong (NVARCHAR), succhua (INT), trangthai (NVARCHAR)
+  - changeSet:
+      id: seed-data-for-phong-table
+      author: nguyen
+      comment: Insert initial room data into the phong table.
+      changes:
+        - insert:
+            tableName: phong
+            columns:
+              - column: {name: tenphong, value: "Phòng A101"}
+              - column: {name: succhua, valueNumeric: 20}
+              - column: {name: trangthai, value: "Sẵn sàng"}
+        - insert:
+            tableName: phong
+            columns:
+              - column: {name: tenphong, value: "Phòng A102"}
+              - column: {name: succhua, valueNumeric: 15}
+              - column: {name: trangthai, value: "Sẵn sàng"}
+        - insert:
+            tableName: phong
+            columns:
+              - column: {name: tenphong, value: "Phòng A102"}
+              - column: {name: succhua, valueNumeric: 25}
+              - column: {name: trangthai, value: "Sẵn sàng"}

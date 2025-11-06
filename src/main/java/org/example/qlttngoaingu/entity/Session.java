@@ -3,6 +3,7 @@ package org.example.qlttngoaingu.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,7 +17,7 @@ public class Session {
     private Integer sessionId;
 
     @Column(name = "ngayhoc")
-    private LocalDateTime sessionDate;
+    private LocalDate sessionDate;
 
     @Column(name = "trangthai")
     private Boolean status;

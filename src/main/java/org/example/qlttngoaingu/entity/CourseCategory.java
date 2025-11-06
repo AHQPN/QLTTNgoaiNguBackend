@@ -16,7 +16,7 @@ public class CourseCategory {
     @Column(name = "tendm", nullable = false, unique = true)
     private String name;
 
-    @Column(name = "capdo")
+    @Column(name = "level")
     private String level;
 
     @Column(name = "mota")

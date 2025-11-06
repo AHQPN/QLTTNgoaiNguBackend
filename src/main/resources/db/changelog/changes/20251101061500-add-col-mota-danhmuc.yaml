@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20250201-01-add-mota-to-danhmuc
+      author: admin
+      changes:
+        - addColumn:
+            tableName: danhmuc
+            columns:
+              - column:
+                  name: mota
+                  type: NVARCHAR(500)
+                  remarks: "Mô tả chi tiết về danh mục khóa học"
+
+  - changeSet:
+      id: 20250201-02-update-danhmuc-description
+      author: admin
+      changes:
+        - update:
+            tableName: danhmuc
+            columns:
+              - column:
+                  name: mota
+                  value: "Khóa học nền tảng dành cho người mới bắt đầu học IELTS, mục tiêu đạt 4.5+"
+            where: "madanhmuc = 1"
+
+        - update:
+            tableName: danhmuc
+            columns:
+              - column:
+                  name: mota
+                  value: "Khóa học nâng cao dành cho học viên đã có nền tảng, mục tiêu đạt 6.0+"
+            where: "madanhmuc = 2"

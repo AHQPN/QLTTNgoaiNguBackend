@@ -61,6 +61,7 @@ public class CourseService {
             dto.setCreatedDate(course.getCreatedDate());
             dto.setTuitionFee(course.getTuitionFee());
             dto.setIsActive(course.getStatus());
+            dto.setCourseCategoryId(course.getCourseCategory().getId());
 
             return dto;
         }).toList();;
@@ -89,7 +90,7 @@ public class CourseService {
         course.setStatus(false);
         course.setCreatedDate(LocalDateTime.now());
         course.setCreatedBy("admin");
-
+        course.setStudyHours(request.getStudyHours());
         // 1️⃣ Thêm Objectives
         if (request.getObjectives() != null && !request.getObjectives().isEmpty()) {
             List<Objective> objectives = request.getObjectives().stream()
@@ -144,10 +145,9 @@ public class CourseService {
 
             course.setModules(modules);
 
-            // 3️⃣ Tính tổng thời lượng
-            int totalDuration = 0;
 
-            course.setStudyHours(totalDuration);
+
+
         }
 
         // 4️⃣ Lưu toàn bộ
@@ -162,6 +162,7 @@ public class CourseService {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
         CourseDetailResponse response = courseMapper.toResponse(course);
+        response.setStatus(course.getStatus());
         response.setCategory(course.getCourseCategory().getName());
         response.setLevel(course.getCourseCategory().getLevel());
         return response;

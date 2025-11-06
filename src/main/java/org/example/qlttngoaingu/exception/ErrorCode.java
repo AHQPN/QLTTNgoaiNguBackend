@@ -28,6 +28,8 @@ public enum ErrorCode {
     BOOK_INVALID_GENRE(HttpStatus.BAD_REQUEST, 2003, "Invalid book genre"),
     BOOK_INVALID_PUBLISHER(HttpStatus.BAD_REQUEST, 2004, "Invalid book publisher"),
 
+    CLASS_NOT_FOUND(HttpStatus.NOT_FOUND, 2005, "Class not found"),
+
     // Module
     MISS_MATCH_COURSE(HttpStatus.NOT_FOUND, 3000, "Not found this module in course"),
     MODULE_NOT_FOUND(HttpStatus.BAD_REQUEST, 3001, "Module not found"),
