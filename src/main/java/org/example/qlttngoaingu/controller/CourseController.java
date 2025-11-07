@@ -26,7 +26,7 @@ public class CourseController {
     // Get all courses (overview)
     @GetMapping("/activecourses")
     public ResponseEntity<ApiResponse> getAllActiveCourses() {
-        List<ActiveCourseResponse> lstCourses = courseService.getAllActiveCourses();
+        List<CourseGroupResponse> lstCourses = courseService.getCoursesGroupedResponse();
         return ResponseEntity.ok().body(ApiResponse.builder().data(lstCourses).build());
     }
     @GetMapping("/activecourses-name")

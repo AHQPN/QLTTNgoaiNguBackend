@@ -4,13 +4,10 @@ import lombok.AllArgsConstructor;
 import org.example.qlttngoaingu.dto.request.CourseCreateRequest;
 import org.example.qlttngoaingu.dto.request.CourseUpdateRequest;
 import org.example.qlttngoaingu.dto.response.*;
-import org.example.qlttngoaingu.entity.Course;
-import org.example.qlttngoaingu.entity.Document;
-import org.example.qlttngoaingu.entity.Content;
+import org.example.qlttngoaingu.entity.*;
+import org.example.qlttngoaingu.entity.Module;
 import org.example.qlttngoaingu.repository.CourseRepository;
 
-import org.example.qlttngoaingu.entity.Objective;
-import org.example.qlttngoaingu.entity.Module;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.mapper.CourseMapper;
@@ -20,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -35,13 +33,34 @@ public class CourseService {
     private final ModuleService moduleService;
     private final CourseMapper courseMapper;
 
-    // Get all courses (overview)
-    public List<ActiveCourseResponse> getAllActiveCourses() {
+    public List<CourseGroupResponse> getCoursesGroupedResponse() {
         return courseRepository.findByStatusTrue()
                 .stream()
-                .map(courseMapper::toActiveResponse)
+                .collect(Collectors.groupingBy(course -> course.getCourseCategory().getId()))
+                .entrySet()
+                .stream()
+                .map(entry -> {
+                    Course firstCourse = entry.getValue().get(0);
+                    CourseCategory category = firstCourse.getCourseCategory();
+
+                    // map từng course sang response
+                    List<ActiveCourseResponse> courseResponses = entry.getValue()
+                            .stream()
+                            .map(courseMapper::toActiveResponse)
+                            .collect(Collectors.toList());
+
+                    return new CourseGroupResponse(
+                            category.getId(),
+                            category.getName(),
+                            category.getLevel(),
+                            category.getDescription(),
+                            courseResponses
+                    );
+                })
                 .collect(Collectors.toList());
     }
+
+
 
     public List<ActiveCourseNameResponse> getAllActiveCourseNames() {
         return courseRepository.findByStatusTrue()

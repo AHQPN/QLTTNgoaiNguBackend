@@ -20,6 +20,7 @@ public enum SchedulePattern {
     MON_WED("2-4", Arrays.asList(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY)),
     TUE_THU("3-5", Arrays.asList(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY));
 
+
     private final String pattern;
     private final List<DayOfWeek> daysOfWeek;
 
