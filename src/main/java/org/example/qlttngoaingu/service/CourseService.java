@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -245,6 +246,18 @@ public class CourseService {
             .toList();
 
 
+
+    }
+    public List<SkillResponse> getSkills() {
+        List<Skill> skills = skillRepository.findAll();
+        List<SkillResponse> skillResponseList = new ArrayList<>();
+        skills.forEach(skill -> {
+            SkillResponse skillResponse = new SkillResponse();
+            skillResponse.setSkillName(skill.getSkillName());
+            skillResponse.setId(skill.getSkillId());
+            skillResponseList.add(skillResponse);
+        });
+        return skillResponseList;
 
     }
 

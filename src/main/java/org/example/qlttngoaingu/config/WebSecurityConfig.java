@@ -100,6 +100,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/courseclasses/**").hasRole("ADMIN")
                         .requestMatchers("/rooms/**").permitAll()
                         .requestMatchers("/lecturers/**").permitAll()
+                        .requestMatchers("/skills").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
