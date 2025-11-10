@@ -2,15 +2,10 @@ package org.example.qlttngoaingu.service;
 
 import lombok.AllArgsConstructor;
 import org.example.qlttngoaingu.dto.request.*;
-import org.example.qlttngoaingu.repository.ContentRepository;
-import org.example.qlttngoaingu.repository.DocumentRepository;
-import org.example.qlttngoaingu.service.enums.ActionEnum;
-import org.example.qlttngoaingu.entity.Content;
-import org.example.qlttngoaingu.entity.Document;
+import org.example.qlttngoaingu.entity.*;
 import org.example.qlttngoaingu.entity.Module;
-import org.example.qlttngoaingu.repository.CourseRepository;
-import org.example.qlttngoaingu.repository.ModuleRepository;
-import org.example.qlttngoaingu.entity.Course;
+import org.example.qlttngoaingu.repository.*;
+import org.example.qlttngoaingu.service.enums.ActionEnum;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
 import org.springframework.stereotype.Service;
@@ -26,15 +21,16 @@ public class ModuleService {
     private final ModuleRepository moduleRepository;
     private final ContentRepository  contentRepository;
     private final DocumentRepository documentRepository;
+    private final CourseSkillRepository  courseSkillRepository;
     // Thêm module
     @Transactional
-    public Module addModule(Integer courseId, ModuleRequest request) {
-        Course course = courseRepository.findById(courseId)
+    public Module addModule(Integer courseSkill, ModuleRequest request) {
+        CourseSkill course = courseSkillRepository.findById(courseSkill)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
         Module module = new Module();
         module.setModuleName(request.getModuleName());
-        module.setCourse(course);
+        module.setCourseSkill(course);
         moduleRepository.save(module);
 
 
@@ -77,6 +73,9 @@ public class ModuleService {
 
         if (request.getModuleName() != null) {
             module.setModuleName(request.getModuleName());
+        }
+        if (request.getDuration() != null) {
+            module.setDuration(request.getDuration());
         }
 
 
@@ -159,8 +158,8 @@ public class ModuleService {
         }
     }
 
-    public List<Module> getmodules(Integer courseId) {
-        return moduleRepository.findByCourse_CourseId(courseId);
+    public List<CourseSkill> getmodules(Integer courseId) {
+        return courseSkillRepository.findByCourse_CourseId(courseId);
 
     }
 

@@ -1,0 +1,85 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0
+      author: admin
+      changes:
+        # 1) Bỏ FK cũ trỏ vào khoahoc
+        - dropForeignKeyConstraint:
+            baseTableName: module
+            constraintName: fk_module_khoahoc
+
+        # 2) Tạo bảng kynang
+        - createTable:
+            tableName: kynang
+            columns:
+              - column:
+                  name: makynang
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenkynang
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+        # 3) Tạo bảng khoahockynang
+        - createTable:
+            tableName: khoahockynang
+            columns:
+              - column:
+                  name: makhkn
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: makhoahoc
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: makynang
+                  type: INT
+                  constraints:
+                    nullable: false
+
+        # 4) Thêm cột makhkn vào module
+        - addColumn:
+            tableName: module
+            columns:
+              - column:
+                  name: makhkn
+                  type: INT
+                  constraints:
+                    nullable: true   # tạm thời cho null
+
+        # 5) Add FK module → khoahockynang
+        - addForeignKeyConstraint:
+            baseTableName: module
+            baseColumnNames: makhkn
+            referencedTableName: khoahockynang
+            referencedColumnNames: makhkn
+            constraintName: fk_module_khkn
+            onDelete: RESTRICT
+
+        # 6) FK khoahockynang → khoahoc
+        - addForeignKeyConstraint:
+            baseTableName: khoahockynang
+            baseColumnNames: makhoahoc
+            referencedTableName: khoahoc
+            referencedColumnNames: makhoahoc
+            constraintName: fk_khoahockynang_khoahoc
+            onDelete: CASCADE
+
+        # 7) FK khoahockynang → kynang
+        - addForeignKeyConstraint:
+            baseTableName: khoahockynang
+            baseColumnNames: makynang
+            referencedTableName: kynang
+            referencedColumnNames: makynang
+            constraintName: fk_khoahockynang_kynang
+            onDelete: CASCADE

@@ -25,8 +25,6 @@ public class CourseClassController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getCourseClass(@PathVariable Integer id) {
 
-
-
         return ResponseEntity.ok().body(ApiResponse.builder().data(courseClassService.getClass(id)).build());
     }
     @GetMapping

@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 import org.example.qlttngoaingu.dto.request.ModuleRequest;
 import org.example.qlttngoaingu.dto.request.ModuleUpdateRequest;
 import org.example.qlttngoaingu.dto.response.ApiResponse;
+import org.example.qlttngoaingu.dto.response.CourseResponse;
+import org.example.qlttngoaingu.entity.CourseSkill;
 import org.example.qlttngoaingu.service.ModuleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,8 +26,8 @@ public class ModuleController {
     // Lấy danh sách module theo courseId
     // -------------------------------
     @GetMapping
-    public ResponseEntity<List<Module>> getModulesByCourseId(@RequestParam Integer courseId) {
-        List<Module> modules = moduleService.getmodules(courseId);
+    public ResponseEntity<List<CourseSkill>> getModulesByCourseId(@RequestParam Integer courseId) {
+        List<CourseSkill> modules = moduleService.getmodules(courseId);
         return ResponseEntity.ok(modules);
     }
     @PostMapping({"/{id}"})

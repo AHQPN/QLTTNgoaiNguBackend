@@ -13,6 +13,7 @@ import java.util.List;
 public class ModuleRequest {
     @NotBlank(message = "FIELD_NOT_BLANK")
     private String moduleName;
+    private Integer duration;
     private List<DocumentRequest> documents;
     private List<ContentRequest> contents;
 }

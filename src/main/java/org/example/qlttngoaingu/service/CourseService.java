@@ -6,11 +6,14 @@ import org.example.qlttngoaingu.dto.request.CourseUpdateRequest;
 import org.example.qlttngoaingu.dto.response.*;
 import org.example.qlttngoaingu.entity.*;
 import org.example.qlttngoaingu.entity.Module;
+import org.example.qlttngoaingu.repository.CourseCategoryRepository;
 import org.example.qlttngoaingu.repository.CourseRepository;
 
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.mapper.CourseMapper;
+import org.example.qlttngoaingu.repository.CourseSkillRepository;
+import org.example.qlttngoaingu.repository.SkillRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,7 +34,10 @@ public class CourseService {
     private final CourseRepository courseRepository;
 
     private final ModuleService moduleService;
+    private final CourseCategoryRepository categoryRepository;
     private final CourseMapper courseMapper;
+    private final CourseSkillRepository courseSkillRepository;
+    private final SkillRepository skillRepository;
 
     public List<CourseGroupResponse> getCoursesGroupedResponse() {
         return courseRepository.findByStatusTrue()
@@ -127,55 +133,61 @@ public class CourseService {
             course.setObjectives(objectives);
         }
 
-        // 2️⃣ Thêm Modules, Documents, Contents
-        if (request.getModules() != null && !request.getModules().isEmpty()) {
-            List<Module> modules = request.getModules().stream().map(mReq -> {
-                Module module = new Module();
-                module.setModuleName(mReq.getModuleName());
-                module.setCourse(course);
 
-                // 2.1️⃣ Documents
-                if (mReq.getDocuments() != null && !mReq.getDocuments().isEmpty()) {
-                    List<Document> documents = mReq.getDocuments().stream()
-                            .map(dReq -> {
-                                Document doc = new Document();
-                                doc.setFileName(dReq.getFileName());
-                                doc.setLink(dReq.getLink());
-                                doc.setDescription(dReq.getDescription());
-                                doc.setImage(dReq.getImage());
-                                doc.setModule(module);
-                                return doc;
-                            })
-                            .collect(Collectors.toList());
-                    module.setDocuments(documents);
-                }
-
-                // 2.2️⃣ Contents
-                if (mReq.getContents() != null && !mReq.getContents().isEmpty()) {
-                    List<Content> contents = mReq.getContents().stream()
-                            .map(cReq -> {
-                                Content content = new Content();
-                                content.setContentName(cReq.getContentName());
-                                content.setModule(module);
-                                return content;
-                            })
-                            .collect(Collectors.toList());
-                    module.setContents(contents);
-                }
-
-                return module;
-            }).collect(Collectors.toList());
-
-            course.setModules(modules);
-
-
-
-
-        }
-
-        // 4️⃣ Lưu toàn bộ
         courseRepository.save(course);
 
+        if (request.getSkillIds() != null && !request.getSkillIds().isEmpty()) {
+            for (Integer skillId : request.getSkillIds()) {
+                Skill skill = skillRepository.findById(skillId)
+                        .orElseThrow(() -> new AppException(ErrorCode.SKILL_NOT_FOUND));
+
+                CourseSkill cs = new CourseSkill();
+                cs.setCourse(course);
+                cs.setSkill(skill);
+                courseSkillRepository.save(cs);
+
+                if (request.getModules() != null && !request.getModules().isEmpty()) {
+                    List<Module> modules = request.getModules().stream().map(mReq -> {
+                        Module module = new Module();
+                        module.setModuleName(mReq.getModuleName());
+                        module.setCourseSkill(cs);
+
+                        // 2 Documents
+                        if (mReq.getDocuments() != null && !mReq.getDocuments().isEmpty()) {
+                            List<Document> documents = mReq.getDocuments().stream()
+                                    .map(dReq -> {
+                                        Document doc = new Document();
+                                        doc.setFileName(dReq.getFileName());
+                                        doc.setLink(dReq.getLink());
+                                        doc.setDescription(dReq.getDescription());
+                                        doc.setImage(dReq.getImage());
+                                        doc.setModule(module);
+                                        return doc;
+                                    })
+                                    .collect(Collectors.toList());
+                            module.setDocuments(documents);
+                        }
+
+                        // 2. Contents
+                        if (mReq.getContents() != null && !mReq.getContents().isEmpty()) {
+                            List<Content> contents = mReq.getContents().stream()
+                                    .map(cReq -> {
+                                        Content content = new Content();
+                                        content.setContentName(cReq.getContentName());
+                                        content.setModule(module);
+                                        return content;
+                                    })
+                                    .collect(Collectors.toList());
+                            module.setContents(contents);
+                        }
+
+                        return module;
+                    }).toList();
+
+
+                }
+            }
+        }
         return course;
     }
 
@@ -200,6 +212,8 @@ public class CourseService {
 
         Course cs  = courseRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
         courseMapper.toExistingCourse(cs, updatedCourse);
+        CourseCategory category = categoryRepository.getCourseCategoriesById(updatedCourse.getCategoryId()).orElseThrow();
+        cs.setCourseCategory(category);
         return courseRepository.save(cs);
     }
 

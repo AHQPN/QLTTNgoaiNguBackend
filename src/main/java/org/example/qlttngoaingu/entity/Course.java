@@ -66,9 +66,4 @@ public class Course {
     @JsonManagedReference
     private List<Objective> objectives = new ArrayList<>();
 
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<Module> modules = new ArrayList<>();
-
-
 }

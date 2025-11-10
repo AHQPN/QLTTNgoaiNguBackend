@@ -39,6 +39,8 @@ public enum ErrorCode {
     GENRE_NOT_FOUND(HttpStatus.NOT_FOUND, 4000, "Genre not found"),
     GENRE_EXIST(HttpStatus.BAD_REQUEST, 4001, "Genre already exists"),
 
+    SKILL_NOT_FOUND(HttpStatus.BAD_REQUEST, 4002, "Skill not found"),
+
     // Publisher errors
     PUBLISHER_NOT_FOUND(HttpStatus.NOT_FOUND, 5000, "Publisher not found"),
     PUBLISHER_EXIST(HttpStatus.BAD_REQUEST, 5001, "Publisher already exists"),

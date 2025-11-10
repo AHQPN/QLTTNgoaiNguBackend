@@ -21,20 +21,21 @@ public class Module {
     @Column(name = "mamodule")
     private Integer moduleId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "makhoahoc", nullable = false)
-    @JsonIgnore
-    private Course course;
 
     @Column(name = "tenmodule", length = 200)
     private String moduleName;
 
-
+    @Column(name = "thoiluong")
+    private Integer duration;
 
     @OneToMany(mappedBy = "module", cascade = CascadeType.ALL, orphanRemoval = true)
-
     private List<Content> contents = new ArrayList<>();
 
     @OneToMany(mappedBy = "module", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Document> documents = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "makhkn", nullable = true)
+    private CourseSkill courseSkill;
+
 }

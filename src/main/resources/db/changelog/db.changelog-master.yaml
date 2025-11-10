@@ -27,5 +27,9 @@ databaseChangeLog:
       file: db/changelog/changes/20251105092800-add-col-thoigianbatdau-to-lop.yaml
   - include:
       file: db/changelog/changes/20250611_alter_table_lop.yaml
+  - include:
+      file: db/changelog/changes/20251109044400_dropConstraint.yaml
+  - include:
+      file: db/changelog/changes/20251110084800_seedata.yaml
 #  - include:
 #      file: db/changelog/changes/20251030111300_seed_data_gv_phong.yaml

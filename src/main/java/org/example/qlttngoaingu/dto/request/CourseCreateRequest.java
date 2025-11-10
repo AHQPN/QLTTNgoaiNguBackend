@@ -46,4 +46,6 @@ public class CourseCreateRequest {
     @Valid
     private List<ModuleRequest> modules;
 
+    @NotEmpty(message = "COURSE_SKILLS_EMPTY")
+    private List<Integer> skillIds;
 }

@@ -9,10 +9,6 @@ databaseChangeLog:
             columnName: sobuoihoc
             tableName: khoahoc
 
-        - dropColumn:
-            columnName: thoiluong
-            tableName: module
-
         # Thêm cột madm vào bảng khoahoc
         - addColumn:
             tableName: khoahoc
