@@ -13,4 +13,8 @@ public class CourseGroupResponse {
     private String categoryLevel;
     private String categoryDescription;
     private List<ActiveCourseResponse> courses;
+
+    public CourseGroupResponse() {
+
+    }
 }
