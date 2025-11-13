@@ -53,8 +53,13 @@ public class CourseService {
                     // map từng course sang response
                     List<ActiveCourseResponse> courseResponses = entry.getValue()
                             .stream()
-                            .map(courseMapper::toActiveResponse)
+                            .map(course -> {
+                                ActiveCourseResponse response = courseMapper.toActiveResponse(course);
+                                response.setObjectives(course.getObjectives());
+                                return response;
+                            })
                             .collect(Collectors.toList());
+
 
                     return new CourseGroupResponse(
                             category.getId(),
@@ -202,6 +207,12 @@ public class CourseService {
         response.setStatus(course.getStatus());
         response.setCategory(course.getCourseCategory().getName());
         response.setLevel(course.getCourseCategory().getLevel());
+        List<Module> modules = new ArrayList<>();
+        List<CourseSkill> courseSkills = courseSkillRepository.findByCourse_CourseId(course.getCourseId());
+        courseSkills.forEach(courseSkill -> {
+            modules.addAll(courseSkill.getModules());
+        });
+        response.setModules(modules);
         return response;
     }
 

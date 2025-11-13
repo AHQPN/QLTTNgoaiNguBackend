@@ -10,7 +10,7 @@ import org.example.qlttngoaingu.entity.*;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.repository.*;
-import org.example.qlttngoaingu.service.enums.SchedulePattern;
+import org.example.qlttngoaingu.utils.CustomSchedulePattern;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -50,7 +50,7 @@ public class CourseClassService {
                     .orElseThrow(() -> new RuntimeException("Lecturer not found"));
         }
 
-        SchedulePattern pattern = SchedulePattern.fromPattern(request.getSchedule());
+        CustomSchedulePattern pattern = new CustomSchedulePattern(request.getSchedule());
 
         List<ConflictInfo> roomConflicts = checkRoomConflicts(
                 request.getRoomId(),
@@ -105,11 +105,12 @@ public class CourseClassService {
 
         return buildResponse(cls, course, room, lecturer, sessions);
     }
+
     @Transactional
     protected List<Session> generateScheduleSessions(
             CourseClass cls,
             Course course,
-            SchedulePattern pattern,
+            CustomSchedulePattern pattern,
             LocalDate startDate,
             LocalTime startTime,
             Integer minutesPerSession) {
@@ -153,7 +154,7 @@ public class CourseClassService {
             Integer excludeClassId) {
 
         List<ConflictInfo> conflicts = new ArrayList<>();
-        SchedulePattern newPattern = SchedulePattern.fromPattern(schedule);
+        CustomSchedulePattern newPattern = new CustomSchedulePattern(schedule);
         LocalTime newEnd = startTime.plusMinutes(minutesPerSession);
 
         List<CourseClass> otherClasses = classRepository.findByRoom_RoomIdAndStatusTrue(roomId);
@@ -196,7 +197,7 @@ public class CourseClassService {
             Integer excludeClassId) {
 
         List<ConflictInfo> conflicts = new ArrayList<>();
-        SchedulePattern newPattern = SchedulePattern.fromPattern(schedule);
+        CustomSchedulePattern newPattern = new CustomSchedulePattern(schedule);
         LocalTime newEnd = startTime.plusMinutes(minutesPerSession);
 
         List<CourseClass> otherClasses = classRepository.findByLecturer_LecturerIdAndStatusTrue(lecturerId);
@@ -282,7 +283,7 @@ public class CourseClassService {
         int totalSessions = (int) Math.ceil(totalHours / hoursPerSession);
 
         LocalDate d = cls.getStartDate();
-        SchedulePattern pattern = SchedulePattern.fromPattern(cls.getSchedule());
+        CustomSchedulePattern pattern = new CustomSchedulePattern(cls.getSchedule());
 
         int count = 0;
         while (count < totalSessions) {
@@ -296,7 +297,7 @@ public class CourseClassService {
             LocalDate startDate,
             double totalHours,
             int minutesPerSession,
-            SchedulePattern pattern) {
+            CustomSchedulePattern pattern) {
 
         double hoursPerSession = minutesPerSession / 60.0;
         int totalSessions = (int) Math.ceil(totalHours / hoursPerSession);
@@ -310,15 +311,14 @@ public class CourseClassService {
         return d.minusDays(1);
     }
 
-    private Set<DayOfWeek> intersectDays(SchedulePattern pattern, CourseClass other) {
-        SchedulePattern otherPattern = SchedulePattern.fromPattern(other.getSchedule());
+    private Set<DayOfWeek> intersectDays(CustomSchedulePattern pattern, CourseClass other) {
+        CustomSchedulePattern otherPattern = new CustomSchedulePattern(other.getSchedule());
         Set<DayOfWeek> result = new HashSet<>(pattern.getDaysOfWeek());
         result.retainAll(otherPattern.getDaysOfWeek());
         return result;
     }
 
     private boolean timeOverlaps(LocalTime aStart, LocalTime aEnd, LocalTime bStart, LocalTime bEnd) {
-        // overlap if aStart < bEnd AND aEnd > bStart
         return aStart.isBefore(bEnd) && aEnd.isAfter(bStart);
     }
 
@@ -335,7 +335,6 @@ public class CourseClassService {
         response.setEndTime(cls.getStartTime().plusMinutes(cls.getMinutesPerSession()));
         response.setStartDate(cls.getStartDate());
 
-        // Tính endDate dựa trên các buổi học
         List<Session> sessions = sessionRepository.findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId());
         if (!sessions.isEmpty()) {
             response.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
@@ -400,7 +399,4 @@ public class CourseClassService {
 
         return response;
     }
-
-
-
 }
