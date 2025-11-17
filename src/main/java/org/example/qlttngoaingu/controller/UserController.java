@@ -6,6 +6,7 @@ import org.example.qlttngoaingu.dto.request.SignupRequest;
 import org.example.qlttngoaingu.dto.request.UserCreateRequest;
 import org.example.qlttngoaingu.dto.request.UserUpdateRequest;
 import org.example.qlttngoaingu.dto.response.ApiResponse;
+import org.example.qlttngoaingu.dto.response.NameAndEmail;
 import org.example.qlttngoaingu.entity.User;
 import org.example.qlttngoaingu.security.model.UserDetailsImpl;
 import org.example.qlttngoaingu.service.LecturerService;
@@ -16,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/users")
@@ -55,6 +58,23 @@ public class UserController {
     {
         userService.AddLecturerUser(lecturerCreationRequest);
         return ResponseEntity.ok().body(ApiResponse.builder().message("User has been created").build());
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse> getStudentInfo(@AuthenticationPrincipal UserDetailsImpl principal) {
+        return ResponseEntity.ok().body(ApiResponse.builder().data(userService.getStudentInfo(principal.getId())).build());
+
+    }
+    @GetMapping("/name-email")
+    public ResponseEntity<ApiResponse> getNameEmail(@AuthenticationPrincipal UserDetailsImpl principal) {
+        NameAndEmail nameAndEmail = new NameAndEmail();
+        if(Objects.equals(principal.getRole(), RoleEnum.STUDENT.name()))
+            nameAndEmail = userService.getStudentEmailAndName(principal.getId());
+
+        else if(Objects.equals(principal.getRole(), RoleEnum.TEACHER.name()))
+            nameAndEmail = userService.getTeacherEmailAndName(principal.getId());
+
+        return ResponseEntity.ok().body(ApiResponse.builder().data(nameAndEmail).build());
     }
 
 

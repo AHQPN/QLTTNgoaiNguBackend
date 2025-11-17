@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -35,6 +34,7 @@ public class CourseClassService {
     private final LecturerRepository lecturerRepository;
     private final CourseClassRepository classRepository;
     private final SessionRepository sessionRepository;
+    private final ConflictCheckService conflictCheckService;
 
     @Transactional
     public ClassCreationResponse createClass(ClassCreationRequest request) {
@@ -50,9 +50,11 @@ public class CourseClassService {
                     .orElseThrow(() -> new RuntimeException("Lecturer not found"));
         }
 
+        // Validate schedule pattern
         CustomSchedulePattern pattern = new CustomSchedulePattern(request.getSchedule());
 
-        List<ConflictInfo> roomConflicts = checkRoomConflicts(
+        // Check conflicts using ConflictCheckService
+        List<ConflictInfo> roomConflicts = conflictCheckService.checkRoomConflicts(
                 request.getRoomId(),
                 request.getSchedule(),
                 request.getStartTime(),
@@ -65,7 +67,7 @@ public class CourseClassService {
         }
 
         if (lecturer != null) {
-            List<ConflictInfo> teacherConflicts = checkTeacherConflicts(
+            List<ConflictInfo> teacherConflicts = conflictCheckService.checkTeacherConflicts(
                     request.getLecturerId(),
                     request.getSchedule(),
                     request.getStartTime(),
@@ -89,7 +91,7 @@ public class CourseClassService {
         cls.setStartDate(request.getStartDate());
         cls.setNote(request.getNote());
         cls.setDateCreated(LocalDateTime.now());
-
+        cls.setStatus(false);
         cls = classRepository.save(cls);
 
         List<Session> sessions = generateScheduleSessions(
@@ -145,107 +147,6 @@ public class CourseClassService {
         return sessions;
     }
 
-    private List<ConflictInfo> checkRoomConflicts(
-            Integer roomId,
-            String schedule,
-            LocalTime startTime,
-            Integer minutesPerSession,
-            LocalDate startDate,
-            Integer excludeClassId) {
-
-        List<ConflictInfo> conflicts = new ArrayList<>();
-        CustomSchedulePattern newPattern = new CustomSchedulePattern(schedule);
-        LocalTime newEnd = startTime.plusMinutes(minutesPerSession);
-
-        List<CourseClass> otherClasses = classRepository.findByRoom_RoomIdAndStatusTrue(roomId);
-        for (CourseClass other : otherClasses) {
-            if (excludeClassId != null && Objects.equals(other.getClassId(), excludeClassId)) continue;
-
-            LocalDate otherEndDate = calculateEndDate(other);
-            if (otherEndDate != null && otherEndDate.isBefore(startDate)) continue;
-
-            LocalDate newClassEndDate = calculateEndDate(startDate, other.getCourse().getStudyHours(),
-                    minutesPerSession, newPattern);
-            if (newClassEndDate.isBefore(other.getStartDate())) continue;
-
-            Set<DayOfWeek> common = intersectDays(newPattern, other);
-            if (common.isEmpty()) continue;
-
-            LocalTime otherStart = other.getStartTime();
-            LocalTime otherEnd = otherStart.plusMinutes(other.getMinutesPerSession());
-            boolean overlap = timeOverlaps(startTime, newEnd, otherStart, otherEnd);
-            if (overlap) {
-                ConflictInfo c = new ConflictInfo();
-                c.setType("ROOM_CONFLICT");
-                c.setDescription(String.format("Room '%s' conflicts with class '%s' on %s (%s-%s).",
-                        Optional.ofNullable(other.getRoom()).map(Room::getRoomName).orElse(String.valueOf(roomId)),
-                        Optional.ofNullable(other.getCourse()).map(Course::getCourseName).orElse("unknown"),
-                        formatDays(common), otherStart, otherEnd));
-                conflicts.add(c);
-            }
-        }
-
-        return conflicts;
-    }
-
-    private List<ConflictInfo> checkTeacherConflicts(
-            Integer lecturerId,
-            String schedule,
-            LocalTime startTime,
-            Integer minutesPerSession,
-            LocalDate startDate,
-            Integer excludeClassId) {
-
-        List<ConflictInfo> conflicts = new ArrayList<>();
-        CustomSchedulePattern newPattern = new CustomSchedulePattern(schedule);
-        LocalTime newEnd = startTime.plusMinutes(minutesPerSession);
-
-        List<CourseClass> otherClasses = classRepository.findByLecturer_LecturerIdAndStatusTrue(lecturerId);
-        for (CourseClass other : otherClasses) {
-            if (excludeClassId != null && Objects.equals(other.getClassId(), excludeClassId)) continue;
-
-            LocalDate otherEndDate = calculateEndDate(other);
-            if (otherEndDate != null && otherEndDate.isBefore(startDate)) continue;
-
-            LocalDate newClassEndDate = calculateEndDate(startDate, other.getCourse().getStudyHours(),
-                    minutesPerSession, newPattern);
-            if (newClassEndDate.isBefore(other.getStartDate())) continue;
-
-            Set<DayOfWeek> common = intersectDays(newPattern, other);
-            if (common.isEmpty()) continue;
-
-            LocalTime otherStart = other.getStartTime();
-            LocalTime otherEnd = otherStart.plusMinutes(other.getMinutesPerSession());
-            boolean overlap = timeOverlaps(startTime, newEnd, otherStart, otherEnd);
-            if (overlap) {
-                ConflictInfo c = new ConflictInfo();
-                c.setType("TEACHER_CONFLICT");
-                c.setDescription(String.format("Lecturer has conflict with class '%s' on %s (%s-%s).",
-                        Optional.ofNullable(other.getCourse()).map(Course::getCourseName).orElse("unknown"),
-                        formatDays(common), otherStart, otherEnd));
-                conflicts.add(c);
-            }
-        }
-
-        return conflicts;
-    }
-
-    private String formatDays(Set<DayOfWeek> days) {
-        Map<DayOfWeek, String> names = Map.of(
-                DayOfWeek.MONDAY, "MON",
-                DayOfWeek.TUESDAY, "TUE",
-                DayOfWeek.WEDNESDAY, "WED",
-                DayOfWeek.THURSDAY, "THU",
-                DayOfWeek.FRIDAY, "FRI",
-                DayOfWeek.SATURDAY, "SAT",
-                DayOfWeek.SUNDAY, "SUN"
-        );
-        return days.stream()
-                .sorted(Comparator.comparingInt(DayOfWeek::getValue))
-                .map(names::get)
-                .collect(Collectors.joining(", "));
-    }
-
     private ClassCreationResponse buildResponse(
             CourseClass cls,
             Course course,
@@ -255,6 +156,8 @@ public class CourseClassService {
 
         ClassCreationResponse resp = new ClassCreationResponse();
         resp.setClassId(cls.getClassId());
+        resp.setClassName(cls.getClassName());
+
         resp.setCourseName(Optional.ofNullable(course).map(Course::getCourseName).orElse(null));
         resp.setRoomName(Optional.ofNullable(room).map(Room::getRoomName).orElse(null));
         resp.setInstructorName(Optional.ofNullable(lecturer).map(Lecturer::getFullName).orElse(null));
@@ -277,51 +180,6 @@ public class CourseClassService {
         return resp;
     }
 
-    private LocalDate calculateEndDate(CourseClass cls) {
-        double totalHours = cls.getCourse().getStudyHours();
-        double hoursPerSession = cls.getMinutesPerSession() / 60.0;
-        int totalSessions = (int) Math.ceil(totalHours / hoursPerSession);
-
-        LocalDate d = cls.getStartDate();
-        CustomSchedulePattern pattern = new CustomSchedulePattern(cls.getSchedule());
-
-        int count = 0;
-        while (count < totalSessions) {
-            if (pattern.getDaysOfWeek().contains(d.getDayOfWeek())) count++;
-            d = d.plusDays(1);
-        }
-        return d.minusDays(1);
-    }
-
-    private LocalDate calculateEndDate(
-            LocalDate startDate,
-            double totalHours,
-            int minutesPerSession,
-            CustomSchedulePattern pattern) {
-
-        double hoursPerSession = minutesPerSession / 60.0;
-        int totalSessions = (int) Math.ceil(totalHours / hoursPerSession);
-
-        LocalDate d = startDate;
-        int count = 0;
-        while (count < totalSessions) {
-            if (pattern.getDaysOfWeek().contains(d.getDayOfWeek())) count++;
-            d = d.plusDays(1);
-        }
-        return d.minusDays(1);
-    }
-
-    private Set<DayOfWeek> intersectDays(CustomSchedulePattern pattern, CourseClass other) {
-        CustomSchedulePattern otherPattern = new CustomSchedulePattern(other.getSchedule());
-        Set<DayOfWeek> result = new HashSet<>(pattern.getDaysOfWeek());
-        result.retainAll(otherPattern.getDaysOfWeek());
-        return result;
-    }
-
-    private boolean timeOverlaps(LocalTime aStart, LocalTime aEnd, LocalTime bStart, LocalTime bEnd) {
-        return aStart.isBefore(bEnd) && aEnd.isAfter(bStart);
-    }
-
     public ClassDetailResponse getClass(Integer classId) {
         CourseClass cls = classRepository.findById(classId)
                 .orElseThrow(() -> new AppException(ErrorCode.CLASS_NOT_FOUND));
@@ -335,6 +193,7 @@ public class CourseClassService {
         response.setEndTime(cls.getStartTime().plusMinutes(cls.getMinutesPerSession()));
         response.setStartDate(cls.getStartDate());
 
+        // Tính endDate dựa trên các buổi học
         List<Session> sessions = sessionRepository.findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId());
         if (!sessions.isEmpty()) {
             response.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());

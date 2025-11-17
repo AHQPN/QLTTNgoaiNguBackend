@@ -28,8 +28,8 @@ public class CourseClass {
     @Column(name = "ghichu", columnDefinition = "TEXT")
     private String note;
 
-    @Column(name = "trangthai", length = 255)
-    private String status;
+    @Column(name = "trangthai")
+    private Boolean status;
 
     @Column(name = "ngaybatdau")
     private LocalDate startDate;
