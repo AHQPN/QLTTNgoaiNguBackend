@@ -27,4 +27,6 @@ public class CourseSkill {
     // One course-skill can have many modules
     @OneToMany(mappedBy = "courseSkill", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Module> modules;
+
+
 }

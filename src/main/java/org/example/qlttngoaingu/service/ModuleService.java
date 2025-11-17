@@ -17,150 +17,182 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Service
 public class ModuleService {
-    private final CourseRepository courseRepository;
-    private final ModuleRepository moduleRepository;
-    private final ContentRepository  contentRepository;
-    private final DocumentRepository documentRepository;
-    private final CourseSkillRepository  courseSkillRepository;
-    // Thêm module
-    @Transactional
-    public Module addModule(Integer courseSkill, ModuleRequest request) {
-        CourseSkill course = courseSkillRepository.findById(courseSkill)
-                .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
+    private final ModuleRepository moduleRepository;
+    private final ContentRepository contentRepository;
+    private final DocumentRepository documentRepository;
+    private final CourseSkillRepository courseSkillRepository;
+
+    /**
+     * Thêm module mới vào CourseSkill
+     * @param courseSkillId ID của CourseSkill (quan hệ giữa Course và Skill)
+     * @param request Thông tin module cần tạo
+     */
+    @Transactional
+    public Module addModule(Integer courseSkillId, ModuleRequest request) {
+        CourseSkill courseSkill = courseSkillRepository.findById(courseSkillId)
+                .orElseThrow(() -> new AppException(ErrorCode.COURSE_SKILL_NOT_FOUND));
+
+        // Tạo module
         Module module = new Module();
         module.setModuleName(request.getModuleName());
-        module.setCourseSkill(course);
+        module.setDuration(request.getDuration());
+        module.setCourseSkill(courseSkill);
         moduleRepository.save(module);
 
-
-        if (request.getDocuments() != null) {
+        // Thêm Documents nếu có
+        if (request.getDocuments() != null && !request.getDocuments().isEmpty()) {
             List<Document> docs = request.getDocuments().stream().map(docReq -> {
                 Document doc = new Document();
                 doc.setFileName(docReq.getFileName());
-                doc.setModule(module);
                 doc.setLink(docReq.getLink());
                 doc.setImage(docReq.getImage());
                 doc.setDescription(docReq.getDescription());
+                doc.setModule(module);
                 return doc;
             }).collect(Collectors.toList());
             documentRepository.saveAll(docs);
         }
 
-
-
-        if (request.getContents() != null) {
-            List<Content> contents = request.getContents().stream().map(contentRequest -> {
+        // Thêm Contents nếu có
+        if (request.getContents() != null && !request.getContents().isEmpty()) {
+            List<Content> contents = request.getContents().stream().map(contentReq -> {
                 Content content = new Content();
-                content.setContentName(contentRequest.getContentName());
+                content.setContentName(contentReq.getContentName());
                 content.setModule(module);
-
                 return content;
-            }).toList();
+            }).collect(Collectors.toList());
             contentRepository.saveAll(contents);
         }
 
-        return module; // trả về module vừa tạo
+        return module;
     }
 
-
-    // Cập nhật module
+    /**
+     * Cập nhật thông tin cơ bản của module (tên, duration)
+     */
     @Transactional
-    public void updateModule(Integer moduleId, ModuleRequest request) {
+    public Module updateModuleBasicInfo(Integer moduleId, String moduleName, Integer duration) {
         Module module = moduleRepository.findById(moduleId)
-                .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.MODULE_NOT_FOUND));
 
-
-        if (request.getModuleName() != null) {
-            module.setModuleName(request.getModuleName());
+        if (moduleName != null) {
+            module.setModuleName(moduleName);
         }
-        if (request.getDuration() != null) {
-            module.setDuration(request.getDuration());
+        if (duration != null) {
+            module.setDuration(duration);
         }
 
-
-        moduleRepository.save(module);
-    }
-    private Module getModule(Integer moduleId) {
-        return moduleRepository.findById(moduleId).orElseThrow(() -> new AppException(ErrorCode.MODULE_NOT_FOUND));
+        return moduleRepository.save(module);
     }
 
-    // Xóa module
-    @Transactional
-    public void deleteModule(Integer moduleId) {
-        Module module = moduleRepository.findById(moduleId)
-                .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
-
-
-        moduleRepository.delete(module);
-    }
-
+    /**
+     * Cập nhật chi tiết module (tên, documents, contents)
+     * Sử dụng cho update toàn diện
+     */
     @Transactional
     public void updateModuleDetail(Integer moduleId, ModuleUpdateRequest request) {
         Module module = moduleRepository.findById(moduleId)
-                .orElseThrow(() -> new RuntimeException("Module not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.MODULE_NOT_FOUND));
 
-        module.setModuleName(request.getModuleName());
+        // Update tên module
+        if (request.getModuleName() != null) {
+            module.setModuleName(request.getModuleName());
+            moduleRepository.save(module);
+        }
 
-        // ---- 1️⃣ Xử lý TÀI LIỆU ----
+        // Xử lý Documents
         if (request.getDocuments() != null) {
-            for (DocumentUpdateRequest tl : request.getDocuments()) {
-                ActionEnum action = tl.getAction();
-                switch (action.name()) {
-                    case "CREATE":
-                        Document newDocument = new Document();
-                        newDocument.setModule(module);
-                        newDocument.setLink(tl.getLink());
-                        newDocument.setImage(tl.getImage());
-                        newDocument.setDescription(tl.getDescription());
-                        documentRepository.save(newDocument);
-                    break;
-
-                    case "UPDATE":
-                        Document existing = documentRepository.findById(tl.getId())
-                                .orElseThrow(() -> new RuntimeException("File not found"));
-                        existing.setFileName(tl.getFileName());
-                        existing.setLink(tl.getLink());
-                        existing.setDescription(tl.getDescription());
-                        existing.setImage(tl.getImage());
-                        documentRepository.save(existing);
+            for (DocumentUpdateRequest docReq : request.getDocuments()) {
+                switch (docReq.getAction()) {
+                    case CREATE:
+                        Document newDoc = new Document();
+                        newDoc.setFileName(docReq.getFileName());
+                        newDoc.setLink(docReq.getLink());
+                        newDoc.setDescription(docReq.getDescription());
+                        newDoc.setImage(docReq.getImage());
+                        newDoc.setModule(module);
+                        documentRepository.save(newDoc);
                         break;
-                    case "DELETE":
-                        documentRepository.deleteById(tl.getId());
+
+                    case UPDATE:
+                        Document existingDoc = documentRepository.findById(docReq.getId())
+                                .orElseThrow(() -> new AppException(ErrorCode.DOCUMENT_NOT_FOUND));
+                        existingDoc.setFileName(docReq.getFileName());
+                        existingDoc.setLink(docReq.getLink());
+                        existingDoc.setDescription(docReq.getDescription());
+                        existingDoc.setImage(docReq.getImage());
+                        documentRepository.save(existingDoc);
+                        break;
+
+                    case DELETE:
+                        documentRepository.deleteById(docReq.getId());
                         break;
                 }
             }
         }
 
-        // ---- 2️⃣ Xử lý NỘI DUNG ----
+        // Xử lý Contents
         if (request.getContents() != null) {
-            for (ContentUpdateRequest nd : request.getContents()) {
-                ActionEnum action = nd.getAction();
+            for (ContentUpdateRequest contReq : request.getContents()) {
+                switch (contReq.getAction()) {
+                    case CREATE:
+                        Content newContent = new Content();
+                        newContent.setContentName(contReq.getContentName());
+                        newContent.setModule(module);
+                        contentRepository.save(newContent);
+                        break;
 
-                switch (action.name()) {
-                    case "CREATE":
-                        Content newND = new Content();
-                        newND.setContentName(nd.getContentName());
-                        newND.setModule(module);
-                        contentRepository.save(newND);
+                    case UPDATE:
+                        Content existingContent = contentRepository.findById(contReq.getId())
+                                .orElseThrow(() -> new AppException(ErrorCode.CONTENT_NOT_FOUND));
+                        existingContent.setContentName(contReq.getContentName());
+                        contentRepository.save(existingContent);
                         break;
-                    case "UPDATE":
-                        Content existingND = contentRepository.findById(nd.getId())
-                                .orElseThrow(() -> new RuntimeException("Nội dung không tồn tại"));
-                        existingND.setContentName(nd.getContentName());
-                        contentRepository.save(existingND);
-                        break;
-                    case "DELETE":
-                        contentRepository.deleteById(nd.getId());
+
+                    case DELETE:
+                        contentRepository.deleteById(contReq.getId());
                         break;
                 }
             }
         }
     }
 
-    public List<CourseSkill> getmodules(Integer courseId) {
-        return courseSkillRepository.findByCourse_CourseId(courseId);
-
+    /**
+     * Xóa module
+     */
+    @Transactional
+    public void deleteModule(Integer moduleId) {
+        if (!moduleRepository.existsById(moduleId)) {
+            throw new AppException(ErrorCode.MODULE_NOT_FOUND);
+        }
+        moduleRepository.deleteById(moduleId);
     }
 
+    /**
+     * Lấy tất cả modules của một CourseSkill
+     */
+    public List<Module> getModulesByCourseSkill(Integer courseSkillId) {
+        CourseSkill courseSkill = courseSkillRepository.findById(courseSkillId)
+                .orElseThrow(() -> new AppException(ErrorCode.COURSE_SKILL_NOT_FOUND));
+        return courseSkill.getModules();
+    }
+
+    /**
+     * Lấy chi tiết một module
+     */
+    public Module getModuleById(Integer moduleId) {
+        return moduleRepository.findById(moduleId)
+                .orElseThrow(() -> new AppException(ErrorCode.MODULE_NOT_FOUND));
+    }
+
+    /**
+     * Lấy tất cả modules của course (từ tất cả các skills)
+     */
+    public List<Module> getModulesByCourseId(Integer courseId) {
+        List<CourseSkill> courseSkills = courseSkillRepository.findByCourse_CourseId(courseId);
+        return courseSkills.stream()
+                .flatMap(cs -> cs.getModules().stream())
+                .collect(Collectors.toList());
+    }
 }

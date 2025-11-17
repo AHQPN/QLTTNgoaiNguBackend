@@ -3,6 +3,7 @@ package org.example.qlttngoaingu.service;
 import lombok.AllArgsConstructor;
 import org.example.qlttngoaingu.dto.request.CourseCreateRequest;
 import org.example.qlttngoaingu.dto.request.CourseUpdateRequest;
+import org.example.qlttngoaingu.dto.request.ModuleRequest;
 import org.example.qlttngoaingu.dto.response.*;
 import org.example.qlttngoaingu.entity.*;
 import org.example.qlttngoaingu.entity.Module;
@@ -22,9 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -123,13 +122,14 @@ public class CourseService {
 
     @Transactional
     public Course createCourse(CourseCreateRequest request) {
-        // Map course cơ bản từ mapper
+        // 1. Tạo course cơ bản
         Course course = courseMapper.toNewCourse(request);
         course.setStatus(false);
         course.setCreatedDate(LocalDateTime.now());
         course.setCreatedBy("admin");
         course.setStudyHours(request.getStudyHours());
-        // 1️⃣ Thêm Objectives
+
+        // 2. Thêm Objectives
         if (request.getObjectives() != null && !request.getObjectives().isEmpty()) {
             List<Objective> objectives = request.getObjectives().stream()
                     .map(obj -> {
@@ -142,61 +142,113 @@ public class CourseService {
             course.setObjectives(objectives);
         }
 
-
+        // Lưu course trước để có courseId
         courseRepository.save(course);
 
-        if (request.getSkillIds() != null && !request.getSkillIds().isEmpty()) {
-            for (Integer skillId : request.getSkillIds()) {
+        // 3. Xử lý Skills và Modules
+        if (request.getModules() != null && !request.getModules().isEmpty()) {
+            // Group modules theo skillId
+            Map<Integer, List<ModuleRequest>> modulesBySkill = request.getModules().stream()
+                    .collect(Collectors.groupingBy(ModuleRequest::getSkillId));
+
+            // Validate: skillIds trong request phải khớp với skillIds trong modules
+            Set<Integer> uniqueSkillIds = modulesBySkill.keySet();
+            if (request.getSkillIds() != null && !request.getSkillIds().containsAll(uniqueSkillIds)) {
+                throw new AppException(ErrorCode.SKILL_MISMATCH);
+            }
+
+            // Với mỗi skill, tạo CourseSkill và modules tương ứng
+            for (Map.Entry<Integer, List<ModuleRequest>> entry : modulesBySkill.entrySet()) {
+                Integer skillId = entry.getKey();
+                List<ModuleRequest> moduleRequests = entry.getValue();
+
+                // Tìm skill
                 Skill skill = skillRepository.findById(skillId)
                         .orElseThrow(() -> new AppException(ErrorCode.SKILL_NOT_FOUND));
 
-                CourseSkill cs = new CourseSkill();
-                cs.setCourse(course);
-                cs.setSkill(skill);
-                courseSkillRepository.save(cs);
+                // Tạo CourseSkill
+                CourseSkill courseSkill = new CourseSkill();
+                courseSkill.setCourse(course);
+                courseSkill.setSkill(skill);
+                courseSkillRepository.save(courseSkill);
 
-                if (request.getModules() != null && !request.getModules().isEmpty()) {
-                    List<Module> modules = request.getModules().stream().map(mReq -> {
-                        Module module = new Module();
-                        module.setModuleName(mReq.getModuleName());
-                        module.setCourseSkill(cs);
-
-                        // 2 Documents
-                        if (mReq.getDocuments() != null && !mReq.getDocuments().isEmpty()) {
-                            List<Document> documents = mReq.getDocuments().stream()
-                                    .map(dReq -> {
-                                        Document doc = new Document();
-                                        doc.setFileName(dReq.getFileName());
-                                        doc.setLink(dReq.getLink());
-                                        doc.setDescription(dReq.getDescription());
-                                        doc.setImage(dReq.getImage());
-                                        doc.setModule(module);
-                                        return doc;
-                                    })
-                                    .collect(Collectors.toList());
-                            module.setDocuments(documents);
-                        }
-
-                        // 2. Contents
-                        if (mReq.getContents() != null && !mReq.getContents().isEmpty()) {
-                            List<Content> contents = mReq.getContents().stream()
-                                    .map(cReq -> {
-                                        Content content = new Content();
-                                        content.setContentName(cReq.getContentName());
-                                        content.setModule(module);
-                                        return content;
-                                    })
-                                    .collect(Collectors.toList());
-                            module.setContents(contents);
-                        }
-
-                        return module;
-                    }).toList();
-
-
+                // Tạo modules cho skill này
+                for (ModuleRequest moduleReq : moduleRequests) {
+                    moduleService.addModule(courseSkill.getCourseSkillId(), moduleReq);
                 }
             }
         }
+
+        return course;
+    }
+
+    // ========== UPDATE COURSE (chỉ thông tin cơ bản và skills) ==========
+    @Transactional
+    public Course updateCourse(Integer id, CourseUpdateRequest request) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+
+        // 1. Update thông tin cơ bản
+        if (request.getCourseName() != null) {
+            course.setCourseName(request.getCourseName());
+        }
+        if (request.getTuitionFee() != null) {
+            course.setTuitionFee(request.getTuitionFee());
+        }
+        if (request.getDescription() != null) {
+            course.setDescription(request.getDescription());
+        }
+        if (request.getEntryLevel() != null) {
+            course.setEntryLevel(request.getEntryLevel());
+        }
+        if (request.getTargetLevel() != null) {
+            course.setTargetLevel(request.getTargetLevel());
+        }
+        if (request.getImage() != null) {
+            course.setImage(request.getImage());
+        }
+        if (request.getVideo() != null) {
+            course.setVideo(request.getVideo());
+        }
+        if (request.getStudyHours() != null) {
+            course.setStudyHours(request.getStudyHours());
+        }
+        if (request.getCategoryId() != null) {
+            CourseCategory category = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+            course.setCourseCategory(category);
+        }
+
+        courseRepository.save(course);
+
+        // 2. Xử lý Skills
+        // Thêm skills mới
+        if (request.getSkillIdsToAdd() != null && !request.getSkillIdsToAdd().isEmpty()) {
+            for (Integer skillId : request.getSkillIdsToAdd()) {
+                // Kiểm tra xem skill đã tồn tại trong course chưa
+                if (!courseSkillRepository.existsByCourse_CourseIdAndSkill_SkillId(id, skillId)) {
+                    Skill skill = skillRepository.findById(skillId)
+                            .orElseThrow(() -> new AppException(ErrorCode.SKILL_NOT_FOUND));
+
+                    CourseSkill courseSkill = new CourseSkill();
+                    courseSkill.setCourse(course);
+                    courseSkill.setSkill(skill);
+                    courseSkillRepository.save(courseSkill);
+                }
+            }
+        }
+
+        // Xóa skills
+        if (request.getSkillIdsToRemove() != null && !request.getSkillIdsToRemove().isEmpty()) {
+            for (Integer skillId : request.getSkillIdsToRemove()) {
+                Optional<CourseSkill> courseSkillOpt = courseSkillRepository
+                        .findByCourse_CourseIdAndSkill_SkillId(id, skillId);
+
+                courseSkillOpt.ifPresent(courseSkillRepository::delete);
+                // Cascade sẽ tự động xóa các modules liên quan
+            }
+        }
+
         return course;
     }
 
@@ -222,15 +274,7 @@ public class CourseService {
 
 
 
-    // Update an existing course
-    public Course updateCourse(Integer id, CourseUpdateRequest updatedCourse) {
 
-        Course cs  = courseRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
-        courseMapper.toExistingCourse(cs, updatedCourse);
-        CourseCategory category = categoryRepository.getCourseCategoriesById(updatedCourse.getCategoryId()).orElseThrow();
-        cs.setCourseCategory(category);
-        return courseRepository.save(cs);
-    }
 
 
     // Change status of course
