@@ -43,5 +43,7 @@ public interface CourseClassRepository extends JpaRepository<CourseClass, Intege
 
 
     Set<CourseClass> findByCourse_CourseIdAndStatusTrue(int courseId);
+
+    CourseClass getCourseClassByClassId(Integer classId);
 }
 
