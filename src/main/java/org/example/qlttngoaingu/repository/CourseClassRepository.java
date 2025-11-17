@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 public interface CourseClassRepository extends JpaRepository<CourseClass, Integer> {
 
@@ -39,5 +40,8 @@ public interface CourseClassRepository extends JpaRepository<CourseClass, Intege
 
     // Lấy tất cả lớp có thể phân trang
     Page<CourseClass> findAll(Pageable pageable);
+
+
+    Set<CourseClass> findByCourse_CourseIdAndStatusTrue(int courseId);
 }
 

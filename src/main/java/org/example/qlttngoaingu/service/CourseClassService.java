@@ -2,10 +2,7 @@ package org.example.qlttngoaingu.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.qlttngoaingu.dto.request.ClassCreationRequest;
-import org.example.qlttngoaingu.dto.response.ClassCreationResponse;
-import org.example.qlttngoaingu.dto.response.ClassDetailResponse;
-import org.example.qlttngoaingu.dto.response.ClassResponse;
-import org.example.qlttngoaingu.dto.response.ConflictInfo;
+import org.example.qlttngoaingu.dto.response.*;
 import org.example.qlttngoaingu.entity.*;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
@@ -22,6 +19,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -258,4 +256,23 @@ public class CourseClassService {
 
         return response;
     }
+
+    public ClassScheduleResponse getScheduleOfAllClassByCourseId(int courseId) {
+        Set<CourseClass> courseClasses =
+                classRepository.findByCourse_CourseIdAndStatusTrue(courseId);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        Set<String> times =  courseClasses.stream()
+                .map(c -> c.getStartTime().format(formatter))
+                .collect(Collectors.toSet());
+
+        Set<String> schedules =  courseClasses.stream().
+                map(CourseClass::getSchedule).collect(Collectors.toSet());
+        ClassScheduleResponse response = new ClassScheduleResponse();
+        response.setSchedulePatterns(schedules);
+        response.setScheduleTimes(times);
+        return response;
+    }
+
 }

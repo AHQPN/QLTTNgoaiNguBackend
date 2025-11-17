@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.example.qlttngoaingu.dto.request.ObjectiveRequest;
 import org.example.qlttngoaingu.entity.Objective;
+import org.example.qlttngoaingu.utils.CustomSchedulePattern;
 
 import java.util.List;
 
@@ -15,7 +16,10 @@ public class ActiveCourseResponse {
     private String entryLevel;
     private String targetLevel;
     private String description;
+    private String studyHours;
+    private ClassScheduleResponse classScheduleResponse;
     private String image;
     private List<Objective> objectives;
+
 
 }
