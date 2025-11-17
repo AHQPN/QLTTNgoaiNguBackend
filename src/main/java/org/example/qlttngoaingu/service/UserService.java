@@ -5,10 +5,16 @@ import jakarta.mail.internet.MimeMessage;
 import org.example.qlttngoaingu.dto.request.LecturerCreationRequest;
 import org.example.qlttngoaingu.dto.request.SignupRequest;
 import org.example.qlttngoaingu.dto.response.ApiResponse;
+import org.example.qlttngoaingu.dto.response.NameAndEmail;
+import org.example.qlttngoaingu.dto.response.StudentInfo;
+import org.example.qlttngoaingu.entity.Lecturer;
+import org.example.qlttngoaingu.entity.Student;
 import org.example.qlttngoaingu.entity.User;
 import org.example.qlttngoaingu.entity.VerificationCode;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
+import org.example.qlttngoaingu.repository.LecturerRepository;
+import org.example.qlttngoaingu.repository.StudentRepository;
 import org.example.qlttngoaingu.repository.UserRepository;
 import org.example.qlttngoaingu.repository.VerificationCodeRepository;
 import org.example.qlttngoaingu.service.enums.RoleEnum;
@@ -32,6 +38,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final VerificationCodeRepository verificationCodeRepository;
     private final JavaMailSender mailSender;
+    private final LecturerRepository lecturerRepository;
+    private final StudentRepository studentRepository;
     LecturerService lecturerService;
     @Transactional
     public User createUser(SignupRequest signupRequest, RoleEnum userType, Boolean sendVerification, String siteURL) {
@@ -208,5 +216,25 @@ public class UserService {
     }
 
 
+    public StudentInfo getStudentInfo(Integer id) {
+        StudentInfo studentInfo = new StudentInfo();
+        return studentInfo;
+    }
 
+    public NameAndEmail getStudentEmailAndName(Integer id) {
+        User user = userRepository.findByUserId(id).orElseThrow();
+        NameAndEmail nameAndEmail = new NameAndEmail();
+        Student student = studentRepository.getStudentByAccount_UserId(user.getUserId());
+        nameAndEmail.setName(student.getName());
+        return nameAndEmail;
+    }
+
+    public NameAndEmail getTeacherEmailAndName(Integer id) {
+        User user = userRepository.findByUserId(id).orElseThrow();
+        Lecturer lecturer = lecturerRepository.getByUser_UserId(id);
+        NameAndEmail nameAndEmail = new NameAndEmail();
+        nameAndEmail.setName(lecturer.getFullName());
+        nameAndEmail.setEmail(user.getEmail());
+        return nameAndEmail;
+    }
 }

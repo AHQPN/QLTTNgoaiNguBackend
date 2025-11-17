@@ -1,0 +1,61 @@
+databaseChangeLog:
+  # === 1. ChangeSet Tạo Bảng HOCVIEN với tên cột mới ===
+  - changeSet:
+      id: 20251114_1_lowercase_v2
+      author: admin
+      changes:
+        - createTable:
+            tableName: hocvien
+            columns:
+              - column:
+                  name: manguoidung
+                  type: INTEGER
+
+              - column:
+                  name: mahocvien
+                  type: INTEGER
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: hoten
+                  type: NVARCHAR(100)
+              - column:
+                  name: ngaysinh
+                  type: DATE
+              - column:
+                  name: gioitinh
+                  type: VARCHAR(10)
+              - column:
+                  name: diachi
+                  type: NVARCHAR(255)
+              - column:
+                  name: nghenghiep
+                  type: NVARCHAR(100)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: trinhdo
+                  type: NVARCHAR(50)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: anhdaidien
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: true
+  # ------------------------------------------------------------------
+
+  # === 2. ChangeSet Thêm Ràng buộc Khóa Ngoại (Foreign Key) ===
+  - changeSet:
+      id: 20251114_2_fk_lowercase
+      author: phuc nguyen
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: manguoidung          # Tên cột mới
+            baseTableName: hocvien
+            constraintName: fk_hocvien_taikhoan_lc # Tên ràng buộc
+            onDelete: CASCADE
+            onUpdate: RESTRICT
+            referencedColumnNames: manguoidung             # Giả định PK của TAIKHOAN là 'id'
+            referencedTableName: nguoidung         # Giả định tên bảng liên quan

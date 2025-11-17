@@ -25,6 +25,6 @@ public class ClassResponse {
         private LocalTime startTime;
         private LocalTime endTime;
         private String schedulePattern;
-        private String status;
+        private Boolean status;
     }
 }

@@ -101,6 +101,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/rooms/**").permitAll()
                         .requestMatchers("/lecturers/**").permitAll()
                         .requestMatchers("/skills").permitAll()
+                        .requestMatchers("/schedules/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
