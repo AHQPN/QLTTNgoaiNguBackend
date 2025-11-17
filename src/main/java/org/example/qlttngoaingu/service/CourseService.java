@@ -39,23 +39,26 @@ public class CourseService {
     private final CourseMapper courseMapper;
     private final CourseSkillRepository courseSkillRepository;
     private final SkillRepository skillRepository;
+    private final CourseClassService courseClassService;
 
     public List<CourseGroupResponse> getCoursesGroupedResponse() {
         return courseRepository.findByStatusTrue()
                 .stream()
                 .collect(Collectors.groupingBy(course -> course.getCourseCategory().getId()))
-                .entrySet()
+                .values()
                 .stream()
-                .map(entry -> {
-                    Course firstCourse = entry.getValue().get(0);
+                .map(courses -> {
+                    Course firstCourse = courses.get(0);
                     CourseCategory category = firstCourse.getCourseCategory();
 
                     // map từng course sang response
-                    List<ActiveCourseResponse> courseResponses = entry.getValue()
+                    List<ActiveCourseResponse> courseResponses = courses
                             .stream()
                             .map(course -> {
                                 ActiveCourseResponse response = courseMapper.toActiveResponse(course);
                                 response.setObjectives(course.getObjectives());
+                                ClassScheduleResponse classScheduleResponse = courseClassService.getScheduleOfAllClassByCourseId(course.getCourseId());
+                                response.setClassScheduleResponse(classScheduleResponse);
                                 return response;
                             })
                             .collect(Collectors.toList());
