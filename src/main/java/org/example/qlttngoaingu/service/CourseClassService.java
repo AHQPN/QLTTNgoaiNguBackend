@@ -9,10 +9,12 @@ import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.mapper.CourseClassMapper;
 import org.example.qlttngoaingu.repository.*;
+import org.example.qlttngoaingu.specification.CourseClassSpec;
 import org.example.qlttngoaingu.utils.CustomSchedulePattern;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -297,6 +299,19 @@ public class CourseClassService {
         response.setSchedulePatterns(schedules);
         response.setScheduleTimes(times);
         return response;
+    }
+
+    public List<ClassResponse.ClassInfo> filterClasses(Integer lecturerId, Integer roomId, Integer courseId) {
+
+        Specification<CourseClass> spec = Specification
+                .where(CourseClassSpec.hasLecturer(lecturerId))
+                .and(CourseClassSpec.hasRoom(roomId))
+                .and(CourseClassSpec.hasCourse(courseId));
+
+        return classRepository.findAll(spec)
+                .stream()
+                .map(courseClassMapper::toDto)
+                .toList();
     }
 
 }

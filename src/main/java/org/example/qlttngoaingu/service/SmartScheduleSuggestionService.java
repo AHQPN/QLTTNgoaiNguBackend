@@ -30,7 +30,6 @@ public class SmartScheduleSuggestionService {
      */
     public ScheduleSuggestionResponse checkAndSuggest(ScheduleCheckRequest request) {
         ScheduleSuggestionResponse response = new ScheduleSuggestionResponse();
-
         // 1. Kiểm tra với thông tin user nhập
         AvailabilityResult initialCheck = checkInitialAvailability(request);
         response.setInitialCheck(initialCheck);

@@ -1,6 +1,7 @@
 package org.example.qlttngoaingu.mapper;
 
 import org.example.qlttngoaingu.dto.request.ScheduleCheckRequest;
+import org.example.qlttngoaingu.dto.response.ClassResponse;
 import org.example.qlttngoaingu.entity.CourseClass;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -21,4 +22,11 @@ public interface CourseClassMapper {
     @Mapping(source = "lecturer.lecturerId", target = "preferredLecturerId") // Lấy ID từ đối tượng Lecturer
     @Mapping(source = "minutesPerSession", target = "durationMinutes") // Ánh xạ 'minutesPerSession' sang 'durationMinutes'
     ScheduleCheckRequest toScheduleCheckRequest(CourseClass courseClass);
+
+
+    @Mapping(source = "course.courseName", target = "courseName")
+    @Mapping(source = "room.roomName", target = "roomName")
+    @Mapping(source = "lecturer.fullName", target = "instructorName")
+    @Mapping(source = "schedule", target = "schedulePattern")
+    ClassResponse.ClassInfo toDto(CourseClass courseClass);
 }
