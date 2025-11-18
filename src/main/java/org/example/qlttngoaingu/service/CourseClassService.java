@@ -2,15 +2,19 @@ package org.example.qlttngoaingu.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.qlttngoaingu.dto.request.ClassCreationRequest;
+import org.example.qlttngoaingu.dto.request.ScheduleCheckRequest;
 import org.example.qlttngoaingu.dto.response.*;
 import org.example.qlttngoaingu.entity.*;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
+import org.example.qlttngoaingu.mapper.CourseClassMapper;
 import org.example.qlttngoaingu.repository.*;
+import org.example.qlttngoaingu.specification.CourseClassSpec;
 import org.example.qlttngoaingu.utils.CustomSchedulePattern;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +37,28 @@ public class CourseClassService {
     private final CourseClassRepository classRepository;
     private final SessionRepository sessionRepository;
     private final ConflictCheckService conflictCheckService;
+    private final SmartScheduleSuggestionService smartScheduleSuggestionService;
+    private final CourseClassMapper  courseClassMapper;
+    @Transactional
+    public ScheduleSuggestionResponse changeStatus(Integer classId){
+
+        CourseClass courseClass = classRepository.getCourseClassByClassId((classId));
+        if(courseClass.getStatus())
+        {
+            courseClass.setStatus(false);
+            return null;
+        }
+        ScheduleCheckRequest createScheduleCheckRequest =  courseClassMapper.toScheduleCheckRequest(courseClass);
+        ScheduleSuggestionResponse scheduleSuggestionResponse =
+                smartScheduleSuggestionService .checkAndSuggest(createScheduleCheckRequest);
+        if(Objects.equals(scheduleSuggestionResponse.getStatus(), "AVAILABLE"))
+        {
+            courseClass.setStatus(true);
+            return null;
+        }
+
+        return scheduleSuggestionResponse;
+    }
 
     @Transactional
     public ClassCreationResponse createClass(ClassCreationRequest request) {
@@ -273,6 +299,19 @@ public class CourseClassService {
         response.setSchedulePatterns(schedules);
         response.setScheduleTimes(times);
         return response;
+    }
+
+    public List<ClassResponse.ClassInfo> filterClasses(Integer lecturerId, Integer roomId, Integer courseId) {
+
+        Specification<CourseClass> spec = Specification
+                .where(CourseClassSpec.hasLecturer(lecturerId))
+                .and(CourseClassSpec.hasRoom(roomId))
+                .and(CourseClassSpec.hasCourse(courseId));
+
+        return classRepository.findAll(spec)
+                .stream()
+                .map(courseClassMapper::toDto)
+                .toList();
     }
 
 }

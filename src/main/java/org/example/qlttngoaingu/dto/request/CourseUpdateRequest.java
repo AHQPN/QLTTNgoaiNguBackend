@@ -1,5 +1,6 @@
 package org.example.qlttngoaingu.dto.request;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -31,5 +32,7 @@ public class CourseUpdateRequest {
 
     private Integer studyHours;
 
-    private List<Integer> skillIds;
+    // Danh sách skill IDs - CourseService chỉ quan tâm thêm/xóa skill
+    private List<Integer> skillIdsToAdd;      // Skills cần thêm vào course
+    private List<Integer> skillIdsToRemove;   // Skills cần xóa khỏi course
 }

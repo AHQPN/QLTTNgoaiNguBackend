@@ -26,8 +26,8 @@ public class ModuleController {
     // Lấy danh sách module theo courseId
     // -------------------------------
     @GetMapping
-    public ResponseEntity<List<CourseSkill>> getModulesByCourseId(@RequestParam Integer courseId) {
-        List<CourseSkill> modules = moduleService.getmodules(courseId);
+    public ResponseEntity<List<Module>> getModulesByCourseId(@RequestParam Integer courseId) {
+        List<Module> modules = moduleService.getModulesByCourseId(courseId);
         return ResponseEntity.ok(modules);
     }
     @PostMapping({"/{id}"})

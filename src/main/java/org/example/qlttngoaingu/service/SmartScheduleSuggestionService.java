@@ -30,12 +30,11 @@ public class SmartScheduleSuggestionService {
      */
     public ScheduleSuggestionResponse checkAndSuggest(ScheduleCheckRequest request) {
         ScheduleSuggestionResponse response = new ScheduleSuggestionResponse();
-
         // 1. Kiểm tra với thông tin user nhập
         AvailabilityResult initialCheck = checkInitialAvailability(request);
         response.setInitialCheck(initialCheck);
 
-        if (initialCheck.getLecturerConflicts().isEmpty() && initialCheck.getRoomConflicts().isEmpty()) {
+        if (initialCheck.getLecturerConflicts().isEmpty() && initialCheck.getRoomConflicts().isEmpty() && initialCheck.isFullyAvailable()) {
             // TH1: Cả phòng và GV đều trống → OK
             response.setStatus("AVAILABLE");
             response.setMessage("Lịch học khả dụng! Vui lòng chọn phòng và giảng viên.");
