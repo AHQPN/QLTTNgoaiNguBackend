@@ -395,4 +395,84 @@ public class CourseClassService {
         return response;
     }
 
+    @Transactional
+    public ClassCreationResponse updateClass(Integer classId, ClassCreationRequest request) {
+
+        CourseClass cls = classRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Class not found"));
+
+        Course course = courseRepository.findById(request.getCourseId())
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+
+        Room room = roomRepository.findById(request.getRoomId())
+                .orElseThrow(() -> new RuntimeException("Room not found"));
+
+        Lecturer lecturer = null;
+        if (request.getLecturerId() != null) {
+            lecturer = lecturerRepository.findById(request.getLecturerId())
+                    .orElseThrow(() -> new RuntimeException("Lecturer not found"));
+        }
+
+        // Validate schedule pattern
+        CustomSchedulePattern pattern = new CustomSchedulePattern(request.getSchedule());
+
+        // ======== CHECK ROOM CONFLICT EXCEPT THIS CLASS ========
+        List<ConflictInfo> roomConflicts = conflictCheckService.checkRoomConflicts(
+                request.getRoomId(),
+                request.getSchedule(),
+                request.getStartTime(),
+                request.getMinutesPerSession(),
+                request.getStartDate(),
+                classId // bỏ qua conflict với chính nó
+        );
+        if (!roomConflicts.isEmpty()) {
+            throw new RuntimeException("Room conflict: " + roomConflicts.get(0).getDescription());
+        }
+
+        // ======== CHECK TEACHER CONFLICT EXCEPT THIS CLASS ========
+        if (lecturer != null) {
+            List<ConflictInfo> teacherConflicts = conflictCheckService.checkTeacherConflicts(
+                    request.getLecturerId(),
+                    request.getSchedule(),
+                    request.getStartTime(),
+                    request.getMinutesPerSession(),
+                    request.getStartDate(),
+                    classId
+            );
+            if (!teacherConflicts.isEmpty()) {
+                throw new RuntimeException("Lecturer conflict: " + teacherConflicts.get(0).getDescription());
+            }
+        }
+
+        // ======== UPDATE PROPERTIES ========
+        cls.setCourse(course);
+        cls.setRoom(room);
+        cls.setLecturer(lecturer);
+        cls.setClassName(request.getClassName());
+        cls.setSchedule(request.getSchedule());
+        cls.setStartTime(request.getStartTime());
+        cls.setMinutesPerSession(request.getMinutesPerSession());
+        cls.setStartDate(request.getStartDate());
+        cls.setNote(request.getNote());
+
+        // ======== REMOVE OLD SESSIONS ========
+        List<Session> oldSessions = sessionRepository.findByCourseClass_ClassIdOrderBySessionDate(classId);
+        sessionRepository.deleteAll(oldSessions);
+
+        // ======== GENERATE NEW SESSIONS ========
+        List<Session> newSessions = generateScheduleSessions(
+                cls,
+                course,
+                pattern,
+                request.getStartDate(),
+                request.getStartTime(),
+                request.getMinutesPerSession()
+        );
+
+        sessionRepository.saveAll(newSessions);
+
+        // ======== RETURN RESPONSE ========
+        return buildResponse(cls, course, room, lecturer, newSessions);
+    }
+
 }

@@ -109,7 +109,29 @@ public enum ErrorCode {
         INVALID_JWT_TOKEN(HttpStatus.UNAUTHORIZED, 8001, "Invalid JWT token"),
         EXPIRED_JWT_TOKEN(HttpStatus.UNAUTHORIZED, 8002, "JWT token is expired"),
         UNSUPPORT_TOKEN(HttpStatus.BAD_REQUEST, 8003, "JWT token is unsupported"),
-        JWT_CLAIMS_EMPTY(HttpStatus.BAD_REQUEST, 8004, "JWT claims string is empty");
+        JWT_CLAIMS_EMPTY(HttpStatus.BAD_REQUEST, 8004, "JWT claims string is empty"),
+
+        // MoMo Payment errors
+        MOMO_PAYMENT_CREATE_FAILED(HttpStatus.BAD_REQUEST, 13000, "Failed to create MoMo payment request"),
+        MOMO_PAYMENT_INVALID_AMOUNT(HttpStatus.BAD_REQUEST, 13001, "Invalid payment amount"),
+        MOMO_PAYMENT_NULL_RESPONSE(HttpStatus.INTERNAL_SERVER_ERROR, 13002, "Received null response from MoMo"),
+        MOMO_PAYMENT_NO_PAY_URL(HttpStatus.INTERNAL_SERVER_ERROR, 13003, "MoMo did not return payment URL"),
+        MOMO_PAYMENT_API_ERROR(HttpStatus.BAD_GATEWAY, 13004, "MoMo API error"),
+        MOMO_STATUS_CHECK_FAILED(HttpStatus.BAD_REQUEST, 13005, "Failed to check payment status"),
+        MOMO_INVALID_ORDER_ID(HttpStatus.BAD_REQUEST, 13006, "Invalid order ID"),
+        MOMO_SIGNATURE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 13007, "Failed to generate payment signature"),
+        MOMO_PAYMENT_PROCESSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 13008, "Error processing MoMo payment"),
+
+        // MoMo result codes (mapping từ MoMo API)
+        MOMO_RESULT_INVALID_SIGNATURE(HttpStatus.BAD_REQUEST, 13010, "Invalid payment signature"),
+        MOMO_RESULT_INSUFFICIENT_BALANCE(HttpStatus.BAD_REQUEST, 13011, "Insufficient balance"),
+        MOMO_RESULT_TRANSACTION_FAILED(HttpStatus.BAD_REQUEST, 13012, "Transaction failed"),
+        MOMO_RESULT_ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, 13013, "Order not found in MoMo system"),
+        MOMO_RESULT_ORDER_ALREADY_PAID(HttpStatus.CONFLICT, 13014, "Order has already been paid"),
+        MOMO_RESULT_TRANSACTION_EXPIRED(HttpStatus.GONE, 13015, "Transaction has expired");
+
+
+
 
         private final HttpStatus httpStatus;
         private final int code;

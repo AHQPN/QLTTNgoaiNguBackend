@@ -101,10 +101,12 @@ public class CourseClassController {
 
 
 
-    @PutMapping
-    public ResponseEntity<ApiResponse> updateCourseClass(@RequestBody ClassCreationRequest classCreationRequest)
+    @PutMapping("/{classId}")
+    public ResponseEntity<ApiResponse> updateCourseClass(@RequestBody ClassCreationRequest classCreationRequest,@PathVariable Integer classId)
     {
-        return ResponseEntity.ok().body(ApiResponse.builder().build());
+
+        ClassCreationResponse response =  courseClassService.updateClass(classId,classCreationRequest);
+        return ResponseEntity.ok().body(ApiResponse.builder().data(response).build());
     }
 
 
