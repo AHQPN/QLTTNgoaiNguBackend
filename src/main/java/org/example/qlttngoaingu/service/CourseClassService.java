@@ -307,18 +307,25 @@ public class CourseClassService {
         return response;
     }
 
-    public List<ClassResponse.ClassInfo> filterClasses(Integer lecturerId, Integer roomId, Integer courseId) {
+    public List<ClassResponse.ClassInfo> filterClasses(
+            Integer lecturerId,
+            Integer roomId,
+            Integer courseId,
+            String className
+    ) {
 
         Specification<CourseClass> spec = Specification
                 .where(CourseClassSpec.hasLecturer(lecturerId))
                 .and(CourseClassSpec.hasRoom(roomId))
-                .and(CourseClassSpec.hasCourse(courseId));
+                .and(CourseClassSpec.hasCourse(courseId))
+                .and(CourseClassSpec.hasClassName(className)); // <--- thêm vào
 
         return classRepository.findAll(spec)
                 .stream()
                 .map(courseClassMapper::toDto)
                 .toList();
     }
+
 
     public WeeklyScheduleResponse getWeeklySchedule(
             Integer lecturerId,

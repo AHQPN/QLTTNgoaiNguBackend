@@ -58,11 +58,12 @@ public class CourseClassController {
             @RequestParam(required = false) Integer lecturerId,
             @RequestParam(required = false) Integer roomId,
             @RequestParam(required = false) Integer courseId,
+            @RequestParam(required = false) String className,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         List<ClassResponse.ClassInfo> filteredList =
-                courseClassService.filterClasses(lecturerId, roomId, courseId);
+                courseClassService.filterClasses(lecturerId, roomId, courseId, className);
 
         int totalItems = filteredList.size();
         int totalPages = (int) Math.ceil((double) totalItems / size);
@@ -98,6 +99,8 @@ public class CourseClassController {
 
         return ResponseEntity.ok().body(ApiResponse.builder().data(weeklyScheduleResponse).build());
     }
+
+
 
 
 
