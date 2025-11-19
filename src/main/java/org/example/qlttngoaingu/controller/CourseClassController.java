@@ -2,18 +2,18 @@ package org.example.qlttngoaingu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.qlttngoaingu.dto.request.ClassCreationRequest;
-import org.example.qlttngoaingu.dto.response.ApiResponse;
-import org.example.qlttngoaingu.dto.response.ClassCreationResponse;
-import org.example.qlttngoaingu.dto.response.ClassResponse;
-import org.example.qlttngoaingu.dto.response.ScheduleSuggestionResponse;
+import org.example.qlttngoaingu.dto.response.*;
 import org.example.qlttngoaingu.entity.CourseClass;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.service.CourseClassService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.*;
 
 @RestController
@@ -58,11 +58,12 @@ public class CourseClassController {
             @RequestParam(required = false) Integer lecturerId,
             @RequestParam(required = false) Integer roomId,
             @RequestParam(required = false) Integer courseId,
+            @RequestParam(required = false) String className,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         List<ClassResponse.ClassInfo> filteredList =
-                courseClassService.filterClasses(lecturerId, roomId, courseId);
+                courseClassService.filterClasses(lecturerId, roomId, courseId, className);
 
         int totalItems = filteredList.size();
         int totalPages = (int) Math.ceil((double) totalItems / size);
@@ -87,12 +88,28 @@ public class CourseClassController {
         return res;
     }
 
+    @GetMapping("/schedule-by-week")
+    public ResponseEntity<ApiResponse> getWeeklySchedule(
+            @RequestParam(required = false) Integer lecturerId,
+            @RequestParam(required = false) Integer roomId,
+            @RequestParam(required = false) Integer courseId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        WeeklyScheduleResponse weeklyScheduleResponse =courseClassService.getWeeklySchedule(lecturerId, roomId, courseId, date);
+
+        return ResponseEntity.ok().body(ApiResponse.builder().data(weeklyScheduleResponse).build());
+    }
 
 
-    @PutMapping
-    public ResponseEntity<ApiResponse> updateCourseClass(@RequestBody ClassCreationRequest classCreationRequest)
+
+
+
+    @PutMapping("/{classId}")
+    public ResponseEntity<ApiResponse> updateCourseClass(@RequestBody ClassCreationRequest classCreationRequest,@PathVariable Integer classId)
     {
-        return ResponseEntity.ok().body(ApiResponse.builder().build());
+
+        ClassCreationResponse response =  courseClassService.updateClass(classId,classCreationRequest);
+        return ResponseEntity.ok().body(ApiResponse.builder().data(response).build());
     }
 
 

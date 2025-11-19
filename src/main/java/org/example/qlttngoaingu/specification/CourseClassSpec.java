@@ -21,4 +21,14 @@ public class CourseClassSpec {
                 courseId == null ? null :
                         builder.equal(root.get("course").get("courseId"), courseId);
     }
+
+    public static Specification<CourseClass> hasClassName(String className) {
+        return (root, query, cb) -> {
+            if (className == null || className.trim().isEmpty()) {
+                return cb.conjunction();
+            }
+            return cb.like(cb.lower(root.get("className")), "%" + className.toLowerCase() + "%");
+        };
+    }
+
 }
