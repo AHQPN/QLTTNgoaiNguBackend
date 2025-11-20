@@ -14,6 +14,7 @@ public class ClassDetailResponse {
     private String schedulePattern; // "2-4-6", "3-5-7", etc.
     private LocalTime startTime;
     private LocalTime endTime;
+    private Integer minutePerSession;
     private LocalDate startDate;
     private LocalDate endDate;
     private String roomName;
