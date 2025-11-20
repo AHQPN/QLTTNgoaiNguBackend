@@ -322,7 +322,23 @@ public class CourseClassService {
 
         return classRepository.findAll(spec)
                 .stream()
-                .map(courseClassMapper::toDto)
+                .map(cls -> {
+                    ClassResponse.ClassInfo info = courseClassMapper.toDto(cls);
+
+                    // Lấy danh sách session của lớp
+                    List<Session> sessions =
+                            sessionRepository.findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId());
+
+                    if (!sessions.isEmpty()) {
+                        info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
+                    }
+
+                    // Set thời gian
+                    info.setStartTime(cls.getStartTime());
+                    info.setEndTime(cls.getStartTime().plusMinutes(cls.getMinutesPerSession()));
+
+                    return info;
+                })
                 .toList();
     }
 

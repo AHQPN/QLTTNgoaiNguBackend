@@ -16,7 +16,7 @@ public class ScheduleCheckRequest {
     private Integer preferredRoomId;
     private Integer preferredLecturerId;
 
-    // Tạo bản copy để test các alternatives
+
     public ScheduleCheckRequest copy() {
         ScheduleCheckRequest copy = new ScheduleCheckRequest();
         copy.setCourseId(this.courseId);

@@ -142,7 +142,7 @@ public class ScheduleSuggestionController {
     }
 }
 
-// Simple response DTO
+
 @Data
 class QuickCheckResponse {
     private boolean available;

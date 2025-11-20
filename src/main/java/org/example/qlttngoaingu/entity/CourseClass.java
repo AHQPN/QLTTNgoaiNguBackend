@@ -43,7 +43,7 @@ public class CourseClass {
     @Column(name = "lich", length = 100)
     private String schedule;
 
-    // --- Many-to-One Relationship with Lecturer (magiangvien) ---
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "magiangvien", referencedColumnName = "magv")
     private Lecturer lecturer;
