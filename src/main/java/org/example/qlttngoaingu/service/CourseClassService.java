@@ -222,6 +222,7 @@ public class CourseClassService {
         response.setStartTime(cls.getStartTime());
         response.setEndTime(cls.getStartTime().plusMinutes(cls.getMinutesPerSession()));
         response.setStartDate(cls.getStartDate());
+        response.setMinutePerSession(cls.getMinutesPerSession());
 
         // Tính endDate dựa trên các buổi học
         List<Session> sessions = sessionRepository.findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId());
@@ -318,11 +319,26 @@ public class CourseClassService {
                 .where(CourseClassSpec.hasLecturer(lecturerId))
                 .and(CourseClassSpec.hasRoom(roomId))
                 .and(CourseClassSpec.hasCourse(courseId))
-                .and(CourseClassSpec.hasClassName(className)); // <--- thêm vào
-
+                .and(CourseClassSpec.hasClassName(className));
         return classRepository.findAll(spec)
                 .stream()
-                .map(courseClassMapper::toDto)
+                .map(cls -> {
+                    ClassResponse.ClassInfo info = courseClassMapper.toDto(cls);
+
+                    // Lấy danh sách session của lớp
+                    List<Session> sessions =
+                            sessionRepository.findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId());
+
+                    if (!sessions.isEmpty()) {
+                        info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
+                    }
+
+                    // Set thời gian
+                    info.setStartTime(cls.getStartTime());
+                    info.setEndTime(cls.getStartTime().plusMinutes(cls.getMinutesPerSession()));
+
+                    return info;
+                })
                 .toList();
     }
 

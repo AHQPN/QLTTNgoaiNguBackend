@@ -32,7 +32,7 @@ public class CourseUpdateRequest {
 
     private Integer studyHours;
 
-    // Danh sách skill IDs - CourseService chỉ quan tâm thêm/xóa skill
-    private List<Integer> skillIdsToAdd;      // Skills cần thêm vào course
-    private List<Integer> skillIdsToRemove;   // Skills cần xóa khỏi course
+
+    private List<Integer> skillIdsToAdd;
+    private List<Integer> skillIdsToRemove;
 }

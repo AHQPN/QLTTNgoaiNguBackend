@@ -22,9 +22,7 @@ public class ModuleController {
         this.moduleService = moduleService;
     }
 
-    // -------------------------------
-    // Lấy danh sách module theo courseId
-    // -------------------------------
+
     @GetMapping
     public ResponseEntity<List<Module>> getModulesByCourseId(@RequestParam Integer courseId) {
         List<Module> modules = moduleService.getModulesByCourseId(courseId);
@@ -48,9 +46,7 @@ public class ModuleController {
         return ResponseEntity.ok().body(ApiResponse.builder().message("Module updated successfully").build());
     }
 
-    // -------------------------------
-    // Xóa module
-    // -------------------------------
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteModule(@PathVariable Integer id) {
