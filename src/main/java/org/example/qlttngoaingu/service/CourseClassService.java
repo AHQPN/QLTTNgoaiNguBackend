@@ -43,6 +43,7 @@ public class CourseClassService {
     private final SmartScheduleSuggestionService smartScheduleSuggestionService;
     private final SessionMapper sessionMapper;
     private final CourseClassMapper  courseClassMapper;
+    private final InvoiceDetailRepository invoiceDetailRepository;
 
     private final List<String> periods = List.of("Sáng", "Chiều", "Tối");
     @Transactional
@@ -244,9 +245,34 @@ public class CourseClassService {
                     return info;
                 })
                 .toList();
+        List<Student> studentEntities = invoiceDetailRepository.findStudentsByClassId(classId);
 
+        List<ClassDetailResponse.StudentInClass> studentList = studentEntities.stream()
+                .map(s -> {
+                    ClassDetailResponse.StudentInClass dto = new ClassDetailResponse.StudentInClass();
+
+                    // Map từ Entity Student
+                    dto.setStudentId(s.getId());
+                    dto.setFullName(s.getName());
+                    dto.setAvatar(s.getAvatar());
+                    dto.setGender(s.getGender());
+
+
+                    if (s.getAccount() != null) {
+                        dto.setEmail(s.getAccount().getEmail());
+                        dto.setPhone(s.getAccount().getPhoneNumber());
+                    }
+
+                    return dto;
+                })
+                .toList();
+        response.setStudents(studentList);
         response.setSessions(sessionInfos);
+        response.setMaxCapacity(cls.getRoom().getCapacity());
+        Integer enrollmentCount = invoiceDetailRepository.countByClassIdAndActiveInvoice(classId);
 
+
+        response.setCurrentEnrollment(enrollmentCount);
         return response;
     }
 
@@ -268,10 +294,16 @@ public class CourseClassService {
             info.setInstructorName(cls.getLecturer() != null ? cls.getLecturer().getFullName() : null);
             info.setStartDate(cls.getStartDate());
 
+
             List<Session> sessions = sessionRepository.findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId());
             if (!sessions.isEmpty()) {
                 info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
             }
+            info.setMaxCapacity(cls.getRoom().getCapacity());
+            Integer enrollmentCount = invoiceDetailRepository.countByClassIdAndActiveInvoice(cls.getClassId());
+
+
+            info.setCurrentEnrollment(enrollmentCount);
 
             info.setStartTime(cls.getStartTime());
             info.setEndTime(cls.getStartTime().plusMinutes(cls.getMinutesPerSession()));

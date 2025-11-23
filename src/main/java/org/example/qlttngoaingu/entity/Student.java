@@ -25,8 +25,8 @@ public class Student {
     @Column(name = "ngaysinh")
     private LocalDate ngaySinh;
 
-    @Column(name = "gioitinh", length = 10)
-    private String gender;
+    @Column(name = "gioitinh")
+    private Boolean gender;
 
     @Column(name = "diachi", length = 255)
     private String address;
@@ -39,9 +39,5 @@ public class Student {
 
     @Column(name = "anhdaidien", length = 255)
     private String avatar;
-
-    @Column(name = "trinhdotienganh", length = 50)
-    private String trinhDoTiengAnh;
-
 
 }

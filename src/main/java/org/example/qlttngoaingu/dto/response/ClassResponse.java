@@ -26,5 +26,7 @@ public class ClassResponse {
         private LocalTime endTime;
         private String schedulePattern;
         private Boolean status;
+        private Integer maxCapacity;
+        private Integer currentEnrollment;
     }
 }

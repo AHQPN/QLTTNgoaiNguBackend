@@ -1,11 +1,11 @@
 package org.example.qlttngoaingu.entity;
 
-
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime; // Dùng cái này thay vì LocalDate
 import java.util.List;
 
 @Entity
@@ -18,23 +18,28 @@ public class Invoice {
     @Column(name = "mahoadon")
     private Integer invoiceId;
 
-    @Column(name = "ngaylap")
-    private LocalDate dateCreated;
 
-    @Column(name = "tongtiensp", precision = 15, scale = 2)
+    @Column(name = "ngaytao")
+    private LocalDateTime dateCreated;
+
+    @Column(name = "tongtien", precision = 15, scale = 2)
     private BigDecimal totalAmount;
 
-    @Column(name = "trangthai", length = 50)
-    private String status;
 
-    @Column(name = "phuongthuctt", length = 100)
-    private String paymentMethod;
+    @Column(name = "trangthai")
+    private Boolean status;
+
 
     @ManyToOne
-    @JoinColumn(name="mahocvien")
+    @JoinColumn(name = "phuongthuc_id")
+    private PaymentMethod paymentMethod;
+
+    @ManyToOne
+    @JoinColumn(name = "mahocvien")
     private Student student;
 
-    // ---- One-to-Many: 1 hóa đơn có nhiều dòng chi tiết ----
+
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude // Tránh vòng lặp vô hạn khi log
     private List<InvoiceDetail> details;
 }

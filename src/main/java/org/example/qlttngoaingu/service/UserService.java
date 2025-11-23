@@ -13,6 +13,7 @@ import org.example.qlttngoaingu.entity.User;
 import org.example.qlttngoaingu.entity.VerificationCode;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
+import org.example.qlttngoaingu.mapper.StudentMapper;
 import org.example.qlttngoaingu.repository.LecturerRepository;
 import org.example.qlttngoaingu.repository.StudentRepository;
 import org.example.qlttngoaingu.repository.UserRepository;
@@ -40,6 +41,7 @@ public class UserService {
     private final JavaMailSender mailSender;
     private final LecturerRepository lecturerRepository;
     private final StudentRepository studentRepository;
+    private final StudentMapper studentMapper;
     LecturerService lecturerService;
     @Transactional
     public User createUser(SignupRequest signupRequest, RoleEnum userType, Boolean sendVerification, String siteURL) {
@@ -217,8 +219,19 @@ public class UserService {
 
 
     public StudentInfo getStudentInfo(Integer id) {
-        StudentInfo studentInfo = new StudentInfo();
-        return studentInfo;
+        User usr = userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        if(usr.getRole().equals(RoleEnum.STUDENT.name())) {
+            Student student = studentRepository.findByAccount_UserId(usr.getUserId()).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+
+
+            StudentInfo studentInfo = studentMapper.toStudentInfo(student);
+
+
+            return studentInfo;
+        }
+        return null;
+
     }
 
     public NameAndEmail getStudentEmailAndName(Integer id) {
@@ -226,6 +239,7 @@ public class UserService {
         NameAndEmail nameAndEmail = new NameAndEmail();
         Student student = studentRepository.getStudentByAccount_UserId(user.getUserId());
         nameAndEmail.setName(student.getName());
+        nameAndEmail.setEmail(user.getEmail());
         return nameAndEmail;
     }
 

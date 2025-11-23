@@ -18,11 +18,11 @@ public class InvoiceDetail {
 
     // ---- Many-to-One: thuộc hóa đơn nào ----
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "mahoadon", referencedColumnName = "mahoadon")
+    @JoinColumn(name = "hoadon_id", referencedColumnName = "mahoadon")
     private Invoice invoice;
 
     // Số tiền / học phí dòng này
-    @Column(name = "sotien", precision = 15, scale = 2)
+    @Column(name = "giaban", precision = 15, scale = 2)
     private BigDecimal amount;
 
     // ---- Many-to-One: lớp học mà học viên đăng ký ----

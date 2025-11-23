@@ -21,4 +21,5 @@ public class CourseDetailResponse {
     private String level;
     private List<Objective> objectives;
     private List<Module> modules;
+    private List<ClassResponse.ClassInfo> classInfos;
 }

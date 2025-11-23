@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.qlttngoaingu.client.MomoHttpClient;
 import org.example.qlttngoaingu.config.MomoConfig;
+import org.example.qlttngoaingu.dto.request.MomoIPNRequest;
 import org.example.qlttngoaingu.dto.request.MomoPaymentRequest;
 import org.example.qlttngoaingu.dto.request.MomoStatusCheckRequest;
 import org.example.qlttngoaingu.dto.response.MomoCheckStatusResponse;
@@ -11,6 +12,7 @@ import org.example.qlttngoaingu.dto.response.MomoCreatePaymentResponse;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.factory.MomoRequestFactory;
+import org.example.qlttngoaingu.utils.MomoSignatureUtil;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -165,5 +167,125 @@ public class MomoService {
             case 1007 -> ErrorCode.MOMO_RESULT_TRANSACTION_EXPIRED;
             default -> ErrorCode.MOMO_PAYMENT_API_ERROR;
         };
+    }
+
+    /**
+     * Xử lý IPN notification từ MoMo
+     */
+    public void processIPNNotification(MomoIPNRequest request) {
+        log.info("Processing IPN for orderId: {}, resultCode: {}",
+                request.getOrderId(), request.getResultCode());
+
+        // 1. Verify signature để đảm bảo request từ MoMo
+        if (!verifyIPNSignature(request)) {
+            log.error("Invalid IPN signature for orderId: {}", request.getOrderId());
+            throw new AppException(ErrorCode.MOMO_RESULT_INVALID_SIGNATURE);
+        }
+
+        // 2. Kiểm tra result code
+        if (request.getResultCode() == 0) {
+            // Thanh toán thành công
+            handleSuccessfulPayment(request);
+        } else {
+            // Thanh toán thất bại
+            handleFailedPayment(request);
+        }
+    }
+
+    /**
+     * Xử lý khi thanh toán thành công
+     */
+    private void handleSuccessfulPayment(MomoIPNRequest request) {
+        log.info("Payment successful for orderId: {}, transId: {}",
+                request.getOrderId(), request.getTransId());
+
+        try {
+            // TODO: Cập nhật trạng thái order trong database
+            // orderService.updateOrderStatus(request.getOrderId(), OrderStatus.PAID);
+
+            // TODO: Gửi email/notification cho user
+            // emailService.sendPaymentSuccessEmail(request.getOrderId());
+
+            // TODO: Kích hoạt khóa học/dịch vụ cho user
+            // courseService.activateCourse(request.getOrderId());
+
+            log.info("Order {} has been updated to PAID status", request.getOrderId());
+
+        } catch (Exception e) {
+            log.error("Error updating order status for orderId: {}", request.getOrderId(), e);
+            // Không throw exception vì đã nhận được tiền rồi
+            // Sẽ có job retry sau
+        }
+    }
+
+    /**
+     * Xử lý khi thanh toán thất bại
+     */
+    private void handleFailedPayment(MomoIPNRequest request) {
+        log.warn("Payment failed for orderId: {}, resultCode: {}, message: {}",
+                request.getOrderId(), request.getResultCode(), request.getMessage());
+
+        try {
+            // TODO: Cập nhật trạng thái order thành FAILED
+            // orderService.updateOrderStatus(request.getOrderId(), OrderStatus.FAILED);
+
+            // TODO: Gửi thông báo cho user
+            // emailService.sendPaymentFailedEmail(request.getOrderId());
+
+        } catch (Exception e) {
+            log.error("Error updating failed order: {}", request.getOrderId(), e);
+        }
+    }
+
+    /**
+     * Verify chữ ký IPN từ MoMo
+     */
+    private boolean verifyIPNSignature(MomoIPNRequest request) {
+        try {
+            // Build raw signature theo format của MoMo
+            String rawSignature = buildIPNRawSignature(request);
+
+            // Generate signature
+            String expectedSignature = MomoSignatureUtil.signHmacSHA256(
+                    rawSignature,
+                    momoConfig.getSecretKey()
+            );
+
+            // So sánh với signature từ MoMo
+            boolean isValid = expectedSignature.equals(request.getSignature());
+
+            if (!isValid) {
+                log.error("Signature mismatch. Expected: {}, Got: {}",
+                        expectedSignature, request.getSignature());
+            }
+
+            return isValid;
+
+        } catch (Exception e) {
+            log.error("Error verifying IPN signature", e);
+            return false;
+        }
+    }
+
+    /**
+     * Build raw signature cho IPN verification
+     */
+    private String buildIPNRawSignature(MomoIPNRequest request) {
+        return String.format(
+                "accessKey=%s&amount=%d&extraData=%s&message=%s&orderId=%s&orderInfo=%s&orderType=%s&partnerCode=%s&payType=%s&requestId=%s&responseTime=%d&resultCode=%d&transId=%d",
+                momoConfig.getAccessKey(),
+                request.getAmount(),
+                request.getExtraData() != null ? request.getExtraData() : "",
+                request.getMessage(),
+                request.getOrderId(),
+                request.getOrderInfo(),
+                request.getOrderType(),
+                request.getPartnerCode(),
+                request.getPayType(),
+                request.getRequestId(),
+                request.getResponseTime(),
+                request.getResultCode(),
+                request.getTransId()
+        );
     }
 }
