@@ -4,6 +4,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.example.qlttngoaingu.dto.request.LecturerCreationRequest;
 import org.example.qlttngoaingu.dto.request.SignupRequest;
+import org.example.qlttngoaingu.dto.request.StudentSignupRequest;
 import org.example.qlttngoaingu.dto.response.ApiResponse;
 import org.example.qlttngoaingu.dto.response.NameAndEmail;
 import org.example.qlttngoaingu.dto.response.StudentInfo;
@@ -69,6 +70,25 @@ public class UserService {
         }
 
         return user;
+    }
+    @Transactional
+    public StudentInfo signUpForStudent(StudentSignupRequest studentSignupRequest,RoleEnum role,Boolean sendVerification, String siteURL)
+    {
+        SignupRequest signupRequest = new SignupRequest();
+        signupRequest.setPhoneNumber(studentSignupRequest.getPhoneNumber());
+        signupRequest.setEmail(studentSignupRequest.getEmail());
+        signupRequest.setPassword(studentSignupRequest.getPassword());
+        User usr = createUser(signupRequest,role,sendVerification,siteURL);
+        Student student = new Student();
+        student.setAccount(usr);
+        student.setName(studentSignupRequest.getName());
+        student.setAddress(studentSignupRequest.getAddress());
+        student.setGender(studentSignupRequest.getGender());
+        student.setNgaySinh(studentSignupRequest.getNgaySinh());
+        student.setJob(studentSignupRequest.getJob());
+
+        student = studentRepository.save(student);
+        return studentMapper.toStudentInfo(student);
     }
 
     public Optional<User> getUserByIdentifier(String identifier) {

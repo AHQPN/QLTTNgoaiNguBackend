@@ -6,8 +6,10 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.example.qlttngoaingu.dto.request.LoginRequest;
 import org.example.qlttngoaingu.dto.request.SignupRequest;
+import org.example.qlttngoaingu.dto.request.StudentSignupRequest;
 import org.example.qlttngoaingu.dto.response.ApiResponse;
 import org.example.qlttngoaingu.dto.response.LoginResponse;
+import org.example.qlttngoaingu.dto.response.StudentInfo;
 import org.example.qlttngoaingu.dto.response.TokenRefreshResponse;
 import org.example.qlttngoaingu.entity.RefreshToken;
 import org.example.qlttngoaingu.entity.User;
@@ -82,10 +84,10 @@ public class AuthController {
 
     // ===== SIGNUP =====
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse> signup(@Valid @RequestBody SignupRequest signUpRequest, HttpServletRequest request, @Value("${APP_SITE_URL}") String siteUrl) {
+    public ResponseEntity<ApiResponse> signup(@Valid @RequestBody StudentSignupRequest studentSignupRequest, HttpServletRequest request, @Value("${APP_SITE_URL}") String siteUrl) {
 
         RoleEnum role = RoleEnum.STUDENT;
-        User user = userService.createUser(signUpRequest,role, true, siteUrl);
+        StudentInfo user = userService.signUpForStudent(studentSignupRequest,role, true, siteUrl);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.builder()
