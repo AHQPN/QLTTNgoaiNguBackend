@@ -107,6 +107,7 @@ public class CourseCategoryService {
         dto.setEntryLevel(course.getEntryLevel());
         dto.setTargetLevel(course.getTargetLevel());
         dto.setDescription(course.getDescription());
+        dto.setStudyHours(course.getStudyHours());
         dto.setImage(course.getImage());
 
         return dto;

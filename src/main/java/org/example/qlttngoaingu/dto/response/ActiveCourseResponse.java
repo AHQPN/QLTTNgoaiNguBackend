@@ -16,7 +16,7 @@ public class ActiveCourseResponse {
     private String entryLevel;
     private String targetLevel;
     private String description;
-    private String studyHours;
+    private Integer studyHours;
     private ClassScheduleResponse classScheduleResponse;
     private String image;
     private List<Objective> objectives;
