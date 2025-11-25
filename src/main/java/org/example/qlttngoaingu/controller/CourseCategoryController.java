@@ -3,6 +3,7 @@ package org.example.qlttngoaingu.controller;
 import lombok.RequiredArgsConstructor;
 import org.example.qlttngoaingu.dto.request.CourseCategoryRequest;
 import org.example.qlttngoaingu.dto.response.CourseCategoryResponse;
+import org.example.qlttngoaingu.dto.response.CourseGroupResponse;
 import org.example.qlttngoaingu.service.CourseCategoryService;
 import org.example.qlttngoaingu.service.CourseCategoryService;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +40,7 @@ public class CourseCategoryController {
 
     //  4. Get detail by ID
     @GetMapping("/{id}")
-    public ResponseEntity<CourseCategoryResponse> getById(@PathVariable Integer id) {
+    public ResponseEntity<CourseGroupResponse> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(courseCategoryService.getById(id));
     }
 }
