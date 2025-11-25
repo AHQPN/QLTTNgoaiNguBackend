@@ -48,6 +48,6 @@ public interface CourseClassRepository extends JpaRepository<CourseClass, Intege
     CourseClass getCourseClassByClassId(Integer classId);
 
 
-
+    List<CourseClass> findByCourse_CourseId(Integer courseId);
 }
 

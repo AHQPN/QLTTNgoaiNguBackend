@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0
+      author: admin
+      changes:
+        - modifyDataType:
+            tableName: hocvien
+            columnName: gioitinh
+            newDataType: bit

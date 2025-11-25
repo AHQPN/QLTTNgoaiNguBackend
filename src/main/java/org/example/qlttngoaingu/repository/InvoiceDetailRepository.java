@@ -1,0 +1,28 @@
+package org.example.qlttngoaingu.repository;
+
+import org.example.qlttngoaingu.entity.InvoiceDetail;
+import org.example.qlttngoaingu.entity.Student;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface InvoiceDetailRepository extends JpaRepository<InvoiceDetail, Integer> {
+
+    // Đếm số lượng InvoiceDetail thuộc về lớp học này mà Hóa đơn cha có status = true
+    @Query("SELECT COUNT(d) FROM InvoiceDetail d " +
+            "WHERE d.courseClass.classId = :classId " +
+            "AND d.invoice.status = true")
+    Integer countByClassIdAndActiveInvoice(@Param("classId") Integer classId);
+
+    @Query("SELECT DISTINCT s FROM InvoiceDetail d " +
+            "JOIN d.invoice i " +
+            "JOIN i.student s " +
+            "LEFT JOIN FETCH s.account " + // Eager fetch account để lấy email/phone
+            "WHERE d.courseClass.classId = :classId " +
+            "AND i.status = true")
+    List<Student> findStudentsByClassId(@Param("classId") Integer classId);
+}

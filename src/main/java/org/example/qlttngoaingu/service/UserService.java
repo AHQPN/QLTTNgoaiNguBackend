@@ -4,6 +4,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.example.qlttngoaingu.dto.request.LecturerCreationRequest;
 import org.example.qlttngoaingu.dto.request.SignupRequest;
+import org.example.qlttngoaingu.dto.request.StudentSignupRequest;
 import org.example.qlttngoaingu.dto.response.ApiResponse;
 import org.example.qlttngoaingu.dto.response.NameAndEmail;
 import org.example.qlttngoaingu.dto.response.StudentInfo;
@@ -13,6 +14,7 @@ import org.example.qlttngoaingu.entity.User;
 import org.example.qlttngoaingu.entity.VerificationCode;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
+import org.example.qlttngoaingu.mapper.StudentMapper;
 import org.example.qlttngoaingu.repository.LecturerRepository;
 import org.example.qlttngoaingu.repository.StudentRepository;
 import org.example.qlttngoaingu.repository.UserRepository;
@@ -40,6 +42,7 @@ public class UserService {
     private final JavaMailSender mailSender;
     private final LecturerRepository lecturerRepository;
     private final StudentRepository studentRepository;
+    private final StudentMapper studentMapper;
     LecturerService lecturerService;
     @Transactional
     public User createUser(SignupRequest signupRequest, RoleEnum userType, Boolean sendVerification, String siteURL) {
@@ -67,6 +70,25 @@ public class UserService {
         }
 
         return user;
+    }
+    @Transactional
+    public StudentInfo signUpForStudent(StudentSignupRequest studentSignupRequest,RoleEnum role,Boolean sendVerification, String siteURL)
+    {
+        SignupRequest signupRequest = new SignupRequest();
+        signupRequest.setPhoneNumber(studentSignupRequest.getPhoneNumber());
+        signupRequest.setEmail(studentSignupRequest.getEmail());
+        signupRequest.setPassword(studentSignupRequest.getPassword());
+        User usr = createUser(signupRequest,role,sendVerification,siteURL);
+        Student student = new Student();
+        student.setAccount(usr);
+        student.setName(studentSignupRequest.getName());
+        student.setAddress(studentSignupRequest.getAddress());
+        student.setGender(studentSignupRequest.getGender());
+        student.setNgaySinh(studentSignupRequest.getNgaySinh());
+        student.setJob(studentSignupRequest.getJob());
+
+        student = studentRepository.save(student);
+        return studentMapper.toStudentInfo(student);
     }
 
     public Optional<User> getUserByIdentifier(String identifier) {
@@ -217,8 +239,19 @@ public class UserService {
 
 
     public StudentInfo getStudentInfo(Integer id) {
-        StudentInfo studentInfo = new StudentInfo();
-        return studentInfo;
+        User usr = userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        if(usr.getRole().equals(RoleEnum.STUDENT.name())) {
+            Student student = studentRepository.findByAccount_UserId(usr.getUserId()).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+
+
+            StudentInfo studentInfo = studentMapper.toStudentInfo(student);
+
+
+            return studentInfo;
+        }
+        return null;
+
     }
 
     public NameAndEmail getStudentEmailAndName(Integer id) {
@@ -226,6 +259,7 @@ public class UserService {
         NameAndEmail nameAndEmail = new NameAndEmail();
         Student student = studentRepository.getStudentByAccount_UserId(user.getUserId());
         nameAndEmail.setName(student.getName());
+        nameAndEmail.setEmail(user.getEmail());
         return nameAndEmail;
     }
 

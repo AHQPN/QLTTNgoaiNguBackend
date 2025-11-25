@@ -1,0 +1,200 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: you
+      changes:
+        - createTable:
+            tableName: loaikhuyenmai
+            columns:
+              - column:
+                  name: maloaikm
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: ten
+                  type: VARCHAR(255)
+              - column:
+                  name: mota
+                  type: VARCHAR(500)
+
+  - changeSet:
+      id: 2
+      author: you
+      changes:
+        - createTable:
+            tableName: khuyenmai
+            columns:
+              - column:
+                  name: makm
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: ten
+                  type: NVARCHAR(255)
+              - column:
+                  name: phantramgiam
+                  type: INT
+              - column:
+                  name: ngaybatdau
+                  type: DATE
+              - column:
+                  name: ngayketthuc
+                  type: DATE
+              - column:
+                  name: loaikhuyenmai
+                  type: INT
+                  constraints:
+                    foreignKeyName: fk_km_lkm
+                    referencedTableName: loaikhuyenmai
+                    referencedColumnNames: maloaikm
+
+  - changeSet:
+      id: 3
+      author: phucnguyen
+      changes:
+        - createTable:
+            tableName: phuongthucthanhtoan
+            columns:
+              - column:
+                  name: mapt
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: ten
+                  type: NVARCHAR(255)
+
+  - changeSet:
+      id: 4
+      author: you
+      changes:
+        - createTable:
+            tableName: hoadon
+            columns:
+              - column:
+                  name: mahoadon
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: mahocvien
+                  type: INT
+                  constraints:
+                    foreignKeyName: fk_hd_hv
+                    referencedTableName: hocvien
+                    referencedColumnNames: mahocvien
+              - column:
+                  name: tongtien
+                  type: DECIMAL(15,2)
+              - column:
+                  name: ngaytao
+                  type: TIMESTAMP
+              - column:
+                  name: phuongthuc_id
+                  type: INT
+                  constraints:
+                    foreignKeyName: fk_hd_pttt
+                    referencedTableName: phuongthucthanhtoan
+                    referencedColumnNames: mapt
+
+  - changeSet:
+      id: 5
+      author: you
+      changes:
+        - createTable:
+            tableName: chitiethoadon
+            columns:
+              - column:
+                  name: macthd
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: hoadon_id
+                  type: INT
+                  constraints:
+                    foreignKeyName: fk_cthd_hd
+                    referencedTableName: hoadon
+                    referencedColumnNames: mahoadon
+              - column:
+                  name: malophoc
+                  type: INT
+                  constraints:
+                    foreignKeyName: fk_cthd_kh
+                    referencedTableName: lop
+                    referencedColumnNames: malop
+              - column:
+                  name: giaban
+                  type: DECIMAL(15,2)
+
+  - changeSet:
+      id: 6
+      author: you
+      changes:
+        - createTable:
+            tableName: chitietkhuyenmai
+            columns:
+              - column:
+                  name: machitietkm
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: khuyenmai_id
+                  type: INT
+                  constraints:
+                    foreignKeyName: fk_ctkm_km
+                    referencedTableName: khuyenmai
+                    referencedColumnNames: makm
+              - column:
+                  name: khoahoc_id
+                  type: INT
+                  constraints:
+                    foreignKeyName: fk_ctkm_kh
+                    referencedTableName: khoahoc
+                    referencedColumnNames: makhoahoc
+              - column:
+                  name: giamsotien
+                  type: DECIMAL(15,2)
+
+  - changeSet:
+      id: 7
+      author: you
+      changes:
+        - createTable:
+            tableName: diemdanh
+            columns:
+              - column:
+                  name: madiemdanh
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: mahocvien
+                  type: INT
+                  constraints:
+                    foreignKeyName: fk_dd_hv
+                    referencedTableName: hocvien
+                    referencedColumnNames: mahocvien
+              - column:
+                  name: mabuoihoc
+                  type: INT
+                  constraints:
+                    foreignKeyName: fk_dd_bh
+                    referencedTableName: buoihoc
+                    referencedColumnNames: mabuoihoc
+              - column:
+                  name: vang
+                  type: bit
+              - column:
+                  name: ghichu
+                  type: nvarchar(200)

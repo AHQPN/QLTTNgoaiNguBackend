@@ -7,14 +7,11 @@ import org.example.qlttngoaingu.dto.request.ModuleRequest;
 import org.example.qlttngoaingu.dto.response.*;
 import org.example.qlttngoaingu.entity.*;
 import org.example.qlttngoaingu.entity.Module;
-import org.example.qlttngoaingu.repository.CourseCategoryRepository;
-import org.example.qlttngoaingu.repository.CourseRepository;
+import org.example.qlttngoaingu.repository.*;
 
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.mapper.CourseMapper;
-import org.example.qlttngoaingu.repository.CourseSkillRepository;
-import org.example.qlttngoaingu.repository.SkillRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +36,8 @@ public class CourseService {
     private final CourseSkillRepository courseSkillRepository;
     private final SkillRepository skillRepository;
     private final CourseClassService courseClassService;
+    private final CourseClassRepository courseClassRepository;
+    private final SessionRepository sessionRepository;
 
     public List<CourseGroupResponse> getCoursesGroupedResponse() {
         return courseRepository.findByStatusTrue()
@@ -153,7 +152,7 @@ public class CourseService {
 
             // Validate: skillIds trong request phải khớp với skillIds trong modules
             Set<Integer> uniqueSkillIds = modulesBySkill.keySet();
-            if (request.getSkillIds() != null && !request.getSkillIds().containsAll(uniqueSkillIds)) {
+            if (request.getSkillIds() != null && !new HashSet<>(request.getSkillIds()).containsAll(uniqueSkillIds)) {
                 throw new AppException(ErrorCode.SKILL_MISMATCH);
             }
 
@@ -268,8 +267,57 @@ public class CourseService {
             modules.addAll(courseSkill.getModules());
         });
         response.setModules(modules);
+        List<ClassResponse.ClassInfo> classInfos = getClassesForCourse(course.getCourseId());
+        response.setClassInfos(classInfos);
         return response;
     }
+    private List<ClassResponse.ClassInfo> getClassesForCourse(Integer courseId) {
+        Set<CourseClass> classes = courseClassRepository.findByCourse_CourseIdAndStatusTrue(courseId);
+
+        return classes.stream()
+                .map(this::mapToClassInfo)
+                .sorted(Comparator
+                        .comparing(ClassResponse.ClassInfo::getStatus).reversed() // Active first
+                        .thenComparing(ClassResponse.ClassInfo::getStartDate).reversed()) // Then by start date
+                .collect(Collectors.toList());
+    }
+    private ClassResponse.ClassInfo mapToClassInfo(CourseClass cls) {
+        ClassResponse.ClassInfo info = new ClassResponse.ClassInfo();
+
+        info.setClassId(cls.getClassId());
+        info.setClassName(cls.getClassName());
+        info.setStatus(cls.getStatus());
+
+        if (cls.getCourse() != null) {
+            info.setCourseName(cls.getCourse().getCourseName());
+        }
+
+        if (cls.getRoom() != null) {
+            info.setRoomName(cls.getRoom().getRoomName());
+        }
+
+        if (cls.getLecturer() != null) {
+            info.setInstructorName(cls.getLecturer().getFullName());
+        }
+
+        info.setSchedulePattern(cls.getSchedule());
+        info.setStartTime(cls.getStartTime());
+        info.setStartDate(cls.getStartDate());
+
+        if (cls.getMinutesPerSession() != null && cls.getStartTime() != null) {
+            info.setEndTime(cls.getStartTime().plusMinutes(cls.getMinutesPerSession()));
+        }
+
+        List<Session> sessions = sessionRepository
+                .findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId());
+
+        if (!sessions.isEmpty()) {
+            info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
+        }
+
+        return info;
+    }
+
 
 
 

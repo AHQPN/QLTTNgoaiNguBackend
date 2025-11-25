@@ -102,7 +102,7 @@ public class SmartScheduleSuggestionService {
                     request.getStartTime(),
                     request.getDurationMinutes(),
                     request.getStartDate(),
-                    null
+                    request.getExcludeClassId()
             );
             result.setRoomConflicts(roomConflicts);
         }
@@ -114,7 +114,7 @@ public class SmartScheduleSuggestionService {
                     request.getStartTime(),
                     request.getDurationMinutes(),
                     request.getStartDate(),
-                    null
+                    request.getExcludeClassId()
             );
             result.setLecturerConflicts(lecturerConflicts);
         }
@@ -286,7 +286,7 @@ public class SmartScheduleSuggestionService {
                     request.getStartTime(),
                     request.getDurationMinutes(),
                     request.getStartDate(),
-                    null
+                    request.getExcludeClassId()
             );
 
             if (roomConflicts.isEmpty()) {
@@ -332,7 +332,7 @@ public class SmartScheduleSuggestionService {
                     request.getStartTime(),
                     request.getDurationMinutes(),
                     request.getStartDate(),
-                    null
+                    request.getExcludeClassId()
             );
 
             if (lecturerConflicts.isEmpty()) {
@@ -372,7 +372,7 @@ public class SmartScheduleSuggestionService {
                     request.getStartTime(),
                     request.getDurationMinutes(),
                     request.getStartDate(),
-                    null
+                    request.getExcludeClassId()
             );
 
             if (conflicts.isEmpty()) {
@@ -397,7 +397,7 @@ public class SmartScheduleSuggestionService {
                     request.getStartTime(),
                     request.getDurationMinutes(),
                     request.getStartDate(),
-                    null
+                    request.getExcludeClassId()
             );
 
             if (conflicts.isEmpty()) {

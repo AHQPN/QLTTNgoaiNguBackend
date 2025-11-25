@@ -1,0 +1,122 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1111
+      author: admin
+      changes:
+        # ============================================================
+        # BƯỚC 1: Xóa ràng buộc và làm sạch dữ liệu + RESET ID
+        # ============================================================
+
+        # 1. Gỡ FK
+        - dropForeignKeyConstraint:
+            baseTableName: diemdanh
+            constraintName: fk_dd_hv
+        - dropForeignKeyConstraint:
+            baseTableName: hoadon
+            constraintName: fk_hd_hv
+
+        # 2. Gỡ PK
+        - dropPrimaryKey:
+            tableName: hocvien
+            constraintName: PK_HOCVIEN
+
+        # 3. Xóa dữ liệu và RESET bộ đếm Identity (QUAN TRỌNG)
+        - sql:
+            sql: |
+              -- Xóa dữ liệu bảng con trước
+              DELETE FROM chitiethoadon;
+              DELETE FROM chitietkhuyenmai;
+              DELETE FROM diemdanh;
+              DELETE FROM hoadon;
+              DELETE FROM khuyenmai;
+              
+              -- Xóa dữ liệu bảng cha
+              DELETE FROM hocvien;
+              DELETE FROM loaikhuyenmai;
+              DELETE FROM phuongthucthanhtoan;
+
+              -- RESET bộ đếm Identity về 0 cho TẤT CẢ các bảng có Identity được tham chiếu
+              -- Để đảm bảo khi insert dòng đầu tiên, ID sẽ là 1
+              DBCC CHECKIDENT ('loaikhuyenmai', RESEED, 0);
+              DBCC CHECKIDENT ('phuongthucthanhtoan', RESEED, 0);
+              
+              -- THÊM MỚI: Reset ID cho hoadon và khuyenmai để khớp với bảng con
+              DBCC CHECKIDENT ('hoadon', RESEED, 0); 
+              DBCC CHECKIDENT ('khuyenmai', RESEED, 0);
+
+        # ============================================================
+        # BƯỚC 2: Tái tạo cột mahocvien (Identity chuẩn, start = 1)
+        # ============================================================
+
+        - dropColumn:
+            tableName: hocvien
+            columnName: mahocvien
+
+        - addColumn:
+            tableName: hocvien
+            columns:
+              - column:
+                  name: mahocvien
+                  type: int
+                  autoIncrement: true
+                  startWith: 1          # Bắt đầu từ 1
+                  incrementBy: 1
+                  constraints:
+                    nullable: false
+
+        # ============================================================
+        # BƯỚC 3: Khôi phục ràng buộc
+        # ============================================================
+
+        - addPrimaryKey:
+            tableName: hocvien
+            columnNames: mahocvien
+            constraintName: PK_HOCVIEN
+
+        - addForeignKeyConstraint:
+            baseColumnNames: mahocvien
+            baseTableName: diemdanh
+            constraintName: fk_dd_hv
+            referencedColumnNames: mahocvien
+            referencedTableName: hocvien
+
+        - addForeignKeyConstraint:
+            baseColumnNames: mahocvien
+            baseTableName: hoadon
+            constraintName: fk_hd_hv
+            referencedColumnNames: mahocvien
+            referencedTableName: hocvien
+
+        # ============================================================
+        # BƯỚC 4: Các thay đổi cột khác
+        # ============================================================
+        - dropColumn:
+            tableName: chitietkhuyenmai
+            columnName: giamsotien
+
+        - addColumn:
+            tableName: khuyenmai
+            columns:
+              - column:
+                  name: trangthai
+                  type: bit
+              - column:
+                  name: mota
+                  type: nvarchar(255)
+                  defaultValue: null
+
+        - addColumn:
+            tableName: hoadon
+            columns:
+              - column:
+                  name: trangthai
+                  type: bit
+
+        # ============================================================
+        # BƯỚC 5: Chạy file seed
+        # ============================================================
+        - sqlFile:
+            path: seedsql2.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true

@@ -20,6 +20,9 @@ public class ClassDetailResponse {
     private String roomName;
     private String instructorName;
     private Integer totalSessions;
+    private Integer currentEnrollment;
+    private Integer maxCapacity ;
+    private List<StudentInClass> students;
     private List<SessionInfoDetail> sessions;
 
     @Data
@@ -29,5 +32,14 @@ public class ClassDetailResponse {
         private String note;
         private Boolean status;
 
+    }
+    @Data
+    public static class StudentInClass {
+        private Integer studentId;
+        private String fullName;
+        private String avatar;
+        private Boolean gender;
+        private String email;
+        private String phone;
     }
 }

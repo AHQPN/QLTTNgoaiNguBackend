@@ -60,7 +60,7 @@ public class UserController {
         return ResponseEntity.ok().body(ApiResponse.builder().message("User has been created").build());
     }
 
-    @GetMapping
+    @GetMapping("/student-info")
     public ResponseEntity<ApiResponse> getStudentInfo(@AuthenticationPrincipal UserDetailsImpl principal) {
         return ResponseEntity.ok().body(ApiResponse.builder().data(userService.getStudentInfo(principal.getId())).build());
 
