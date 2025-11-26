@@ -13,10 +13,12 @@ public class ActiveCourseResponse {
     private Integer courseId;
     private String courseName;
     private Double tuitionFee;
+    private Double promotionPrice;
     private String entryLevel;
     private String targetLevel;
     private String description;
-    private String studyHours;
+    private Integer studyHours;
+
     private ClassScheduleResponse classScheduleResponse;
     private String image;
     private List<Objective> objectives;

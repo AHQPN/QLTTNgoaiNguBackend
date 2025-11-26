@@ -8,6 +8,7 @@ import org.example.qlttngoaingu.entity.CourseClass;
 import org.example.qlttngoaingu.entity.Room;
 import org.example.qlttngoaingu.repository.CourseClassRepository;
 import org.example.qlttngoaingu.repository.RoomRepository;
+import org.example.qlttngoaingu.service.enums.ClassStatusEnum;
 import org.example.qlttngoaingu.service.enums.SchedulePattern;
 import org.springframework.stereotype.Service;
 
@@ -77,7 +78,7 @@ public class RoomService {
             LocalDate startDate
             ) {
 
-        List<CourseClass> classes = classRepository.findByRoom_RoomIdAndStatusTrue(roomId);
+        List<CourseClass> classes = classRepository.findByRoom_RoomIdAndStatus(roomId, ClassStatusEnum.InProgress.name());
 
         for (CourseClass courseClass : classes) {
 

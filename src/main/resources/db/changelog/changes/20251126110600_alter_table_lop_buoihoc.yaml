@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0
+      author: admin
+      changes:
+        - modifyDataType:
+            tableName: lop
+            columnName: trangthai
+            newDataType: varchar(20)
+        - modifyDataType:
+            tableName: buoihoc
+            columnName: trangthai
+            newDataType: varchar(20)
+
+  - changeSet:
+      id: set-default-buoihoc-status
+      author: admin
+      changes:
+        - update:
+            tableName: buoihoc
+            columns:
+              - column:
+                  name: trangthai
+                  value: NotCompleted
+        - update:
+            tableName: lop
+            columns:
+              - column:
+                  name: trangthai
+                  value: InProgress

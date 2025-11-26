@@ -30,7 +30,7 @@ public class ClassDetailResponse {
         private Integer sessionId;
         private LocalDate date;
         private String note;
-        private Boolean status;
+        private String status;
 
     }
     @Data

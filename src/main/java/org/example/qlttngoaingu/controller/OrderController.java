@@ -17,11 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderController {
     private final CourseRegistrationService  courseRegistrationService;
 
-    @PostMapping
-    public ResponseEntity<ApiResponse> RegisterClass(@RequestBody  CourseRegistrationRequest courseRegistrationRequest) {
-
-        return ResponseEntity.ok().body(ApiResponse.builder().data(courseRegistrationService.registerCourses(courseRegistrationRequest)).build());
-    }
+//    @PostMapping
+//    public ResponseEntity<ApiResponse> RegisterClass(@RequestBody  CourseRegistrationRequest courseRegistrationRequest) {
+//
+//        return ResponseEntity.ok().body(ApiResponse.builder().data(courseRegistrationService.registerCourses(courseRegistrationRequest)).build());
+//    }
 
 
 }

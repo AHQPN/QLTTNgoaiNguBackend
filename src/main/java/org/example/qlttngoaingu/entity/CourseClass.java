@@ -11,7 +11,7 @@ import java.util.List;
 
 @Entity
 @Data
-@Table(name = "lop") // Maps to Vietnamese table name
+@Table(name = "lop")
 public class CourseClass {
 
     @Id
@@ -29,7 +29,7 @@ public class CourseClass {
     private String note;
 
     @Column(name = "trangthai")
-    private Boolean status;
+    private String status;
 
     @Column(name = "ngaybatdau")
     private LocalDate startDate;

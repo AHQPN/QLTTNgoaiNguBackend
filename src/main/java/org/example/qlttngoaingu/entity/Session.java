@@ -20,7 +20,7 @@ public class Session {
     private LocalDate sessionDate;
 
     @Column(name = "trangthai")
-    private Boolean status;
+    private String status;
 
     @Column(name = "ghichu", columnDefinition = "TEXT")
     private String note;

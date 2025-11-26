@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -271,4 +272,34 @@ public class UserService {
         nameAndEmail.setEmail(user.getEmail());
         return nameAndEmail;
     }
+    @Transactional
+    public void updateStudentInfo(Integer id, StudentInfo studentInfo) {
+        User user = userRepository.getUserByUserId(id).orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        if(user.getRole().equals(RoleEnum.STUDENT.name())) {
+            if(studentInfo.getEmail() != null)
+                user.setEmail(studentInfo.getEmail());
+            if(studentInfo.getPhoneNumber() != null)
+                user.setPhoneNumber(studentInfo.getPhoneNumber());
+            Student student = studentRepository.getStudentByAccount_UserId(user.getUserId());
+            if(studentInfo.getAddress() != null)
+                student.setAddress(studentInfo.getAddress());
+            if (studentInfo.getGender() != null)
+                student.setGender(studentInfo.getGender());
+            if(studentInfo.getDateOfBirth() != null)
+                student.setNgaySinh(studentInfo.getDateOfBirth());
+            if(studentInfo.getJobs() != null)
+                student.setJob(studentInfo.getJobs());
+            if(studentInfo.getName() != null)
+                student.setName(studentInfo.getName());
+            if(studentInfo.getImage() != null)
+                student.setAvatar(studentInfo.getImage());
+
+            userRepository.save(user);
+            studentRepository.save(student);
+        }
+
+    }
+
+
 }

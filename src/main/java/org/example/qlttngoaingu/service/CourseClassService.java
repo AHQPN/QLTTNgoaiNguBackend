@@ -10,6 +10,9 @@ import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.mapper.CourseClassMapper;
 import org.example.qlttngoaingu.mapper.SessionMapper;
 import org.example.qlttngoaingu.repository.*;
+import org.example.qlttngoaingu.service.enums.ClassStatusEnum;
+import org.example.qlttngoaingu.service.enums.RoleEnum;
+import org.example.qlttngoaingu.service.enums.SessionStatus;
 import org.example.qlttngoaingu.specification.CourseClassSpec;
 import org.example.qlttngoaingu.utils.CustomSchedulePattern;
 import org.example.qlttngoaingu.utils.ScheduleUltis;
@@ -44,28 +47,30 @@ public class CourseClassService {
     private final SessionMapper sessionMapper;
     private final CourseClassMapper  courseClassMapper;
     private final InvoiceDetailRepository invoiceDetailRepository;
+    private final StudentRepository studentRepository;
+    private final UserRepository userRepository;
 
     private final List<String> periods = List.of("Sáng", "Chiều", "Tối");
-    @Transactional
-    public ScheduleSuggestionResponse changeStatus(Integer classId){
-
-        CourseClass courseClass = classRepository.getCourseClassByClassId((classId));
-        if(courseClass.getStatus())
-        {
-            courseClass.setStatus(false);
-            return null;
-        }
-        ScheduleCheckRequest createScheduleCheckRequest =  courseClassMapper.toScheduleCheckRequest(courseClass);
-        ScheduleSuggestionResponse scheduleSuggestionResponse =
-                smartScheduleSuggestionService .checkAndSuggest(createScheduleCheckRequest);
-        if(Objects.equals(scheduleSuggestionResponse.getStatus(), "AVAILABLE"))
-        {
-            courseClass.setStatus(true);
-            return null;
-        }
-
-        return scheduleSuggestionResponse;
-    }
+//    @Transactional
+//    public ScheduleSuggestionResponse changeStatus(Integer classId){
+//
+//        CourseClass courseClass = classRepository.getCourseClassByClassId((classId));
+//        if(courseClass.getStatus() ==  ClassStatusEnum.InProgress.name())
+//        {
+//            courseClass.setStatus(false);
+//            return null;
+//        }
+//        ScheduleCheckRequest createScheduleCheckRequest =  courseClassMapper.toScheduleCheckRequest(courseClass);
+//        ScheduleSuggestionResponse scheduleSuggestionResponse =
+//                smartScheduleSuggestionService .checkAndSuggest(createScheduleCheckRequest);
+//        if(Objects.equals(scheduleSuggestionResponse.getStatus(), "AVAILABLE"))
+//        {
+//            courseClass.setStatus(true);
+//            return null;
+//        }
+//
+//        return scheduleSuggestionResponse;
+//    }
 
     @Transactional
     public ClassCreationResponse createClass(ClassCreationRequest request) {
@@ -122,7 +127,7 @@ public class CourseClassService {
         cls.setStartDate(request.getStartDate());
         cls.setNote(request.getNote());
         cls.setDateCreated(LocalDateTime.now());
-        cls.setStatus(false);
+        cls.setStatus(ClassStatusEnum.InProgress.name());
         cls = classRepository.save(cls);
 
         List<Session> sessions = generateScheduleSessions(
@@ -166,7 +171,7 @@ public class CourseClassService {
                 Session s = new Session();
                 s.setCourseClass(cls);
                 s.setSessionDate(date);
-                s.setStatus(false);
+                s.setStatus(SessionStatus.NotCompleted.name());
                 s.setNote("Session " + seq);
                 sessions.add(s);
                 created++;
@@ -530,4 +535,77 @@ public class CourseClassService {
         return buildResponse(cls, course, room, lecturer, newSessions);
     }
 
+    public WeeklyScheduleResponse getWeeklyScheduleByUser(Integer id, LocalDate dateInWeek) {
+        LocalDate weekStart = dateInWeek.with(DayOfWeek.MONDAY);
+        LocalDate weekEnd = weekStart.plusDays(6);
+        User user = userRepository.getUserByUserId(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        List<Session> sessions = new ArrayList<>();
+        if(Objects.equals(user.getRole(), RoleEnum.STUDENT.name()))
+        {
+            Student student = studentRepository.getStudentByAccount_UserId(id);
+            List<Integer> classIds = classRepository.findRegisteredClassIds(student.getId());
+            sessions = sessionRepository.findByCourseClass_ClassIdInAndSessionDateBetweenAndStatusNot(
+                    classIds, weekStart, weekEnd, "Canceled"
+            );
+
+        }
+        if(Objects.equals(user.getRole(), RoleEnum.TEACHER.name()))
+        {
+            Lecturer lecturer = lecturerRepository.getByUser_UserId(id);
+            List<Integer> classIds = classRepository
+                    .findByLecturer_LecturerIdAndStatusNot(lecturer.getLecturerId(), "Closed");
+
+            sessions = sessionRepository.findByCourseClass_ClassIdInAndSessionDateBetweenAndStatusNot(
+                    classIds, weekStart, weekEnd, "Canceled"
+            );
+
+        }
+
+        // Nhóm theo ngày -> ca
+        Map<LocalDate, Map<String, List<WeeklyScheduleResponse.SessionInfo>>> tempSchedule = new TreeMap<>();
+
+        sessions.forEach(s -> {
+            WeeklyScheduleResponse.SessionInfo info = sessionMapper.toDto(s);
+            String period = ScheduleUltis.getSessionPeriod(s.getCourseClass().getStartTime());
+            LocalDate day = s.getSessionDate();
+
+            tempSchedule
+                    .computeIfAbsent(day, k -> new TreeMap<>())
+                    .computeIfAbsent(period, k -> new ArrayList<>())
+                    .add(info);
+        });
+
+        // Tạo DTO tuần, đảm bảo mỗi ngày có 3 ca
+        List<WeeklyScheduleResponse.DaySchedule> days = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            LocalDate currentDay = weekStart.plusDays(i);
+            Map<String, List<WeeklyScheduleResponse.SessionInfo>> daySessions = tempSchedule.getOrDefault(currentDay, new HashMap<>());
+
+            WeeklyScheduleResponse.DaySchedule daySchedule = new WeeklyScheduleResponse.DaySchedule();
+            daySchedule.setDate(currentDay);
+            daySchedule.setDayName(currentDay.getDayOfWeek().toString());
+
+            List<WeeklyScheduleResponse.PeriodSchedule> periodSchedules = new ArrayList<>();
+            for (String period : periods) {
+                WeeklyScheduleResponse.PeriodSchedule ps = new WeeklyScheduleResponse.PeriodSchedule();
+                ps.setPeriod(period);
+                ps.setSessions(daySessions.getOrDefault(period, new ArrayList<>()));
+                periodSchedules.add(ps);
+            }
+            daySchedule.setPeriods(periodSchedules);
+            days.add(daySchedule);
+        }
+
+        WeeklyScheduleResponse response = new WeeklyScheduleResponse();
+        response.setWeekStart(weekStart);
+        response.setWeekEnd(weekEnd);
+        response.setDays(days);
+        return response;
+    }
+
+//    public ClassResponse findByStudent(Integer userId) {
+//        Student student = studentRepository.findByAccount_UserId(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND);
+//        List<CourseClass> courseClasses = invoiceDetailRepository.findAllByHocVienId(student.getId());
+//        courseClassMapper.
+//    }
 }

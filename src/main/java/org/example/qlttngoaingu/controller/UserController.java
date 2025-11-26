@@ -77,6 +77,12 @@ public class UserController {
         return ResponseEntity.ok().body(ApiResponse.builder().data(nameAndEmail).build());
     }
 
+//    @GetMapping("/students")
+//    public ResponseEntity<ApiResponse> getStudents(@RequestParam(defaultValue = "0") int page,
+//                                                   @RequestParam(defaultValue = "15") int size) {
+//        userService.getStudents();
+//    }
+
 
 
 //    @PostMapping("/get-user-info")

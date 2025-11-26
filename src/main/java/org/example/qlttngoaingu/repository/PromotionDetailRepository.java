@@ -11,4 +11,6 @@ import java.util.List;
 public interface PromotionDetailRepository extends JpaRepository<PromotionDetail, Integer> {
     // Tìm danh sách chi tiết theo khuyến mãi
     List<PromotionDetail> findByPromotion(Promotion promotion);
+
+    List<PromotionDetail> findByCourse_CourseId(Integer courseId);
 }

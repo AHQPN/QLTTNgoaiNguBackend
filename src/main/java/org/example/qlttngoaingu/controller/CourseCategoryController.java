@@ -2,7 +2,9 @@ package org.example.qlttngoaingu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.qlttngoaingu.dto.request.CourseCategoryRequest;
+import org.example.qlttngoaingu.dto.response.ApiResponse;
 import org.example.qlttngoaingu.dto.response.CourseCategoryResponse;
+import org.example.qlttngoaingu.dto.response.CourseGroupResponse;
 import org.example.qlttngoaingu.service.CourseCategoryService;
 import org.example.qlttngoaingu.service.CourseCategoryService;
 import org.springframework.http.ResponseEntity;
@@ -17,29 +19,29 @@ public class CourseCategoryController {
     private final CourseCategoryService courseCategoryService;
 
     @PostMapping
-    public ResponseEntity<CourseCategoryResponse> create(@RequestBody CourseCategoryRequest request) {
+    public ResponseEntity<?> create(@RequestBody CourseCategoryRequest request) {
         CourseCategoryResponse response = courseCategoryService.create(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok().body(ApiResponse.builder().data(response).build());
     }
 
     //  2. Update category
     @PutMapping("/{id}")
-    public ResponseEntity<CourseCategoryResponse> update(
+    public ResponseEntity<?> update(
             @PathVariable Integer id,
             @RequestBody CourseCategoryRequest request) {
         CourseCategoryResponse response = courseCategoryService.update(id, request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok().body(ApiResponse.builder().data(response).build());
     }
 
     //  3. Get all categories
     @GetMapping
-    public ResponseEntity<List<CourseCategoryResponse>> getAll() {
-        return ResponseEntity.ok(courseCategoryService.getAll());
+    public ResponseEntity<?> getAll() {
+        return ResponseEntity.ok().body(ApiResponse.builder().data(courseCategoryService.getAll()).build());
     }
 
     //  4. Get detail by ID
     @GetMapping("/{id}")
-    public ResponseEntity<CourseCategoryResponse> getById(@PathVariable Integer id) {
-        return ResponseEntity.ok(courseCategoryService.getById(id));
+    public ResponseEntity<?> getById(@PathVariable Integer id) {
+        return ResponseEntity.ok().body(ApiResponse.builder().data(courseCategoryService.getById(id)).build());
     }
 }

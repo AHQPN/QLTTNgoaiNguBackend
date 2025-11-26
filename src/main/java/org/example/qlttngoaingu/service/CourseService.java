@@ -38,6 +38,8 @@ public class CourseService {
     private final CourseClassService courseClassService;
     private final CourseClassRepository courseClassRepository;
     private final SessionRepository sessionRepository;
+    private final PromotionDetailRepository  promotionDetailRepository;
+    private final PromotionRepository promotionRepository;
 
     public List<CourseGroupResponse> getCoursesGroupedResponse() {
         return courseRepository.findByStatusTrue()
@@ -53,8 +55,20 @@ public class CourseService {
                     List<ActiveCourseResponse> courseResponses = courses
                             .stream()
                             .map(course -> {
+                                List<Promotion> validPromotions = promotionRepository.findValidPromotionsByCourseAndType1(
+                                        course.getCourseId(),
+                                        LocalDate.now()
+                                );
+
+
+
                                 ActiveCourseResponse response = courseMapper.toActiveResponse(course);
                                 response.setObjectives(course.getObjectives());
+                                if (!validPromotions.isEmpty()) {
+                                    Promotion bestPromotion = validPromotions.get(0);
+                                    Double promotionPrice =  course.getTuitionFee() / bestPromotion.getDiscountPercent();
+                                    response.setPromotionPrice(promotionPrice);
+                                }
                                 ClassScheduleResponse classScheduleResponse = courseClassService.getScheduleOfAllClassByCourseId(course.getCourseId());
                                 response.setClassScheduleResponse(classScheduleResponse);
                                 return response;
@@ -256,7 +270,21 @@ public class CourseService {
     public CourseDetailResponse getCourseDetailById(Integer id) {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+
+
+        List<Promotion> validPromotions = promotionRepository.findValidPromotionsByCourseAndType1(
+                course.getCourseId(),
+                LocalDate.now()
+        );
+
+
         CourseDetailResponse response = courseMapper.toResponse(course);
+        if (!validPromotions.isEmpty()) {
+            Promotion bestPromotion = validPromotions.get(0);
+            Double promotionPrice =  course.getTuitionFee() / bestPromotion.getDiscountPercent();
+            response.setPromotionPrice(promotionPrice);
+        }
+
         response.setEntryLevel(course.getEntryLevel());
         response.setStatus(course.getStatus());
         response.setCategory(course.getCourseCategory().getName());
@@ -370,5 +398,9 @@ public class CourseService {
     // Additional method for overview summary (e.g., count of courses)
     public long getCourseCount() {
         return courseRepository.count();
+    }
+
+    public CourseGroupResponse getCourseByStudent() {
+        return  null;
     }
 }

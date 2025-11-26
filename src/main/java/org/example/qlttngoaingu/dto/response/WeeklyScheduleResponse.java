@@ -30,7 +30,7 @@ public class WeeklyScheduleResponse {
         private String courseName;
         private String roomName;
         private String instructorName;
-        private Boolean status;
+        private String status;
         private String note;
         private String schedulePattern;
         private LocalDate sessionDate;

@@ -42,16 +42,16 @@ public class CourseClassController {
                 .message("Course Class has been created")
                 .data(classCreationResponse).build());
     }
-    @PostMapping("/{classId}")
-    public ResponseEntity<ApiResponse> changeStatusCourseClass(@PathVariable Integer classId){
-        ScheduleSuggestionResponse scheduleSuggestionResponse = courseClassService.changeStatus(classId);
-
-        ApiResponse apiResponse = (scheduleSuggestionResponse == null)
-                ? ApiResponse.builder().message("Course Class status has been changed successfully.").build()
-                : ApiResponse.builder().data(scheduleSuggestionResponse).message("Schedule suggestions available.").build();
-
-        return ResponseEntity.ok().body(apiResponse);
-    }
+//    @PostMapping("/{classId}")
+//    public ResponseEntity<ApiResponse> changeStatusCourseClass(@PathVariable Integer classId){
+//        ScheduleSuggestionResponse scheduleSuggestionResponse = courseClassService.changeStatus(classId);
+//
+//        ApiResponse apiResponse = (scheduleSuggestionResponse == null)
+//                ? ApiResponse.builder().message("Course Class status has been changed successfully.").build()
+//                : ApiResponse.builder().data(scheduleSuggestionResponse).message("Schedule suggestions available.").build();
+//
+//        return ResponseEntity.ok().body(apiResponse);
+//    }
 
     @GetMapping("/filter")
     public ClassResponse filter(

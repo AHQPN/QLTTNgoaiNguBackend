@@ -10,6 +10,7 @@ import org.example.qlttngoaingu.entity.Lecturer;
 import org.example.qlttngoaingu.repository.CourseClassRepository;
 import org.example.qlttngoaingu.repository.LecturerRepository;
 import org.example.qlttngoaingu.repository.UserRepository;
+import org.example.qlttngoaingu.service.enums.ClassStatusEnum;
 import org.example.qlttngoaingu.service.enums.SchedulePattern;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -90,7 +91,7 @@ public class LecturerService {
             LocalDate startDate
     ) {
         // Tìm các lớp giảng viên đang dạy và còn hoạt động
-        List<CourseClass> classes = classRepository.findByLecturer_LecturerIdAndStatusTrue(lecturerId);
+        List<CourseClass> classes = classRepository.findByLecturer_LecturerIdAndStatus(lecturerId, ClassStatusEnum.InProgress.name());
 
         for (CourseClass courseClass : classes) {
 

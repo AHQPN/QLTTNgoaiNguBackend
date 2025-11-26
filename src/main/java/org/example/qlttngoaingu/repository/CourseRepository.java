@@ -17,4 +17,6 @@ public interface CourseRepository extends JpaRepository<Course, Integer> {
     List<Course> findTop3ByCourseIdNotAndStatusTrue(Integer id);
 
     Course getCourseByCourseId(Integer courseId);
+
+    List<Course> findByCourseCategory_IdAndStatusTrue(Integer id);
 }

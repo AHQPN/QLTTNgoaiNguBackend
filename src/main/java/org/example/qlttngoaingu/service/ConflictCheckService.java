@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.qlttngoaingu.dto.response.ConflictInfo;
 import org.example.qlttngoaingu.entity.*;
 import org.example.qlttngoaingu.repository.CourseClassRepository;
+import org.example.qlttngoaingu.service.enums.ClassStatusEnum;
 import org.example.qlttngoaingu.utils.CustomSchedulePattern;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +36,7 @@ public class ConflictCheckService {
         LocalTime newEnd = startTime.plusMinutes(minutesPerSession);
 
         // Lấy tất cả các lớp đang active của phòng này
-        List<CourseClass> otherClasses = classRepository.findByRoom_RoomIdAndStatusTrue(roomId);
+        List<CourseClass> otherClasses = classRepository.findByRoom_RoomIdAndStatus(roomId,ClassStatusEnum.InProgress.name());
 
         for (CourseClass other : otherClasses) {
             // Bỏ qua nếu là chính lớp đang edit
@@ -86,7 +87,7 @@ public class ConflictCheckService {
         LocalTime newEnd = startTime.plusMinutes(minutesPerSession);
 
         // Lấy tất cả các lớp đang active của giảng viên này
-        List<CourseClass> otherClasses = classRepository.findByLecturer_LecturerIdAndStatusTrue(lecturerId);
+        List<CourseClass> otherClasses = classRepository.findByLecturer_LecturerIdAndStatus(lecturerId, ClassStatusEnum.InProgress.name());
 
         for (CourseClass other : otherClasses) {
             // Bỏ qua nếu là chính lớp đang edit

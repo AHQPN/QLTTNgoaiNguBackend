@@ -15,4 +15,15 @@ public interface PromotionRepository extends JpaRepository<Promotion, Integer> {
     // Tìm tất cả khuyến mãi đang hoạt động trong thời gian hiện tại
     @Query("SELECT p FROM Promotion p WHERE p.active = true AND :today BETWEEN p.startDate AND p.endDate")
     List<Promotion> findAllActivePromotions(@Param("today") LocalDate today);
+
+    @Query("SELECT pd.promotion FROM PromotionDetail pd " +
+            "WHERE pd.course.courseId = :courseId " +
+            "AND pd.promotion.active = true " +
+            "AND pd.promotion.promotionType.id = 1 " +
+            "AND :today >= pd.promotion.startDate " +
+            "AND :today <= pd.promotion.endDate")
+    List<Promotion> findValidPromotionsByCourseAndType1(
+            @Param("courseId") Integer courseId,
+            @Param("today") LocalDate today
+    );
 }

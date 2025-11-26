@@ -11,6 +11,7 @@ public class CourseDetailResponse {
     private String courseName;
     private Integer studyHours;
     private Double tuitionFee;
+    private Double PromotionPrice;
     private String video;
     private Boolean status;
     private String description;

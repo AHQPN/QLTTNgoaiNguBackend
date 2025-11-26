@@ -1,5 +1,6 @@
 package org.example.qlttngoaingu.repository;
 
+import org.example.qlttngoaingu.entity.CourseClass;
 import org.example.qlttngoaingu.entity.InvoiceDetail;
 import org.example.qlttngoaingu.entity.Student;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,4 +26,13 @@ public interface InvoiceDetailRepository extends JpaRepository<InvoiceDetail, In
             "WHERE d.courseClass.classId = :classId " +
             "AND i.status = true")
     List<Student> findStudentsByClassId(@Param("classId") Integer classId);
+
+    @Query("""
+        SELECT cls
+        FROM CourseClass cls
+        JOIN InvoiceDetail detail ON detail.courseClass = cls
+        JOIN Invoice hd ON hd = detail.invoice
+        WHERE hd.student.id = :hocVienId
+    """)
+    List<CourseClass> findAllByHocVienId(@Param("hocVienId") Integer hocVienId);
 }

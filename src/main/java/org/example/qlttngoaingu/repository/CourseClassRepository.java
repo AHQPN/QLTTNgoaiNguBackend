@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -34,10 +35,10 @@ public interface CourseClassRepository extends JpaRepository<CourseClass, Intege
 
     List<CourseClass> findByLecturer_LecturerIdAndStartDateGreaterThanEqual(Integer lecturerId, LocalDate startDate);
 
-    List<CourseClass> findByRoom_RoomIdAndStatusTrue(Integer roomId);
+    List<CourseClass> findByRoom_RoomIdAndStatus(Integer roomId,String status);
 
     // Lấy các lớp theo giảng viên mà đang active (status = true)
-    List<CourseClass> findByLecturer_LecturerIdAndStatusTrue(Integer lecturerId);
+    List<CourseClass> findByLecturer_LecturerIdAndStatus(Integer lecturerId, String status);
 
     // Lấy tất cả lớp có thể phân trang
     Page<CourseClass> findAll(Pageable pageable);
@@ -49,5 +50,14 @@ public interface CourseClassRepository extends JpaRepository<CourseClass, Intege
 
 
     List<CourseClass> findByCourse_CourseId(Integer courseId);
+
+    @Query("""
+    SELECT detail.courseClass.classId
+    FROM InvoiceDetail detail
+    WHERE detail.invoice.student.id = :studentId
+    """)
+    List<Integer> findRegisteredClassIds(@Param("studentId") Integer studentId);
+
+    List<Integer> findByLecturer_LecturerIdAndStatusNot(Integer lecturerId, String closed);
 }
 
