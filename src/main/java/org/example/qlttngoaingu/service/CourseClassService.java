@@ -329,7 +329,7 @@ public class CourseClassService {
 
     public ClassScheduleResponse getScheduleOfAllClassByCourseId(int courseId) {
         Set<CourseClass> courseClasses =
-                classRepository.findByCourse_CourseIdAndStatusTrue(courseId);
+                classRepository.findByCourse_CourseIdAndStatus(courseId,ClassStatusEnum.InProgress.name());
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
@@ -553,7 +553,7 @@ public class CourseClassService {
         {
             Lecturer lecturer = lecturerRepository.getByUser_UserId(id);
             List<Integer> classIds = classRepository
-                    .findByLecturer_LecturerIdAndStatusNot(lecturer.getLecturerId(), "Closed");
+                    .findIdsByLecturer_LecturerIdAndStatusNot(lecturer.getLecturerId(), "Closed");
 
             sessions = sessionRepository.findByCourseClass_ClassIdInAndSessionDateBetweenAndStatusNot(
                     classIds, weekStart, weekEnd, "Canceled"
@@ -601,6 +601,29 @@ public class CourseClassService {
         response.setWeekEnd(weekEnd);
         response.setDays(days);
         return response;
+    }
+
+    public List<ClassResponse.ClassInfo> getClassByUser(Integer userId) {
+
+        User user = userRepository.getUserByUserId(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        if(Objects.equals(user.getRole(), RoleEnum.STUDENT.name()))
+        {
+            Student student = studentRepository.getStudentByAccount_UserId(userId);
+            List<CourseClass> classes = classRepository.findRegisteredClasses(student.getId());
+            return classes.stream()
+                    .map(courseClassMapper::toDto)
+                    .collect(Collectors.toList());
+        }
+        else if(Objects.equals(user.getRole(), RoleEnum.TEACHER.name()))
+        {
+            Lecturer lecturer = lecturerRepository.getByUser_UserId(userId);
+            List<CourseClass> classes = classRepository
+                    .findByLecturer_LecturerIdAndStatusNot(lecturer.getLecturerId(),ClassStatusEnum.Closed.name());
+            return classes.stream()
+                    .map(courseClassMapper::toDto)
+                    .collect(Collectors.toList());
+        }
+        return null;
     }
 
 //    public ClassResponse findByStudent(Integer userId) {

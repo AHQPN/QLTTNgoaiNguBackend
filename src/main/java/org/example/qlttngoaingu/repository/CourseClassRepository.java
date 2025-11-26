@@ -40,12 +40,12 @@ public interface CourseClassRepository extends JpaRepository<CourseClass, Intege
     // Lấy các lớp theo giảng viên mà đang active (status = true)
     List<CourseClass> findByLecturer_LecturerIdAndStatus(Integer lecturerId, String status);
 
+
     // Lấy tất cả lớp có thể phân trang
     Page<CourseClass> findAll(Pageable pageable);
 
 
-    Set<CourseClass> findByCourse_CourseIdAndStatusTrue(int courseId);
-
+    Set<CourseClass> findByCourse_CourseIdAndStatus(int courseId, String status);
     CourseClass getCourseClassByClassId(Integer classId);
 
 
@@ -58,6 +58,17 @@ public interface CourseClassRepository extends JpaRepository<CourseClass, Intege
     """)
     List<Integer> findRegisteredClassIds(@Param("studentId") Integer studentId);
 
-    List<Integer> findByLecturer_LecturerIdAndStatusNot(Integer lecturerId, String closed);
+    @Query("""
+    SELECT detail.courseClass
+    FROM InvoiceDetail detail
+    WHERE detail.invoice.student.id = :studentId
+    """)
+    List<CourseClass> findRegisteredClasses(@Param("studentId") Integer studentId);
+
+
+    List<CourseClass> findByLecturer_LecturerIdAndStatusNot(Integer lecturerId, String status);
+
+    List<Integer> findIdsByLecturer_LecturerIdAndStatusNot(Integer lecturerId, String status);
+
 }
 

@@ -12,6 +12,7 @@ import org.example.qlttngoaingu.repository.*;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.mapper.CourseMapper;
+import org.example.qlttngoaingu.service.enums.ClassStatusEnum;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -300,7 +301,8 @@ public class CourseService {
         return response;
     }
     private List<ClassResponse.ClassInfo> getClassesForCourse(Integer courseId) {
-        Set<CourseClass> classes = courseClassRepository.findByCourse_CourseIdAndStatusTrue(courseId);
+        Set<CourseClass> classes = courseClassRepository
+                .findByCourse_CourseIdAndStatus(courseId, ClassStatusEnum.InProgress.name());
 
         return classes.stream()
                 .map(this::mapToClassInfo)

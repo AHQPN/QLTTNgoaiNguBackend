@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("students")
@@ -44,15 +45,13 @@ public class StudentController {
         WeeklyScheduleResponse response =  courseClassService.getWeeklyScheduleByUser(principal.getId(),date);
         return  ResponseEntity.ok().body(ApiResponse.builder().data(response).build());
     }
-    @GetMapping("/get-courses_enrolled")
-    public ResponseEntity<ApiResponse> getCoursesEnrolled(@AuthenticationPrincipal UserDetailsImpl principal) {
-        CourseGroupResponse courseGroupResponse = courseService.getCourseByStudent();
-        return ResponseEntity.ok().body(ApiResponse.builder().data(courseGroupResponse).build());
+
+    @GetMapping("/get-classes-enrolled")
+    public ResponseEntity<ApiResponse> getClassesEnrolled(@AuthenticationPrincipal UserDetailsImpl principal) {
+        List<ClassResponse.ClassInfo> cls = courseClassService.getClassByUser(principal.getId());
+        return ResponseEntity.ok().body(ApiResponse.builder().data(cls).build());
     }
 
-//    @GetMapping("/get-classes-enrolled")
-//    public ResponseEntity<ApiResponse> getClassesEnrolled(@AuthenticationPrincipal UserDetailsImpl principal) {
-//        ClassResponse cls = courseClassService.getClassByUser();
-//    }
+
 
 }

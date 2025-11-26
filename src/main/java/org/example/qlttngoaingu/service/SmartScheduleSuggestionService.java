@@ -10,6 +10,7 @@ import org.example.qlttngoaingu.utils.ResourceConverter;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
@@ -59,8 +60,7 @@ public class SmartScheduleSuggestionService {
         // Chiến lược 2: Thử ngày bắt đầu khác (trong vòng 2 tuần)
         alternatives.addAll(suggestAlternativeStartDates(request));
 
-        // Chiến lược 3: Thử pattern khác
-        alternatives.addAll(suggestAlternativePatterns(request));
+
 
         // Chiến lược 4: Gợi ý phòng thay thế (nếu user đã chọn phòng cụ thể)
         if (request.getPreferredRoomId() != null && !initialCheck.getRoomConflicts().isEmpty()) {
@@ -152,6 +152,10 @@ public class SmartScheduleSuggestionService {
         for (LocalTime altTime : timeSlots) {
             if (altTime.equals(request.getStartTime())) continue;
 
+            // 🔥 Chỉ xét các giờ trong khoảng ± 30 hoặc ± 60 phút
+            long diffMinutes = Math.abs(Duration.between(request.getStartTime(), altTime).toMinutes());
+            if (diffMinutes > 60) continue; // hoặc 30 nếu chỉ muốn ± 0.5 giờ
+
             ScheduleCheckRequest altRequest = request.copy();
             altRequest.setStartTime(altTime);
 
@@ -169,12 +173,20 @@ public class SmartScheduleSuggestionService {
                 alt.setAvailableLecturers(ResourceConverter.fromLecturers(lecturers));
                 alt.setReason(String.format("Đổi giờ từ %s sang %s",
                         request.getStartTime(), altTime));
-                alt.setPriority(calculatePriority("TIME", rooms.size(), lecturers.size(),
-                        Math.abs(altTime.toSecondOfDay() - request.getStartTime().toSecondOfDay())));
+                int diff = (int) diffMinutes;
+
+                alt.setPriority(calculatePriority(
+                        "TIME",
+                        rooms.size(),
+                        lecturers.size(),
+                        diff
+                ));
+
 
                 alternatives.add(alt);
             }
         }
+
 
         return alternatives;
     }

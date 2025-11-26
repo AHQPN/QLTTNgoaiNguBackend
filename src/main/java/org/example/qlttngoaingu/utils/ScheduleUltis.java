@@ -13,7 +13,7 @@ public class ScheduleUltis {
         } else if (!startTime.isBefore(LocalTime.of(18, 0)) && startTime.isBefore(LocalTime.of(21, 1))) {
             return "Tối";
         } else {
-            return "Khác"; // trường hợp giờ không nằm trong ca
+            return "Khác";
         }
     }
 

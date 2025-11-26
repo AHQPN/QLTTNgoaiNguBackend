@@ -1,0 +1,62 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: admin
+      changes:
+        - createTable:
+            tableName: loaibangcap
+            columns:
+              - column:
+                  name: maloai
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: ten
+                  type: NVARCHAR(100)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 2
+      author: admin
+      changes:
+        - createTable:
+            tableName: bangcap
+            columns:
+              - column:
+                  name: ma
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: magv
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: maloai
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: trinhdo
+                  type: NVARCHAR(255)
+                  constraints:
+                    nullable: true
+        - addForeignKeyConstraint:
+            baseTableName: bangcap
+            baseColumnNames: magv
+            referencedTableName: giangvien
+            referencedColumnNames: magv
+            constraintName: fk_bangcap_giangvien
+        - addForeignKeyConstraint:
+            baseTableName: bangcap
+            baseColumnNames: maloai
+            referencedTableName: loaibangcap
+            referencedColumnNames: maloai
+            constraintName: fk_bangcap_loaibangcap

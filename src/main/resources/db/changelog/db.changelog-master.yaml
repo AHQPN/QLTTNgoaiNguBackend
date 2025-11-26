@@ -41,5 +41,7 @@ databaseChangeLog:
       file: db/changelog/changes/20251123124300_altertable_hocvien.yaml
   - include:
       file: db/changelog/changes/20251126110600_alter_table_lop_buoihoc.yaml
+  - include:
+      file: db/changelog/changes/20251126171000_create_table_bangcap_loaibangcap.yaml
 #  - include:
 #      file: db/changelog/changes/20251030111300_seed_data_gv_phong.yaml
