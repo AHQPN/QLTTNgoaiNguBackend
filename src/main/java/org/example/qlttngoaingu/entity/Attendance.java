@@ -17,12 +17,13 @@ public class Attendance {
     @Column(name = "madiemdanh")
     private Integer id;
 
-    @ManyToOne
-    @JoinColumn(name = "mahocvien", referencedColumnName = "mahocvien")
-    private Student student;
+    // Liên kết với chi tiết hóa đơn (trong chi tiết hóa đơn có thông tin học viên)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "macthd", referencedColumnName = "macthd", nullable = false)
+    private InvoiceDetail invoiceDetail;
 
-    @ManyToOne
-    @JoinColumn(name = "mabuoihoc", referencedColumnName = "mabuoihoc")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mabuoihoc", referencedColumnName = "mabuoihoc", nullable = false)
     private Session session;
 
     @Column(name = "vang")
@@ -30,4 +31,6 @@ public class Attendance {
 
     @Column(name = "ghichu")
     private String note;
+
+
 }

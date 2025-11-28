@@ -1,5 +1,8 @@
 package org.example.qlttngoaingu.repository;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.example.qlttngoaingu.entity.CourseClass;
 import org.example.qlttngoaingu.entity.InvoiceDetail;
 import org.example.qlttngoaingu.entity.Student;
@@ -7,8 +10,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 public interface InvoiceDetailRepository extends JpaRepository<InvoiceDetail, Integer> {
@@ -26,6 +27,9 @@ public interface InvoiceDetailRepository extends JpaRepository<InvoiceDetail, In
             "WHERE d.courseClass.classId = :classId " +
             "AND i.status = true")
     List<Student> findStudentsByClassId(@Param("classId") Integer classId);
+
+        @Query("SELECT d FROM InvoiceDetail d JOIN d.invoice i WHERE d.courseClass.classId = :classId AND i.student.id = :studentId AND i.status = true")
+        Optional<org.example.qlttngoaingu.entity.InvoiceDetail> findByClassIdAndStudentId(@Param("classId") Integer classId, @Param("studentId") Integer studentId);
 
     @Query("""
         SELECT cls
