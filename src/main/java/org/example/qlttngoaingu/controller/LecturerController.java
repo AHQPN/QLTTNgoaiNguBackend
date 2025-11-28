@@ -51,12 +51,12 @@ public class LecturerController {
     }
 
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse> getById(@PathVariable Integer id) {
-        return ResponseEntity.ok(
-                ApiResponse.builder().data(lecturerService.getLecturerById(id)).build()
-        );
-    }
+//    @GetMapping("/{id}")
+//    public ResponseEntity<ApiResponse> getById(@AuthenticationPrincipal UserDetailsImpl user) {
+//        return ResponseEntity.ok(
+//                ApiResponse.builder().data(lecturerService.getLecturerById(user.getId())).build()
+//        );
+//    }
 
     // Mark attendance for a session (lecturer marks attendance for students)
     @PostMapping("/sessions/{sessionId}/attendance")
@@ -67,6 +67,8 @@ public class LecturerController {
         AttendanceSessionResponse resp = attendanceService.markAttendance(principal.getId(), request);
         return ResponseEntity.ok().body(ApiResponse.<AttendanceSessionResponse>builder().data(resp).build());
     }
+
+
 
 
 

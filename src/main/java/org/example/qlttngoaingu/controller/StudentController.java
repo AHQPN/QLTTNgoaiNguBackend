@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -47,10 +48,42 @@ public class StudentController {
     }
 
     @GetMapping("/get-classes-enrolled")
-    public ResponseEntity<ApiResponse> getClassesEnrolled(@AuthenticationPrincipal UserDetailsImpl principal) {
-        List<ClassResponse.ClassInfo> cls = courseClassService.getClassByUser(principal.getId());
-        return ResponseEntity.ok().body(ApiResponse.builder().data(cls).build());
+    public ResponseEntity<ApiResponse> getClassesEnrolled(
+            @AuthenticationPrincipal UserDetailsImpl principal,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+
+        List<ClassResponse.ClassInfo> fullList =
+                courseClassService.getClassByUser(principal.getId());
+
+        int totalItems = fullList.size();
+        int totalPages = (int) Math.ceil((double) totalItems / size);
+
+        // Chỉ số phân trang
+        int fromIndex = (page - 1) * size;
+        int toIndex = Math.min(fromIndex + size, totalItems);
+
+        // Tránh lỗi out-of-bound
+        List<ClassResponse.ClassInfo> paginatedList =
+                (fromIndex >= totalItems) ?
+                        new ArrayList<>() :
+                        fullList.subList(fromIndex, toIndex);
+
+        // Build response giống API filter
+        ClassResponse response = new ClassResponse();
+        response.setCurrentPage(page);
+        response.setTotalPages(totalPages);
+        response.setTotalItems(totalItems);
+        response.setClasses(paginatedList);
+
+        return ResponseEntity.ok(
+                ApiResponse.builder()
+                        .data(response)
+                        .build()
+        );
     }
+
 
 
 

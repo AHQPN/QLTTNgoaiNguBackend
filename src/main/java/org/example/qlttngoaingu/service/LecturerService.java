@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.qlttngoaingu.dto.request.LecturerCreationRequest;
 import org.example.qlttngoaingu.dto.response.AvailableLecturerResponse;
 import org.example.qlttngoaingu.dto.response.AvailableRoomResponse;
+import org.example.qlttngoaingu.dto.response.TeacherInfo;
 import org.example.qlttngoaingu.entity.Course;
 import org.example.qlttngoaingu.entity.CourseClass;
 import org.example.qlttngoaingu.entity.Lecturer;
@@ -160,10 +161,12 @@ public class LecturerService {
                 .toList();
     }
 
-    public Lecturer getLecturerById(Integer id) {
-        return lecturerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Lecturer not found"));
-    }
+//    public TeacherInfo getLecturerById(Integer id) {
+//
+//
+//        return lecturerRepository.findById(id)
+//                .orElseThrow(() -> new RuntimeException("Lecturer not found"));
+//    }
 
 
 }

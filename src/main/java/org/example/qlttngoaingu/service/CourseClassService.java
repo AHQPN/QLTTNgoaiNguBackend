@@ -606,21 +606,51 @@ public class CourseClassService {
     public List<ClassResponse.ClassInfo> getClassByUser(Integer userId) {
 
         User user = userRepository.getUserByUserId(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        if(Objects.equals(user.getRole(), RoleEnum.STUDENT.name()))
-        {
+        if (Objects.equals(user.getRole(), RoleEnum.STUDENT.name())) {
+
             Student student = studentRepository.getStudentByAccount_UserId(userId);
             List<CourseClass> classes = classRepository.findRegisteredClasses(student.getId());
+
             return classes.stream()
-                    .map(courseClassMapper::toDto)
+                    .map(cls -> {
+                        ClassResponse.ClassInfo info = courseClassMapper.toDto(cls);
+
+                        info.setMaxCapacity(cls.getRoom().getCapacity());
+                        Integer enrollmentCount =
+                                invoiceDetailRepository.countByClassIdAndActiveInvoice(cls.getClassId());
+                        List<Session> sessions = sessionRepository.findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId());
+                        if (!sessions.isEmpty()) {
+                            info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
+                        }
+                        info.setEndTime(cls.getStartTime().plusMinutes(cls.getMinutesPerSession()));
+
+                        info.setCurrentEnrollment(enrollmentCount);
+                        return info;
+                    })
                     .collect(Collectors.toList());
         }
+
         else if(Objects.equals(user.getRole(), RoleEnum.TEACHER.name()))
         {
             Lecturer lecturer = lecturerRepository.getByUser_UserId(userId);
             List<CourseClass> classes = classRepository
                     .findByLecturer_LecturerIdAndStatusNot(lecturer.getLecturerId(),ClassStatusEnum.Closed.name());
             return classes.stream()
-                    .map(courseClassMapper::toDto)
+                    .map(cls -> {
+                        ClassResponse.ClassInfo info = courseClassMapper.toDto(cls);
+
+                        info.setMaxCapacity(cls.getRoom().getCapacity());
+                        Integer enrollmentCount =
+                                invoiceDetailRepository.countByClassIdAndActiveInvoice(cls.getClassId());
+                        List<Session> sessions = sessionRepository.findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId());
+                        if (!sessions.isEmpty()) {
+                            info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
+                        }
+                        info.setEndTime(cls.getStartTime().plusMinutes(cls.getMinutesPerSession()));
+
+                        info.setCurrentEnrollment(enrollmentCount);
+                        return info;
+                    })
                     .collect(Collectors.toList());
         }
         return null;
