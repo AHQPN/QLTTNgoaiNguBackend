@@ -164,4 +164,6 @@ public class LecturerService {
         return lecturerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lecturer not found"));
     }
+
+
 }

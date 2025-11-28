@@ -1,20 +1,33 @@
 package org.example.qlttngoaingu.controller;
 
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
+import org.example.qlttngoaingu.dto.request.AttendanceSessionRequest;
 import org.example.qlttngoaingu.dto.request.CheckConflictRequest;
 import org.example.qlttngoaingu.dto.response.ApiResponse;
+import org.example.qlttngoaingu.dto.response.AttendanceSessionResponse;
 import org.example.qlttngoaingu.dto.response.AvailableLecturerResponse;
+import org.example.qlttngoaingu.entity.Lecturer;
+import org.example.qlttngoaingu.security.model.UserDetailsImpl;
+import org.example.qlttngoaingu.service.AttendanceService;
 import org.example.qlttngoaingu.service.LecturerService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/lecturers")
 @RequiredArgsConstructor
 public class LecturerController {
     private final LecturerService lecturerService;
+    private final AttendanceService attendanceService;
 
     @PostMapping("/available")
     public ResponseEntity<List<AvailableLecturerResponse>> getAvailableLecturers(
@@ -44,6 +57,20 @@ public class LecturerController {
                 ApiResponse.builder().data(lecturerService.getLecturerById(id)).build()
         );
     }
+
+    // Mark attendance for a session (lecturer marks attendance for students)
+    @PostMapping("/sessions/{sessionId}/attendance")
+    public ResponseEntity<ApiResponse<AttendanceSessionResponse>> markAttendance(@AuthenticationPrincipal UserDetailsImpl principal, @PathVariable Integer sessionId, @RequestBody AttendanceSessionRequest request) {
+        if (!sessionId.equals(request.getSessionId())) {
+            return ResponseEntity.badRequest().body(ApiResponse.<AttendanceSessionResponse>builder().message("sessionId mismatch").build());
+        }
+        AttendanceSessionResponse resp = attendanceService.markAttendance(principal.getId(), request);
+        return ResponseEntity.ok().body(ApiResponse.<AttendanceSessionResponse>builder().data(resp).build());
+    }
+
+
+
+
 
 
 

@@ -8,31 +8,30 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 public class VNPayConfig {
 
-    // VNPay Test/Sandbox credentials
-    @Value("${vnpay.tmn-code:CGKD9BN1}")
+    @Value("${vnpay.tmn-code}")
     private String tmnCode;
 
-    @Value("${vnpay.hash-secret:GJXFAYTALTSLSRLPIPCCBMXBUSHXDRDV}")
+    @Value("${vnpay.hash-secret}")
     private String hashSecret;
 
-    @Value("${vnpay.api-url:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}")
+    @Value("${vnpay.api-url}")
     private String apiUrl;
 
-    @Value("${vnpay.return-url:http://localhost:8080/payment/vnpay/return}")
+    @Value("${vnpay.return-url}")
     private String returnUrl;
 
-    @Value("${vnpay.version:2.1.0}")
+    @Value("${vnpay.version}")
     private String version;
 
-    @Value("${vnpay.command:pay}")
+    @Value("${vnpay.command}")
     private String command;
 
-    @Value("${vnpay.order-type:other}")
+    @Value("${vnpay.order-type}")
     private String orderType;
 
-    @Value("${vnpay.locale:vn}")
+    @Value("${vnpay.locale}")
     private String locale;
 
-    @Value("${vnpay.currency-code:VND}")
+    @Value("${vnpay.currency-code}")
     private String currencyCode;
 }

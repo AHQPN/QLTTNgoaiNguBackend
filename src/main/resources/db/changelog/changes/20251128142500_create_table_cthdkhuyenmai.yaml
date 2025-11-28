@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0
+      author: admin
+      changes:
+        - createTable:
+            tableName: chitiethoadonkhuyenmai
+            columns:
+              - column:
+                  name: macthd_km
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: macthd
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: makhuyenmai
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: giatrigiam
+                  type: DECIMAL(15,2)
+
+        - addForeignKeyConstraint:
+            constraintName: fk_cthdkm_cthd
+            baseTableName: chitiethoadonkhuyenmai
+            baseColumnNames: macthd
+            referencedTableName: chitiethoadon
+            referencedColumnNames: macthd
+            onDelete: CASCADE
+            onUpdate: CASCADE
+
+        - addForeignKeyConstraint:
+            constraintName: fk_cthdkm_khuyenmai
+            baseTableName: chitiethoadonkhuyenmai
+            baseColumnNames: makhuyenmai
+            referencedTableName: khuyenmai
+            referencedColumnNames: makm
+            onDelete: CASCADE
+            onUpdate: CASCADE

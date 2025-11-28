@@ -6,10 +6,14 @@ import org.example.qlttngoaingu.dto.response.*;
 import org.example.qlttngoaingu.entity.CourseClass;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
+import org.example.qlttngoaingu.repository.CourseClassRepository;
+import org.example.qlttngoaingu.security.model.UserDetailsImpl;
+import org.example.qlttngoaingu.service.AttendanceService;
 import org.example.qlttngoaingu.service.CourseClassService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.DayOfWeek;
@@ -21,7 +25,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class CourseClassController {
     private final CourseClassService courseClassService;
-
+    private final AttendanceService attendanceService;
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getCourseClass(@PathVariable Integer id) {
 
@@ -33,6 +37,7 @@ public class CourseClassController {
 
         return ResponseEntity.ok().body(ApiResponse.builder().data(courseClassService.getAllClasses(page,size)).build());
     }
+
 
     @PostMapping()
     public ResponseEntity<ApiResponse> createCourseClass(@RequestBody ClassCreationRequest classCreationRequest)
@@ -110,6 +115,12 @@ public class CourseClassController {
 
         ClassCreationResponse response =  courseClassService.updateClass(classId,classCreationRequest);
         return ResponseEntity.ok().body(ApiResponse.builder().data(response).build());
+    }
+
+    @GetMapping("/sessions/{sessionId}/attendance")
+    public ResponseEntity<ApiResponse<AttendanceSessionResponse>> getAttendance(@AuthenticationPrincipal UserDetailsImpl principal, @PathVariable Integer sessionId) {
+        AttendanceSessionResponse resp = attendanceService.getAttendanceForSession(principal.getId(), sessionId);
+        return ResponseEntity.ok().body(ApiResponse.<AttendanceSessionResponse>builder().data(resp).build());
     }
 
 

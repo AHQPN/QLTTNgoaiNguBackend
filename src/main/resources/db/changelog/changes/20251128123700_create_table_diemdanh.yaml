@@ -1,0 +1,51 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20251126_create_diemdanh
+      author: admin
+      changes:
+        - dropTable:
+            tableName: diemdanh
+        - createTable:
+            tableName: diemdanh
+            columns:
+              - column:
+                  name: madiemdanh
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: macthd
+                  type: INT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: mabuoihoc
+                  type: INT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: ghichu
+                  type: NVARCHAR(255)
+
+              - column:
+                  name: vang
+                  type: BOOLEAN
+
+        - addForeignKeyConstraint:
+            baseTableName: diemdanh
+            baseColumnNames: macthd
+            referencedTableName: chitiethoadon
+            referencedColumnNames: macthd
+            constraintName: fk_diemdanh_chitiethoadon
+
+        - addForeignKeyConstraint:
+            baseTableName: diemdanh
+            baseColumnNames: mabuoihoc
+            referencedTableName: buoihoc
+            referencedColumnNames: mabuoihoc
+            constraintName: fk_diemdanh_buoihoc
