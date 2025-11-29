@@ -369,6 +369,15 @@ public class CourseClassService {
                     if (!sessions.isEmpty()) {
                         info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
                     }
+                    info.setMaxCapacity(cls.getRoom().getCapacity());
+                    Integer enrollmentCount =
+                            invoiceDetailRepository.countByClassIdAndActiveInvoice(cls.getClassId());
+                    if (!sessions.isEmpty()) {
+                        info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
+                    }
+                    info.setEndTime(cls.getStartTime().plusMinutes(cls.getMinutesPerSession()));
+
+                    info.setCurrentEnrollment(enrollmentCount);
 
                     // Set thời gian
                     info.setStartTime(cls.getStartTime());
