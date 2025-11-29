@@ -1,0 +1,44 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20251129_create_table_phieudiem
+      author: admin
+      changes:
+        - createTable:
+            tableName: phieudiem
+            columns:
+              - column:
+                  name: maphieu
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: diem
+                  type: DECIMAL(5,2)
+
+              - column:
+                  name: ghichu
+                  type: NVARCHAR(255)
+
+              - column:
+                  name: ngaylap
+                  type: TIMESTAMP
+
+              - column:
+                  name: loaidiem
+                  type: NVARCHAR(50)
+
+              - column:
+                  name: macthd
+                  type: INT
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: phieudiem
+            baseColumnNames: macthd
+            referencedTableName: chitiethoadon
+            referencedColumnNames: macthd
+            constraintName: fk_phieudiem_chitiethoadon
