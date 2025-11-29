@@ -23,28 +23,8 @@ databaseChangeLog:
             tableName: giangvien
             columnName: email
 
-  # 2. ChangeSet: Thêm seed data cho bảng phong
-  # Cấu trúc bảng phong: maphong (INT, PK, Identity), tenphong (NVARCHAR), succhua (INT), trangthai (NVARCHAR)
+  # 2. ChangeSet: Thêm seed data cho bảng phong (REMOVED)
   - changeSet:
-      id: seed-data-for-phong-table
+      id: 20251105-REMOVED-seed-phong
       author: nguyen
-      comment: Insert initial room data into the phong table.
-      changes:
-        - insert:
-            tableName: phong
-            columns:
-              - column: {name: tenphong, value: "Phòng A101"}
-              - column: {name: succhua, valueNumeric: 20}
-              - column: {name: trangthai, value: "Sẵn sàng"}
-        - insert:
-            tableName: phong
-            columns:
-              - column: {name: tenphong, value: "Phòng A102"}
-              - column: {name: succhua, valueNumeric: 15}
-              - column: {name: trangthai, value: "Sẵn sàng"}
-        - insert:
-            tableName: phong
-            columns:
-              - column: {name: tenphong, value: "Phòng A102"}
-              - column: {name: succhua, valueNumeric: 25}
-              - column: {name: trangthai, value: "Sẵn sàng"}
+      comment: "Seed data removed - only structural changes remain applied in other migrations."

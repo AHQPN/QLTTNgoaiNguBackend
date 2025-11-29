@@ -1,10 +1,5 @@
 databaseChangeLog:
   - changeSet:
-      id: 20251017-01
-      author: nguyen
-      changes:
-        - sqlFile:
-            path: seed_data.sql
-            relativeToChangelogFile: true
-            splitStatements: true
-            stripComments: true
+      id: 20251017-01-REMOVED-SEED
+      author: admin
+      comment: "This seed changeSet has been removed; seeds are not applied in migrations anymore."

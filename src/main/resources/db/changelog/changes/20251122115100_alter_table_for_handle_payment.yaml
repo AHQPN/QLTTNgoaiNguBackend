@@ -112,11 +112,7 @@ databaseChangeLog:
                   name: trangthai
                   type: bit
 
-        # ============================================================
-        # BƯỚC 5: Chạy file seed
-        # ============================================================
-        - sqlFile:
-            path: seedsql2.sql
-            relativeToChangelogFile: true
-            splitStatements: true
-            stripComments: true
+  - changeSet:
+      id: 20251122-REMOVED-seed-sql
+      author: admin
+      comment: "Previously used to run seeds via seedsql2.sql; seed data removed."

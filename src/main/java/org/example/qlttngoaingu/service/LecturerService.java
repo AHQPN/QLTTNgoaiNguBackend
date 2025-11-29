@@ -1,14 +1,24 @@
 package org.example.qlttngoaingu.service;
 
-import lombok.RequiredArgsConstructor;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.example.qlttngoaingu.dto.request.LecturerCreationRequest;
 import org.example.qlttngoaingu.dto.response.AvailableLecturerResponse;
-import org.example.qlttngoaingu.dto.response.AvailableRoomResponse;
 import org.example.qlttngoaingu.dto.response.TeacherInfo;
 import org.example.qlttngoaingu.entity.Course;
 import org.example.qlttngoaingu.entity.CourseClass;
 import org.example.qlttngoaingu.entity.Lecturer;
 import org.example.qlttngoaingu.repository.CourseClassRepository;
+import org.example.qlttngoaingu.repository.LecturerDegreeRepository;
 import org.example.qlttngoaingu.repository.LecturerRepository;
 import org.example.qlttngoaingu.repository.UserRepository;
 import org.example.qlttngoaingu.service.enums.ClassStatusEnum;
@@ -16,17 +26,13 @@ import org.example.qlttngoaingu.service.enums.SchedulePattern;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.*;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class LecturerService {
     private final LecturerRepository lecturerRepository;
+    private final LecturerDegreeRepository lecturerDegreeRepository;
     private final UserRepository userRepository;
     private final CourseClassRepository classRepository;
 
@@ -161,12 +167,40 @@ public class LecturerService {
                 .toList();
     }
 
-//    public TeacherInfo getLecturerById(Integer id) {
-//
-//
-//        return lecturerRepository.findById(id)
-//                .orElseThrow(() -> new RuntimeException("Lecturer not found"));
-//    }
+
+
+    @Transactional(readOnly = true)
+    public TeacherInfo getLecturerById(Integer userId) {
+        Lecturer lecturer = lecturerRepository.getByUser_UserId(userId);
+        if (lecturer == null) {
+            throw new RuntimeException("Lecturer not found");
+        }
+
+        TeacherInfo dto = new TeacherInfo();
+        dto.setLecturerId(lecturer.getLecturerId());
+        dto.setFullName(lecturer.getFullName());
+        dto.setDateOfBirth(lecturer.getDateOfBirth());
+        dto.setImagePath(lecturer.getImagePath());
+
+        if (lecturer.getUser() != null) {
+            dto.setEmail(lecturer.getUser().getEmail());
+            dto.setPhoneNumber(lecturer.getUser().getPhoneNumber());
+        }
+
+        List<org.example.qlttngoaingu.entity.LecturerDegree> list = lecturerDegreeRepository.findByLecturer_LecturerId(lecturer.getLecturerId());
+        var qualList = list.stream().map(ld -> {
+            TeacherInfo.QualificationDTO q = new TeacherInfo.QualificationDTO();
+            if (ld.getDegree() != null) {
+                q.setDegreeId(ld.getDegree().getId());
+                q.setDegreeName(ld.getDegree().getName());
+            }
+            q.setLevel(ld.getLevel());
+            return q;
+        }).toList();
+
+        dto.setQualifications(qualList);
+        return dto;
+    }
 
 
 }
