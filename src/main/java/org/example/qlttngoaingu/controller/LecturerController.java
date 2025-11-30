@@ -54,7 +54,7 @@ public class LecturerController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getById(@AuthenticationPrincipal UserDetailsImpl user,@PathVariable Integer id) {
         return ResponseEntity.ok(
-                ApiResponse.builder().data(lecturerService.getLecturerById(user.getId())).build()
+                ApiResponse.builder().data(lecturerService.getLecturerById(user.getId(),id)).build()
         );
     }
 

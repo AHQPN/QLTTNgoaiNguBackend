@@ -14,9 +14,9 @@ import java.util.Set;
 import org.example.qlttngoaingu.dto.request.LecturerCreationRequest;
 import org.example.qlttngoaingu.dto.response.AvailableLecturerResponse;
 import org.example.qlttngoaingu.dto.response.TeacherInfo;
-import org.example.qlttngoaingu.entity.Course;
-import org.example.qlttngoaingu.entity.CourseClass;
-import org.example.qlttngoaingu.entity.Lecturer;
+import org.example.qlttngoaingu.entity.*;
+import org.example.qlttngoaingu.exception.AppException;
+import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.repository.CourseClassRepository;
 import org.example.qlttngoaingu.repository.LecturerDegreeRepository;
 import org.example.qlttngoaingu.repository.LecturerRepository;
@@ -170,12 +170,46 @@ public class LecturerService {
 
 
     @Transactional(readOnly = true)
-    public TeacherInfo getLecturerById(Integer userId) {
-        Lecturer lecturer = lecturerRepository.getByUser_UserId(userId);
-        if (lecturer == null) {
-            throw new RuntimeException("Lecturer not found");
+    public TeacherInfo getLecturerById(Integer userId, Integer lecturerId) {
+
+        // 1. Lấy user hiện tại
+        User usr = userRepository.getUserByUserId(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        Lecturer lecturer;
+
+        // 2. Nếu là admin → phải truyền lecturerId để xem thông tin bất kỳ giảng viên nào
+        if (usr.getRole().equalsIgnoreCase("ADMIN")) {
+
+            if (lecturerId == null) {
+                throw new AppException(ErrorCode.UNCATEGORIZED);
+            }
+
+            lecturer = lecturerRepository.getLecturersByLecturerId(lecturerId)
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         }
 
+        // 3. Nếu là giảng viên tự xem hồ sơ → lấy theo userId hiện tại
+        else if (usr.getRole().equalsIgnoreCase("LECTURER")) {
+
+            lecturer = lecturerRepository.getByUser_UserId(userId);
+            if (lecturer == null) {
+                throw new AppException(ErrorCode.USER_NOT_FOUND);
+            }
+
+            if (lecturerId != null && !lecturerId.equals(lecturer.getLecturerId())) {
+                throw new AppException(ErrorCode.UNCATEGORIZED);
+            }
+        }
+
+        // 4. Các role khác → không có quyền
+        else {
+            throw new AppException(ErrorCode.UNCATEGORIZED);
+        }
+
+        // ==============================
+        // Build DTO
+        // ==============================
         TeacherInfo dto = new TeacherInfo();
         dto.setLecturerId(lecturer.getLecturerId());
         dto.setFullName(lecturer.getFullName());
@@ -187,20 +221,24 @@ public class LecturerService {
             dto.setPhoneNumber(lecturer.getUser().getPhoneNumber());
         }
 
-        List<org.example.qlttngoaingu.entity.LecturerDegree> list = lecturerDegreeRepository.findByLecturer_LecturerId(lecturer.getLecturerId());
+        List<LecturerDegree> list = lecturerDegreeRepository.findByLecturer_LecturerId(lecturer.getLecturerId());
         var qualList = list.stream().map(ld -> {
             TeacherInfo.QualificationDTO q = new TeacherInfo.QualificationDTO();
+
             if (ld.getDegree() != null) {
                 q.setDegreeId(ld.getDegree().getId());
                 q.setDegreeName(ld.getDegree().getName());
             }
+
             q.setLevel(ld.getLevel());
             return q;
         }).toList();
 
         dto.setQualifications(qualList);
+
         return dto;
     }
+
 
 
 }
