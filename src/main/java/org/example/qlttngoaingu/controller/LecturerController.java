@@ -57,6 +57,17 @@ public class LecturerController {
                 ApiResponse.builder().data(lecturerService.getLecturerById(user.getId(),id)).build()
         );
     }
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse> getMyInfo(
+            @AuthenticationPrincipal UserDetailsImpl user
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.builder()
+                        .data(lecturerService.getLecturerById(user.getId(), null))
+                        .build()
+        );
+    }
+
 
     @PostMapping("/sessions/{sessionId}/attendance")
     public ResponseEntity<ApiResponse<AttendanceSessionResponse>> markAttendance(@AuthenticationPrincipal UserDetailsImpl principal, @PathVariable Integer sessionId, @RequestBody AttendanceSessionRequest request) {

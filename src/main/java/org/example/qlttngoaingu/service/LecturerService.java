@@ -22,6 +22,7 @@ import org.example.qlttngoaingu.repository.LecturerDegreeRepository;
 import org.example.qlttngoaingu.repository.LecturerRepository;
 import org.example.qlttngoaingu.repository.UserRepository;
 import org.example.qlttngoaingu.service.enums.ClassStatusEnum;
+import org.example.qlttngoaingu.service.enums.RoleEnum;
 import org.example.qlttngoaingu.service.enums.SchedulePattern;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -190,7 +191,7 @@ public class LecturerService {
         }
 
         // 3. Nếu là giảng viên tự xem hồ sơ → lấy theo userId hiện tại
-        else if (usr.getRole().equalsIgnoreCase("LECTURER")) {
+        else if (usr.getRole().equalsIgnoreCase(RoleEnum.TEACHER.name())) {
 
             lecturer = lecturerRepository.getByUser_UserId(userId);
             if (lecturer == null) {
