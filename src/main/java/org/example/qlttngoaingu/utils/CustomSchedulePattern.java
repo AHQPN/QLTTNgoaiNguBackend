@@ -1,12 +1,12 @@
 package org.example.qlttngoaingu.utils;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 import java.time.DayOfWeek;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
@@ -27,10 +27,41 @@ public class CustomSchedulePattern {
 
         return Arrays.stream(pattern.split("-"))
                 .map(String::trim)
-                .mapToInt(Integer::parseInt)
+                .mapToInt(CustomSchedulePattern::parseDayTokenToNumber)
                 .sorted()
                 .mapToObj(CustomSchedulePattern::dayOfWeekFromNumber)
                 .collect(Collectors.toList());
+    }
+
+    private static int parseDayTokenToNumber(String token) {
+        if (token == null || token.isEmpty()) {
+            throw new IllegalArgumentException("Empty day token");
+        }
+
+        token = token.trim().toUpperCase();
+
+        // Support Vietnamese short forms: CN, T2..T7
+        if (token.equals("CN")) return 1; // Chủ nhật
+        if (token.startsWith("T")) {
+            String num = token.substring(1);
+            try {
+                int v = Integer.parseInt(num);
+                if (v >= 2 && v <= 7) return v;
+            } catch (NumberFormatException e) {
+                // fallthrough to exception
+            }
+            throw new IllegalArgumentException("Invalid token: " + token);
+        }
+
+        // Fallback: numeric tokens 1..7 (1 = CN = Sunday)
+        try {
+            int v = Integer.parseInt(token);
+            if (v >= 1 && v <= 7) return v;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid day token: " + token);
+        }
+
+        throw new IllegalArgumentException("Invalid day token: " + token);
     }
 
     private static DayOfWeek dayOfWeekFromNumber(int number) {

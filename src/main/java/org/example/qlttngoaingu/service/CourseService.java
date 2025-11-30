@@ -102,7 +102,7 @@ public class CourseService {
         Pageable paging = PageRequest.of(page, size);
         Page<Course> pageTuts;
 
-        pageTuts = courseRepository.findAll(paging);
+        pageTuts = courseRepository.findByStatusTrue(paging);
         List<Course> x = pageTuts.getContent();
 
         List<CourseResponse> courseResponses = pageTuts.getContent().stream().map(course -> {
