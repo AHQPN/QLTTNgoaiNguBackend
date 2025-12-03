@@ -28,5 +28,6 @@ public class ClassResponse {
         private String status;
         private Integer maxCapacity;
         private Integer currentEnrollment;
+        private Double tuitionFee; // Học phí từ Course
     }
 }

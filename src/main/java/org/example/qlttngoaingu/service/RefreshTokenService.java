@@ -17,7 +17,7 @@ import java.util.UUID;
 @Service
 public class RefreshTokenService {
     @Value("${app.jwtRefreshExpirationMs}")
-    private Integer refreshTokenDurationMs;
+    private Long refreshTokenDurationMs;
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
 
@@ -25,6 +25,7 @@ public class RefreshTokenService {
         this.refreshTokenRepository = refreshTokenRepository;
         this.userRepository = userRepository;
     }
+
     public Optional<RefreshToken> findByToken(String token) {
         return refreshTokenRepository.findByRefreshToken(token);
     }
@@ -45,7 +46,7 @@ public class RefreshTokenService {
             refreshTokenRepository.delete(token);
             throw new AppException(ErrorCode.REFRESH_TOKEN_EXPIRED);
         }
-        if(token.getRevoked())
+        if (token.getRevoked())
             throw new AppException(ErrorCode.REFRESH_TOKEN_REVOKED);
 
         return token;
@@ -58,6 +59,7 @@ public class RefreshTokenService {
         // Tạo token mới
         return createRefreshToken(oldToken.getUser().getUserId());
     }
+
     public void setRevoked(RefreshToken refreshToken) {
         refreshToken.setRevoked(true);
     }

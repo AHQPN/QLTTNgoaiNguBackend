@@ -18,6 +18,7 @@ public class CourseDetailResponse {
     private String entryLevel;
     private String targetLevel;
     private String image;
+    private Integer courseCategoryId;
     private String category;
     private String level;
     private List<Objective> objectives;

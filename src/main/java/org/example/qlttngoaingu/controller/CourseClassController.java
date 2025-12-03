@@ -10,6 +10,7 @@ import org.example.qlttngoaingu.repository.CourseClassRepository;
 import org.example.qlttngoaingu.security.model.UserDetailsImpl;
 import org.example.qlttngoaingu.service.AttendanceService;
 import org.example.qlttngoaingu.service.CourseClassService;
+import org.example.qlttngoaingu.service.ReviewService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,7 @@ import java.util.*;
 public class CourseClassController {
     private final CourseClassService courseClassService;
     private final AttendanceService attendanceService;
+    private final ReviewService reviewService;
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getCourseClass(@PathVariable Integer id) {
 
@@ -121,6 +123,19 @@ public class CourseClassController {
     public ResponseEntity<ApiResponse<AttendanceSessionResponse>> getAttendance(@AuthenticationPrincipal UserDetailsImpl principal, @PathVariable Integer sessionId) {
         AttendanceSessionResponse resp = attendanceService.getAttendanceForSession(principal.getId(), sessionId);
         return ResponseEntity.ok().body(ApiResponse.<AttendanceSessionResponse>builder().data(resp).build());
+    }
+
+    /**
+     * GET /courseclasses/{classId}/reviews
+     * Lấy danh sách đánh giá của lớp học
+     */
+    @GetMapping("/{classId}/reviews")
+    public ResponseEntity<ApiResponse> getClassReviews(@PathVariable Integer classId) {
+        return ResponseEntity.ok().body(
+            ApiResponse.builder()
+                .data(reviewService.getClassReviews(classId))
+                .build()
+        );
     }
 
 

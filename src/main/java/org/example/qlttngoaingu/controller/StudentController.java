@@ -1,11 +1,15 @@
 package org.example.qlttngoaingu.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.qlttngoaingu.dto.request.ReviewRequest;
 import org.example.qlttngoaingu.dto.response.*;
 import org.example.qlttngoaingu.entity.Student;
 import org.example.qlttngoaingu.security.model.UserDetailsImpl;
 import org.example.qlttngoaingu.service.CourseClassService;
 import org.example.qlttngoaingu.service.CourseService;
+import org.example.qlttngoaingu.service.GradeService;
+import org.example.qlttngoaingu.service.ReviewService;
 import org.example.qlttngoaingu.service.UserService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +28,8 @@ public class StudentController {
     private final UserService userService;
     private final CourseService courseService;
     private final CourseClassService courseClassService;
+    private final GradeService gradeService;
+    private final ReviewService reviewService;
 
     @GetMapping
     public ResponseEntity<ApiResponse> getStudentInfo(@AuthenticationPrincipal UserDetailsImpl principal) {
@@ -35,11 +41,6 @@ public class StudentController {
         userService.updateStudentInfo(principal.getId(),student);
         return ResponseEntity.ok().body(ApiResponse.builder().message("Cập nhật thành công").build());
     }
-//    @GetMapping("/classes")
-//    public ResponseEntity<ApiResponse> getClassesByStudent(@AuthenticationPrincipal UserDetailsImpl principal)
-//    {
-//        return ResponseEntity.ok().body(ApiResponse.builder().data(courseClassService.findByStudent(principal.getId())).build());
-//    }
 
     @GetMapping("/schedule-by-week")
     public ResponseEntity<ApiResponse> getScheduleByWeekforStudent(@AuthenticationPrincipal UserDetailsImpl principal, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
@@ -60,17 +61,14 @@ public class StudentController {
         int totalItems = fullList.size();
         int totalPages = (int) Math.ceil((double) totalItems / size);
 
-        // Chỉ số phân trang
         int fromIndex = (page - 1) * size;
         int toIndex = Math.min(fromIndex + size, totalItems);
 
-        // Tránh lỗi out-of-bound
         List<ClassResponse.ClassInfo> paginatedList =
                 (fromIndex >= totalItems) ?
                         new ArrayList<>() :
                         fullList.subList(fromIndex, toIndex);
 
-        // Build response giống API filter
         ClassResponse response = new ClassResponse();
         response.setCurrentPage(page);
         response.setTotalPages(totalPages);
@@ -84,7 +82,79 @@ public class StudentController {
         );
     }
 
+    // Alias endpoint cho backward compatibility với FE cũ
+    @GetMapping("/get-courses_enrolled")
+    public ResponseEntity<ApiResponse> getCoursesEnrolled(
+            @AuthenticationPrincipal UserDetailsImpl principal,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return getClassesEnrolled(principal, page, size);
+    }
 
+    // ==================== GRADES APIs (STU-01, STU-02) ====================
 
+    /**
+     * STU-01: GET /students/grades
+     * Lấy tất cả điểm của học viên đang đăng nhập
+     */
+    @GetMapping("/grades")
+    public ResponseEntity<ApiResponse> getMyGrades(
+            @AuthenticationPrincipal UserDetailsImpl principal
+    ) {
+        List<GradeResponse> grades = gradeService.getStudentGrades(principal.getId());
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("Lấy điểm thành công")
+                .data(grades)
+                .build());
+    }
 
+    /**
+     * STU-02: GET /students/grades/class/{classId}
+     * Lấy điểm của học viên theo lớp cụ thể
+     */
+    @GetMapping("/grades/class/{classId}")
+    public ResponseEntity<ApiResponse> getGradesByClass(
+            @AuthenticationPrincipal UserDetailsImpl principal,
+            @PathVariable Integer classId
+    ) {
+        GradeResponse grades = gradeService.getStudentGradesByClass(principal.getId(), classId);
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("Lấy điểm lớp thành công")
+                .data(grades)
+                .build());
+    }
+
+    // ==================== REVIEWS APIs (STU-03, STU-04) ====================
+
+    /**
+     * STU-03: POST /students/reviews
+     * Học viên gửi đánh giá khóa học
+     */
+    @PostMapping("/reviews")
+    public ResponseEntity<ApiResponse> submitReview(
+            @AuthenticationPrincipal UserDetailsImpl principal,
+            @Valid @RequestBody ReviewRequest request
+    ) {
+        ReviewResponse review = reviewService.submitReview(principal.getId(), request);
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("Đánh giá đã được gửi thành công")
+                .data(review)
+                .build());
+    }
+
+    /**
+     * STU-04: GET /students/reviews
+     * Học viên xem lịch sử đánh giá của mình
+     */
+    @GetMapping("/reviews")
+    public ResponseEntity<ApiResponse> getMyReviews(
+            @AuthenticationPrincipal UserDetailsImpl principal
+    ) {
+        List<ReviewResponse> reviews = reviewService.getStudentReviews(principal.getId());
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("Lấy lịch sử đánh giá thành công")
+                .data(reviews)
+                .build());
+    }
 }

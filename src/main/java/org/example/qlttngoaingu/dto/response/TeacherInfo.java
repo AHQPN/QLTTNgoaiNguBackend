@@ -16,6 +16,11 @@ public class TeacherInfo {
     private String phoneNumber;
     private String email;
 
+    // Thống kê cho Flutter FE
+    private Integer totalClasses;
+    private Integer totalStudents;
+    private Double rating;
+
     private List<QualificationDTO> qualifications;
 
     @Data

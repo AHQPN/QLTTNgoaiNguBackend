@@ -45,32 +45,34 @@ public class CourseClassService {
     private final ConflictCheckService conflictCheckService;
     private final SmartScheduleSuggestionService smartScheduleSuggestionService;
     private final SessionMapper sessionMapper;
-    private final CourseClassMapper  courseClassMapper;
+    private final CourseClassMapper courseClassMapper;
     private final InvoiceDetailRepository invoiceDetailRepository;
     private final StudentRepository studentRepository;
     private final UserRepository userRepository;
+    private final GradeSheetRepository gradeSheetRepository;
 
     private final List<String> periods = List.of("Sáng", "Chiều", "Tối");
-//    @Transactional
-//    public ScheduleSuggestionResponse changeStatus(Integer classId){
-//
-//        CourseClass courseClass = classRepository.getCourseClassByClassId((classId));
-//        if(courseClass.getStatus() ==  ClassStatusEnum.InProgress.name())
-//        {
-//            courseClass.setStatus(false);
-//            return null;
-//        }
-//        ScheduleCheckRequest createScheduleCheckRequest =  courseClassMapper.toScheduleCheckRequest(courseClass);
-//        ScheduleSuggestionResponse scheduleSuggestionResponse =
-//                smartScheduleSuggestionService .checkAndSuggest(createScheduleCheckRequest);
-//        if(Objects.equals(scheduleSuggestionResponse.getStatus(), "AVAILABLE"))
-//        {
-//            courseClass.setStatus(true);
-//            return null;
-//        }
-//
-//        return scheduleSuggestionResponse;
-//    }
+    // @Transactional
+    // public ScheduleSuggestionResponse changeStatus(Integer classId){
+    //
+    // CourseClass courseClass = classRepository.getCourseClassByClassId((classId));
+    // if(courseClass.getStatus() == ClassStatusEnum.InProgress.name())
+    // {
+    // courseClass.setStatus(false);
+    // return null;
+    // }
+    // ScheduleCheckRequest createScheduleCheckRequest =
+    // courseClassMapper.toScheduleCheckRequest(courseClass);
+    // ScheduleSuggestionResponse scheduleSuggestionResponse =
+    // smartScheduleSuggestionService .checkAndSuggest(createScheduleCheckRequest);
+    // if(Objects.equals(scheduleSuggestionResponse.getStatus(), "AVAILABLE"))
+    // {
+    // courseClass.setStatus(true);
+    // return null;
+    // }
+    //
+    // return scheduleSuggestionResponse;
+    // }
 
     @Transactional
     public ClassCreationResponse createClass(ClassCreationRequest request) {
@@ -96,8 +98,7 @@ public class CourseClassService {
                 request.getStartTime(),
                 request.getMinutesPerSession(),
                 request.getStartDate(),
-                null
-        );
+                null);
         if (!roomConflicts.isEmpty()) {
             throw new RuntimeException("Room conflict: " + roomConflicts.get(0).getDescription());
         }
@@ -109,8 +110,7 @@ public class CourseClassService {
                     request.getStartTime(),
                     request.getMinutesPerSession(),
                     request.getStartDate(),
-                    null
-            );
+                    null);
             if (!teacherConflicts.isEmpty()) {
                 throw new RuntimeException("Lecturer conflict: " + teacherConflicts.get(0).getDescription());
             }
@@ -136,8 +136,7 @@ public class CourseClassService {
                 pattern,
                 request.getStartDate(),
                 request.getStartTime(),
-                request.getMinutesPerSession()
-        );
+                request.getMinutesPerSession());
 
         sessionRepository.saveAll(sessions);
 
@@ -238,6 +237,8 @@ public class CourseClassService {
 
         response.setRoomName(cls.getRoom() != null ? cls.getRoom().getRoomName() : null);
         response.setInstructorName(cls.getLecturer() != null ? cls.getLecturer().getFullName() : null);
+        response.setLecturerId(cls.getLecturer() != null ? cls.getLecturer().getLecturerId() : null);
+        response.setCourseId(cls.getCourse() != null ? cls.getCourse().getCourseId() : null);
         response.setTotalSessions(sessions.size());
 
         List<ClassDetailResponse.SessionInfoDetail> sessionInfos = sessions.stream()
@@ -252,6 +253,15 @@ public class CourseClassService {
                 .toList();
         List<Student> studentEntities = invoiceDetailRepository.findStudentsByClassId(classId);
 
+        // Lấy tất cả điểm của lớp
+        List<GradeSheet> allGrades = gradeSheetRepository.findAllByClassId(classId);
+        
+        // Map grades theo studentId
+        Map<Integer, List<GradeSheet>> gradesByStudentId = allGrades.stream()
+                .collect(Collectors.groupingBy(g -> 
+                    g.getEnrollment().getInvoice().getStudent().getId()
+                ));
+
         List<ClassDetailResponse.StudentInClass> studentList = studentEntities.stream()
                 .map(s -> {
                     ClassDetailResponse.StudentInClass dto = new ClassDetailResponse.StudentInClass();
@@ -262,10 +272,15 @@ public class CourseClassService {
                     dto.setAvatar(s.getAvatar());
                     dto.setGender(s.getGender());
 
-
                     if (s.getAccount() != null) {
                         dto.setEmail(s.getAccount().getEmail());
                         dto.setPhone(s.getAccount().getPhoneNumber());
+                    }
+                    
+                    // Tính điểm trung bình cho học sinh
+                    List<GradeSheet> studentGrades = gradesByStudentId.get(s.getId());
+                    if (studentGrades != null && !studentGrades.isEmpty()) {
+                        dto.setAverageScore(calculateAverageScore(studentGrades));
                     }
 
                     return dto;
@@ -276,7 +291,6 @@ public class CourseClassService {
         response.setMaxCapacity(cls.getRoom().getCapacity());
         Integer enrollmentCount = invoiceDetailRepository.countByClassIdAndActiveInvoice(classId);
 
-
         response.setCurrentEnrollment(enrollmentCount);
         return response;
     }
@@ -285,8 +299,7 @@ public class CourseClassService {
         PageRequest pageable = PageRequest.of(
                 page,
                 size,
-                Sort.by(Sort.Order.asc("startDate"), Sort.Order.desc("status"))
-        );
+                Sort.by(Sort.Order.asc("startDate"), Sort.Order.desc("status")));
 
         Page<CourseClass> classPage = classRepository.findAll(pageable);
 
@@ -299,7 +312,6 @@ public class CourseClassService {
             info.setInstructorName(cls.getLecturer() != null ? cls.getLecturer().getFullName() : null);
             info.setStartDate(cls.getStartDate());
 
-
             List<Session> sessions = sessionRepository.findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId());
             if (!sessions.isEmpty()) {
                 info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
@@ -307,13 +319,17 @@ public class CourseClassService {
             info.setMaxCapacity(cls.getRoom().getCapacity());
             Integer enrollmentCount = invoiceDetailRepository.countByClassIdAndActiveInvoice(cls.getClassId());
 
-
             info.setCurrentEnrollment(enrollmentCount);
 
             info.setStartTime(cls.getStartTime());
             info.setEndTime(cls.getStartTime().plusMinutes(cls.getMinutesPerSession()));
             info.setSchedulePattern(cls.getSchedule());
             info.setStatus(cls.getStatus());
+
+            // Set tuitionFee từ Course
+            if (cls.getCourse() != null && cls.getCourse().getTuitionFee() != null) {
+                info.setTuitionFee(cls.getCourse().getTuitionFee());
+            }
 
             return info;
         }).toList();
@@ -328,17 +344,16 @@ public class CourseClassService {
     }
 
     public ClassScheduleResponse getScheduleOfAllClassByCourseId(int courseId) {
-        Set<CourseClass> courseClasses =
-                classRepository.findByCourse_CourseIdAndStatus(courseId,ClassStatusEnum.InProgress.name());
+        Set<CourseClass> courseClasses = classRepository.findByCourse_CourseIdAndStatus(courseId,
+                ClassStatusEnum.InProgress.name());
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
-        Set<String> times =  courseClasses.stream()
+        Set<String> times = courseClasses.stream()
                 .map(c -> c.getStartTime().format(formatter))
                 .collect(Collectors.toSet());
 
-        Set<String> schedules =  courseClasses.stream().
-                map(CourseClass::getSchedule).collect(Collectors.toSet());
+        Set<String> schedules = courseClasses.stream().map(CourseClass::getSchedule).collect(Collectors.toSet());
         ClassScheduleResponse response = new ClassScheduleResponse();
         response.setSchedulePatterns(schedules);
         response.setScheduleTimes(times);
@@ -349,8 +364,7 @@ public class CourseClassService {
             Integer lecturerId,
             Integer roomId,
             Integer courseId,
-            String className
-    ) {
+            String className) {
 
         Specification<CourseClass> spec = Specification
                 .where(CourseClassSpec.hasLecturer(lecturerId))
@@ -363,15 +377,14 @@ public class CourseClassService {
                     ClassResponse.ClassInfo info = courseClassMapper.toDto(cls);
 
                     // Lấy danh sách session của lớp
-                    List<Session> sessions =
-                            sessionRepository.findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId());
+                    List<Session> sessions = sessionRepository
+                            .findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId());
 
                     if (!sessions.isEmpty()) {
                         info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
                     }
                     info.setMaxCapacity(cls.getRoom().getCapacity());
-                    Integer enrollmentCount =
-                            invoiceDetailRepository.countByClassIdAndActiveInvoice(cls.getClassId());
+                    Integer enrollmentCount = invoiceDetailRepository.countByClassIdAndActiveInvoice(cls.getClassId());
                     if (!sessions.isEmpty()) {
                         info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
                     }
@@ -383,18 +396,21 @@ public class CourseClassService {
                     info.setStartTime(cls.getStartTime());
                     info.setEndTime(cls.getStartTime().plusMinutes(cls.getMinutesPerSession()));
 
+                    // Set tuitionFee từ Course
+                    if (cls.getCourse() != null && cls.getCourse().getTuitionFee() != null) {
+                        info.setTuitionFee(cls.getCourse().getTuitionFee());
+                    }
+
                     return info;
                 })
                 .toList();
     }
 
-
     public WeeklyScheduleResponse getWeeklySchedule(
             Integer lecturerId,
             Integer roomId,
             Integer courseId,
-            LocalDate dateInWeek
-    ) {
+            LocalDate dateInWeek) {
         LocalDate weekStart = dateInWeek.with(DayOfWeek.MONDAY);
         LocalDate weekEnd = weekStart.plusDays(6);
 
@@ -439,7 +455,8 @@ public class CourseClassService {
         List<WeeklyScheduleResponse.DaySchedule> days = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
             LocalDate currentDay = weekStart.plusDays(i);
-            Map<String, List<WeeklyScheduleResponse.SessionInfo>> daySessions = tempSchedule.getOrDefault(currentDay, new HashMap<>());
+            Map<String, List<WeeklyScheduleResponse.SessionInfo>> daySessions = tempSchedule.getOrDefault(currentDay,
+                    new HashMap<>());
 
             WeeklyScheduleResponse.DaySchedule daySchedule = new WeeklyScheduleResponse.DaySchedule();
             daySchedule.setDate(currentDay);
@@ -506,8 +523,7 @@ public class CourseClassService {
                     request.getStartTime(),
                     request.getMinutesPerSession(),
                     request.getStartDate(),
-                    classId
-            );
+                    classId);
             if (!teacherConflicts.isEmpty()) {
                 throw new RuntimeException("Lecturer conflict: " + teacherConflicts.get(0).getDescription());
             }
@@ -535,8 +551,7 @@ public class CourseClassService {
                 pattern,
                 request.getStartDate(),
                 request.getStartTime(),
-                request.getMinutesPerSession()
-        );
+                request.getMinutesPerSession());
 
         sessionRepository.saveAll(newSessions);
 
@@ -549,24 +564,20 @@ public class CourseClassService {
         LocalDate weekEnd = weekStart.plusDays(6);
         User user = userRepository.getUserByUserId(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         List<Session> sessions = new ArrayList<>();
-        if(Objects.equals(user.getRole(), RoleEnum.STUDENT.name()))
-        {
+        if (Objects.equals(user.getRole(), RoleEnum.STUDENT.name())) {
             Student student = studentRepository.getStudentByAccount_UserId(id);
             List<Integer> classIds = classRepository.findRegisteredClassIds(student.getId());
             sessions = sessionRepository.findByCourseClass_ClassIdInAndSessionDateBetweenAndStatusNot(
-                    classIds, weekStart, weekEnd, "Canceled"
-            );
+                    classIds, weekStart, weekEnd, "Canceled");
 
         }
-        if(Objects.equals(user.getRole(), RoleEnum.TEACHER.name()))
-        {
+        if (Objects.equals(user.getRole(), RoleEnum.TEACHER.name())) {
             Lecturer lecturer = lecturerRepository.getByUser_UserId(id);
             List<Integer> classIds = classRepository
                     .findIdsByLecturer_LecturerIdAndStatusNot(lecturer.getLecturerId(), "Closed");
 
             sessions = sessionRepository.findByCourseClass_ClassIdInAndSessionDateBetweenAndStatusNot(
-                    classIds, weekStart, weekEnd, "Canceled"
-            );
+                    classIds, weekStart, weekEnd, "Canceled");
 
         }
 
@@ -588,7 +599,8 @@ public class CourseClassService {
         List<WeeklyScheduleResponse.DaySchedule> days = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
             LocalDate currentDay = weekStart.plusDays(i);
-            Map<String, List<WeeklyScheduleResponse.SessionInfo>> daySessions = tempSchedule.getOrDefault(currentDay, new HashMap<>());
+            Map<String, List<WeeklyScheduleResponse.SessionInfo>> daySessions = tempSchedule.getOrDefault(currentDay,
+                    new HashMap<>());
 
             WeeklyScheduleResponse.DaySchedule daySchedule = new WeeklyScheduleResponse.DaySchedule();
             daySchedule.setDate(currentDay);
@@ -614,7 +626,8 @@ public class CourseClassService {
 
     public List<ClassResponse.ClassInfo> getClassByUser(Integer userId) {
 
-        User user = userRepository.getUserByUserId(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        User user = userRepository.getUserByUserId(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         if (Objects.equals(user.getRole(), RoleEnum.STUDENT.name())) {
 
             Student student = studentRepository.getStudentByAccount_UserId(userId);
@@ -625,39 +638,50 @@ public class CourseClassService {
                         ClassResponse.ClassInfo info = courseClassMapper.toDto(cls);
 
                         info.setMaxCapacity(cls.getRoom().getCapacity());
-                        Integer enrollmentCount =
-                                invoiceDetailRepository.countByClassIdAndActiveInvoice(cls.getClassId());
-                        List<Session> sessions = sessionRepository.findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId());
+                        Integer enrollmentCount = invoiceDetailRepository
+                                .countByClassIdAndActiveInvoice(cls.getClassId());
+                        List<Session> sessions = sessionRepository
+                                .findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId());
                         if (!sessions.isEmpty()) {
                             info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
                         }
                         info.setEndTime(cls.getStartTime().plusMinutes(cls.getMinutesPerSession()));
 
                         info.setCurrentEnrollment(enrollmentCount);
+
+                        // Set tuitionFee từ Course
+                        if (cls.getCourse() != null && cls.getCourse().getTuitionFee() != null) {
+                            info.setTuitionFee(cls.getCourse().getTuitionFee());
+                        }
                         return info;
                     })
                     .collect(Collectors.toList());
         }
 
-        else if(Objects.equals(user.getRole(), RoleEnum.TEACHER.name()))
-        {
+        else if (Objects.equals(user.getRole(), RoleEnum.TEACHER.name())) {
             Lecturer lecturer = lecturerRepository.getByUser_UserId(userId);
             List<CourseClass> classes = classRepository
-                    .findByLecturer_LecturerIdAndStatusNot(lecturer.getLecturerId(),ClassStatusEnum.Closed.name());
+                    .findByLecturer_LecturerIdAndStatusNot(lecturer.getLecturerId(), ClassStatusEnum.Closed.name());
             return classes.stream()
                     .map(cls -> {
                         ClassResponse.ClassInfo info = courseClassMapper.toDto(cls);
 
                         info.setMaxCapacity(cls.getRoom().getCapacity());
-                        Integer enrollmentCount =
-                                invoiceDetailRepository.countByClassIdAndActiveInvoice(cls.getClassId());
-                        List<Session> sessions = sessionRepository.findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId());
+                        Integer enrollmentCount = invoiceDetailRepository
+                                .countByClassIdAndActiveInvoice(cls.getClassId());
+                        List<Session> sessions = sessionRepository
+                                .findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId());
                         if (!sessions.isEmpty()) {
                             info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
                         }
                         info.setEndTime(cls.getStartTime().plusMinutes(cls.getMinutesPerSession()));
 
                         info.setCurrentEnrollment(enrollmentCount);
+
+                        // Set tuitionFee từ Course
+                        if (cls.getCourse() != null && cls.getCourse().getTuitionFee() != null) {
+                            info.setTuitionFee(cls.getCourse().getTuitionFee());
+                        }
                         return info;
                     })
                     .collect(Collectors.toList());
@@ -665,9 +689,133 @@ public class CourseClassService {
         return null;
     }
 
-//    public ClassResponse findByStudent(Integer userId) {
-//        Student student = studentRepository.findByAccount_UserId(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND);
-//        List<CourseClass> courseClasses = invoiceDetailRepository.findAllByHocVienId(student.getId());
-//        courseClassMapper.
-//    }
+    /**
+     * Lấy danh sách lớp học của giảng viên
+     */
+    public List<ClassResponse.ClassInfo> getClassesByLecturer(Integer userId) {
+        Lecturer lecturer = lecturerRepository.getByUser_UserId(userId);
+        if (lecturer == null) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        List<CourseClass> classes = classRepository
+                .findByLecturer_LecturerIdAndStatusNot(lecturer.getLecturerId(), ClassStatusEnum.Closed.name());
+
+        return classes.stream()
+                .map(cls -> {
+                    ClassResponse.ClassInfo info = courseClassMapper.toDto(cls);
+                    info.setMaxCapacity(cls.getRoom().getCapacity());
+                    Integer enrollmentCount = invoiceDetailRepository.countByClassIdAndActiveInvoice(cls.getClassId());
+                    List<Session> sessions = sessionRepository
+                            .findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId());
+                    if (!sessions.isEmpty()) {
+                        info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
+                    }
+                    info.setEndTime(cls.getStartTime().plusMinutes(cls.getMinutesPerSession()));
+                    info.setCurrentEnrollment(enrollmentCount);
+
+                    // Set tuitionFee từ Course
+                    if (cls.getCourse() != null && cls.getCourse().getTuitionFee() != null) {
+                        info.setTuitionFee(cls.getCourse().getTuitionFee());
+                    }
+                    return info;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Lấy chi tiết lớp học cho giảng viên
+     */
+    public ClassDetailResponse getClassDetailForTeacher(Integer userId, Integer classId) {
+        Lecturer lecturer = lecturerRepository.getByUser_UserId(userId);
+        if (lecturer == null) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        CourseClass cls = classRepository.findById(classId)
+                .orElseThrow(() -> new AppException(ErrorCode.CLASS_NOT_FOUND));
+
+        // Verify teacher owns this class
+        if (!cls.getLecturer().getLecturerId().equals(lecturer.getLecturerId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        return getClass(classId);
+    }
+
+    /**
+     * Lấy danh sách học viên trong lớp (cho giảng viên)
+     */
+    public List<ClassDetailResponse.StudentInClass> getStudentsByClassForTeacher(Integer userId, Integer classId) {
+        Lecturer lecturer = lecturerRepository.getByUser_UserId(userId);
+        if (lecturer == null) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        CourseClass cls = classRepository.findById(classId)
+                .orElseThrow(() -> new AppException(ErrorCode.CLASS_NOT_FOUND));
+
+        // Verify teacher owns this class
+        if (!cls.getLecturer().getLecturerId().equals(lecturer.getLecturerId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        ClassDetailResponse detail = getClass(classId);
+        return detail.getStudents() != null ? detail.getStudents() : new ArrayList<>();
+    }
+
+    // public ClassResponse findByStudent(Integer userId) {
+    // Student student =
+    // studentRepository.findByAccount_UserId(userId).orElseThrow(() -> new
+    // AppException(ErrorCode.USER_NOT_FOUND);
+    // List<CourseClass> courseClasses =
+    // invoiceDetailRepository.findAllByHocVienId(student.getId());
+    // courseClassMapper.
+    // }
+
+    /**
+     * Tính điểm trung bình từ danh sách điểm
+     * Công thức: attendance 10% + midterm 30% + final 60%
+     */
+    private Double calculateAverageScore(List<GradeSheet> grades) {
+        if (grades == null || grades.isEmpty()) return null;
+        
+        BigDecimal attendance = null, midterm = null, finalScore = null;
+        
+        for (GradeSheet grade : grades) {
+            String gradeType = grade.getGradeType();
+            if (gradeType == null || grade.getScore() == null) continue;
+            
+            // Match by grade type name: "Chuyên cần", "Giữa kỳ", "Cuối kỳ"
+            if (gradeType.contains("Chuyên cần") || gradeType.equalsIgnoreCase("Attendance")) {
+                attendance = grade.getScore();
+            } else if (gradeType.contains("Giữa kỳ") || gradeType.equalsIgnoreCase("Midterm")) {
+                midterm = grade.getScore();
+            } else if (gradeType.contains("Cuối kỳ") || gradeType.equalsIgnoreCase("Final")) {
+                finalScore = grade.getScore();
+            }
+        }
+        
+        // Tính điểm tổng kết theo trọng số
+        if (attendance == null && midterm == null && finalScore == null) {
+            return null;
+        }
+        
+        // Nếu có đầy đủ điểm thì tính theo công thức
+        if (attendance != null && midterm != null && finalScore != null) {
+            BigDecimal total = attendance.multiply(new BigDecimal("0.1"))
+                    .add(midterm.multiply(new BigDecimal("0.3")))
+                    .add(finalScore.multiply(new BigDecimal("0.6")));
+            return total.setScale(2, RoundingMode.HALF_UP).doubleValue();
+        }
+        
+        // Nếu thiếu điểm thì tính trung bình các điểm có
+        int count = 0;
+        BigDecimal sum = BigDecimal.ZERO;
+        if (attendance != null) { sum = sum.add(attendance); count++; }
+        if (midterm != null) { sum = sum.add(midterm); count++; }
+        if (finalScore != null) { sum = sum.add(finalScore); count++; }
+        
+        return count > 0 ? sum.divide(new BigDecimal(count), 2, RoundingMode.HALF_UP).doubleValue() : null;
+    }
 }

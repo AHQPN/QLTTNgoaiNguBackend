@@ -65,11 +65,12 @@ public class WebSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:3001")); // Thêm các domain khác nếu cần
+        // Cho phép tất cả origins trong development
+        configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:*", "http://127.0.0.1:*"));
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Auth-Token"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
 
         configuration.setAllowCredentials(true);
 
@@ -88,7 +89,9 @@ public class WebSecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/users/**").permitAll()
+                        .requestMatchers("/test/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/users/seedUser").permitAll()
+                        .requestMatchers("/users/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/courses/**").permitAll()
                         .requestMatchers("/courses/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/modules/**").permitAll()

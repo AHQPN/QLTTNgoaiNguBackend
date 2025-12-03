@@ -26,6 +26,7 @@ public class WeeklyScheduleResponse {
     @Data
     public static class SessionInfo {
         private Integer sessionId;
+        private Integer classId;
         private String className;
         private String courseName;
         private String roomName;
@@ -34,5 +35,7 @@ public class WeeklyScheduleResponse {
         private String note;
         private String schedulePattern;
         private LocalDate sessionDate;
+        private String startTime; // HH:mm format
+        private Integer durationMinutes;
     }
 }

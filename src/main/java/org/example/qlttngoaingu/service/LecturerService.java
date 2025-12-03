@@ -18,6 +18,7 @@ import org.example.qlttngoaingu.entity.*;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.repository.CourseClassRepository;
+import org.example.qlttngoaingu.repository.InvoiceDetailRepository;
 import org.example.qlttngoaingu.repository.LecturerDegreeRepository;
 import org.example.qlttngoaingu.repository.LecturerRepository;
 import org.example.qlttngoaingu.repository.UserRepository;
@@ -36,6 +37,7 @@ public class LecturerService {
     private final LecturerDegreeRepository lecturerDegreeRepository;
     private final UserRepository userRepository;
     private final CourseClassRepository classRepository;
+    private final InvoiceDetailRepository invoiceDetailRepository;
 
     @Transactional
     public void addLecturerInfo(LecturerCreationRequest request,Integer userId) {
@@ -221,6 +223,20 @@ public class LecturerService {
             dto.setEmail(lecturer.getUser().getEmail());
             dto.setPhoneNumber(lecturer.getUser().getPhoneNumber());
         }
+
+        // Thống kê số lớp và số học viên
+        List<CourseClass> teacherClasses = classRepository.findByLecturer_LecturerIdAndStatusNot(
+                lecturer.getLecturerId(), ClassStatusEnum.Closed.name());
+        dto.setTotalClasses(teacherClasses.size());
+
+        // Tính tổng số học viên từ tất cả các lớp
+        int totalStudents = 0;
+        for (CourseClass cls : teacherClasses) {
+            Integer count = invoiceDetailRepository.countByClassIdAndActiveInvoice(cls.getClassId());
+            totalStudents += (count != null ? count : 0);
+        }
+        dto.setTotalStudents(totalStudents);
+        dto.setRating(0.0); // TODO: Tính rating từ bảng đánh giá
 
         List<LecturerDegree> list = lecturerDegreeRepository.findByLecturer_LecturerId(lecturer.getLecturerId());
         var qualList = list.stream().map(ld -> {
