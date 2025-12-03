@@ -75,4 +75,15 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Inte
         WHERE c.lecturer.lecturerId = :lecturerId
     """)
     Double getAverageTeacherRatingByLecturerId(@Param("lecturerId") Integer lecturerId);
+
+    /**
+     * Đếm số đánh giá của một lớp học
+     */
+    @Query("""
+        SELECT COUNT(r) FROM CourseReview r
+        JOIN r.enrollment e
+        JOIN e.courseClass c
+        WHERE c.classId = :classId
+    """)
+    int countByClassId(@Param("classId") Integer classId);
 }

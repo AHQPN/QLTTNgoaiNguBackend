@@ -818,4 +818,43 @@ public class CourseClassService {
         
         return count > 0 ? sum.divide(new BigDecimal(count), 2, RoundingMode.HALF_UP).doubleValue() : null;
     }
+
+    /**
+     * Cập nhật trạng thái và ghi chú của buổi học
+     */
+    @Transactional
+    public ClassDetailResponse.SessionInfoDetail updateSession(
+            Integer sessionId, 
+            org.example.qlttngoaingu.dto.request.SessionUpdateRequest request) {
+        
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new AppException(ErrorCode.CLASS_NOT_FOUND));
+        
+        // Cập nhật trạng thái nếu có
+        if (request.getStatus() != null && !request.getStatus().isEmpty()) {
+            // Validate status
+            try {
+                SessionStatus.valueOf(request.getStatus());
+                session.setStatus(request.getStatus());
+            } catch (IllegalArgumentException e) {
+                throw new AppException(ErrorCode.INVALID_REQUEST);
+            }
+        }
+        
+        // Cập nhật ghi chú nếu có
+        if (request.getNote() != null) {
+            session.setNote(request.getNote());
+        }
+        
+        sessionRepository.save(session);
+        
+        // Trả về thông tin session đã cập nhật
+        ClassDetailResponse.SessionInfoDetail info = new ClassDetailResponse.SessionInfoDetail();
+        info.setSessionId(session.getSessionId());
+        info.setDate(session.getSessionDate());
+        info.setNote(session.getNote());
+        info.setStatus(session.getStatus());
+        
+        return info;
+    }
 }

@@ -18,6 +18,7 @@ import org.example.qlttngoaingu.entity.*;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.repository.CourseClassRepository;
+import org.example.qlttngoaingu.repository.CourseReviewRepository;
 import org.example.qlttngoaingu.repository.InvoiceDetailRepository;
 import org.example.qlttngoaingu.repository.LecturerDegreeRepository;
 import org.example.qlttngoaingu.repository.LecturerRepository;
@@ -38,6 +39,7 @@ public class LecturerService {
     private final UserRepository userRepository;
     private final CourseClassRepository classRepository;
     private final InvoiceDetailRepository invoiceDetailRepository;
+    private final CourseReviewRepository courseReviewRepository;
 
     @Transactional
     public void addLecturerInfo(LecturerCreationRequest request,Integer userId) {
@@ -180,9 +182,10 @@ public class LecturerService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         Lecturer lecturer;
+        boolean isAdmin = usr.getRole().equalsIgnoreCase("ADMIN");
 
         // 2. Nếu là admin → phải truyền lecturerId để xem thông tin bất kỳ giảng viên nào
-        if (usr.getRole().equalsIgnoreCase("ADMIN")) {
+        if (isAdmin) {
 
             if (lecturerId == null) {
                 throw new AppException(ErrorCode.UNCATEGORIZED);
@@ -219,9 +222,25 @@ public class LecturerService {
         dto.setDateOfBirth(lecturer.getDateOfBirth());
         dto.setImagePath(lecturer.getImagePath());
 
-        if (lecturer.getUser() != null) {
-            dto.setEmail(lecturer.getUser().getEmail());
-            dto.setPhoneNumber(lecturer.getUser().getPhoneNumber());
+        User lecturerUser = lecturer.getUser();
+        if (lecturerUser != null) {
+            dto.setEmail(lecturerUser.getEmail());
+            dto.setPhoneNumber(lecturerUser.getPhoneNumber());
+
+            // Thông tin tài khoản - chỉ Admin mới xem được mật khẩu
+            TeacherInfo.AccountInfo accountInfo = new TeacherInfo.AccountInfo();
+            accountInfo.setUserId(lecturerUser.getUserId());
+            accountInfo.setUsername(lecturerUser.getEmail()); // hoặc phone
+            accountInfo.setRole(lecturerUser.getRole());
+            accountInfo.setCreatedAt(lecturerUser.getCreatedAt());
+            accountInfo.setIsVerified(lecturerUser.getIsVerified());
+
+            // Chỉ Admin mới xem được mật khẩu
+            if (isAdmin) {
+                accountInfo.setPassword(lecturerUser.getPasswordHash());
+            }
+
+            dto.setAccountInfo(accountInfo);
         }
 
         // Thống kê số lớp và số học viên
@@ -236,7 +255,18 @@ public class LecturerService {
             totalStudents += (count != null ? count : 0);
         }
         dto.setTotalStudents(totalStudents);
-        dto.setRating(0.0); // TODO: Tính rating từ bảng đánh giá
+
+        // Tính rating từ bảng đánh giá
+        Double avgRating = courseReviewRepository.getAverageTeacherRatingByLecturerId(lecturer.getLecturerId());
+        dto.setRating(avgRating != null ? avgRating : 0.0);
+
+        // Đếm số lượng đánh giá
+        int reviewCount = 0;
+        List<CourseClass> allClasses = classRepository.findByLecturer_LecturerId(lecturer.getLecturerId());
+        for (CourseClass cls : allClasses) {
+            reviewCount += courseReviewRepository.countByClassId(cls.getClassId());
+        }
+        dto.setTotalReviews(reviewCount);
 
         List<LecturerDegree> list = lecturerDegreeRepository.findByLecturer_LecturerId(lecturer.getLecturerId());
         var qualList = list.stream().map(ld -> {

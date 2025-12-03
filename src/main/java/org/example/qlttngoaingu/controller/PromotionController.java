@@ -2,14 +2,17 @@ package org.example.qlttngoaingu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.qlttngoaingu.dto.response.ApiResponse;
+import org.example.qlttngoaingu.entity.Course;
 import org.example.qlttngoaingu.entity.Promotion;
 import org.example.qlttngoaingu.entity.PromotionDetail;
+import org.example.qlttngoaingu.repository.CourseRepository;
 import org.example.qlttngoaingu.repository.PromotionRepository;
 import org.example.qlttngoaingu.repository.PromotionDetailRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,6 +23,7 @@ public class PromotionController {
 
     private final PromotionRepository promotionRepository;
     private final PromotionDetailRepository promotionDetailRepository;
+    private final CourseRepository courseRepository;
 
     /**
      * Lấy danh sách tất cả khuyến mãi đang hoạt động
@@ -112,6 +116,121 @@ public class PromotionController {
                 .build());
     }
 
+    /**
+     * Tạo khuyến mãi mới
+     */
+    @PostMapping
+    public ResponseEntity<ApiResponse<PromotionResponse>> createPromotion(
+            @RequestBody PromotionRequest request) {
+        Promotion promotion = new Promotion();
+        promotion.setName(request.getName());
+        promotion.setDescription(request.getDescription());
+        promotion.setDiscountPercent(request.getDiscountPercent());
+        promotion.setStartDate(request.getStartDate());
+        promotion.setEndDate(request.getEndDate());
+        promotion.setActive(request.getActive() != null ? request.getActive() : true);
+        
+        promotion = promotionRepository.save(promotion);
+        
+        // Lưu danh sách khóa học áp dụng
+        if (request.getApplicableCourseIds() != null && !request.getApplicableCourseIds().isEmpty()) {
+            savePromotionDetails(promotion, request.getApplicableCourseIds());
+        }
+        
+        return ResponseEntity.ok(ApiResponse.<PromotionResponse>builder()
+                .code(1000)
+                .message("Tạo khuyến mãi thành công")
+                .data(mapToResponse(promotion))
+                .build());
+    }
+
+    /**
+     * Cập nhật khuyến mãi
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<PromotionResponse>> updatePromotion(
+            @PathVariable Integer id,
+            @RequestBody PromotionRequest request) {
+        Promotion promotion = promotionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi với ID: " + id));
+        
+        if (request.getName() != null) {
+            promotion.setName(request.getName());
+        }
+        if (request.getDescription() != null) {
+            promotion.setDescription(request.getDescription());
+        }
+        if (request.getDiscountPercent() != null) {
+            promotion.setDiscountPercent(request.getDiscountPercent());
+        }
+        if (request.getStartDate() != null) {
+            promotion.setStartDate(request.getStartDate());
+        }
+        if (request.getEndDate() != null) {
+            promotion.setEndDate(request.getEndDate());
+        }
+        if (request.getActive() != null) {
+            promotion.setActive(request.getActive());
+        }
+        
+        promotion = promotionRepository.save(promotion);
+        
+        // Cập nhật danh sách khóa học áp dụng
+        if (request.getApplicableCourseIds() != null) {
+            // Xóa các chi tiết cũ
+            List<PromotionDetail> oldDetails = promotionDetailRepository.findByPromotion(promotion);
+            promotionDetailRepository.deleteAll(oldDetails);
+            
+            // Thêm các chi tiết mới
+            if (!request.getApplicableCourseIds().isEmpty()) {
+                savePromotionDetails(promotion, request.getApplicableCourseIds());
+            }
+        }
+        
+        return ResponseEntity.ok(ApiResponse.<PromotionResponse>builder()
+                .code(1000)
+                .message("Cập nhật khuyến mãi thành công")
+                .data(mapToResponse(promotion))
+                .build());
+    }
+
+    /**
+     * Xóa khuyến mãi
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deletePromotion(@PathVariable Integer id) {
+        Promotion promotion = promotionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi với ID: " + id));
+        
+        // Xóa chi tiết khuyến mãi trước
+        List<PromotionDetail> details = promotionDetailRepository.findByPromotion(promotion);
+        promotionDetailRepository.deleteAll(details);
+        
+        // Xóa khuyến mãi
+        promotionRepository.delete(promotion);
+        
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .code(1000)
+                .message("Xóa khuyến mãi thành công")
+                .build());
+    }
+
+    private void savePromotionDetails(Promotion promotion, List<Integer> courseIds) {
+        List<PromotionDetail> details = new ArrayList<>();
+        for (Integer courseId : courseIds) {
+            Course course = courseRepository.findById(courseId).orElse(null);
+            if (course != null) {
+                PromotionDetail detail = new PromotionDetail();
+                detail.setPromotion(promotion);
+                detail.setCourse(course);
+                details.add(detail);
+            }
+        }
+        if (!details.isEmpty()) {
+            promotionDetailRepository.saveAll(details);
+        }
+    }
+
     private PromotionResponse mapToResponse(Promotion promotion) {
         LocalDate today = LocalDate.now();
         boolean isExpired = promotion.getEndDate() != null && today.isAfter(promotion.getEndDate());
@@ -175,5 +294,23 @@ public class PromotionController {
         private String promotionTypeName;
         private List<Integer> applicableCourseIds;
         private List<String> applicableCourseNames;
+    }
+
+    @lombok.Data
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    public static class PromotionRequest {
+        private String name;
+        private String code;
+        private String description;
+        private Integer discountPercent;
+        private LocalDate startDate;
+        private LocalDate endDate;
+        private Boolean active;
+        private Integer usageLimit;
+        private Double minOrderValue;
+        private List<Integer> applicableCourseIds;
+        private String promotionType;
+        private Boolean requireAllCourses;
     }
 }

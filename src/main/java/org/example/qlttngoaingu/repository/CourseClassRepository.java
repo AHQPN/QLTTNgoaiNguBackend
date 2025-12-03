@@ -70,5 +70,6 @@ public interface CourseClassRepository extends JpaRepository<CourseClass, Intege
 
     List<Integer> findIdsByLecturer_LecturerIdAndStatusNot(Integer lecturerId, String status);
 
-}
+    List<CourseClass> findByLecturer_LecturerId(Integer lecturerId);
 
+}
