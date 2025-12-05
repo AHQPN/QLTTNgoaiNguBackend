@@ -1,17 +1,49 @@
 package org.example.qlttngoaingu.service;
 
-import lombok.AllArgsConstructor;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.example.qlttngoaingu.dto.request.CourseCreateRequest;
 import org.example.qlttngoaingu.dto.request.CourseUpdateRequest;
 import org.example.qlttngoaingu.dto.request.ModuleRequest;
-import org.example.qlttngoaingu.dto.response.*;
-import org.example.qlttngoaingu.entity.*;
+import org.example.qlttngoaingu.dto.response.ActiveCourseNameResponse;
+import org.example.qlttngoaingu.dto.response.ActiveCourseResponse;
+import org.example.qlttngoaingu.dto.response.ClassResponse;
+import org.example.qlttngoaingu.dto.response.ClassScheduleResponse;
+import org.example.qlttngoaingu.dto.response.CourseDetailResponse;
+import org.example.qlttngoaingu.dto.response.CourseGroupResponse;
+import org.example.qlttngoaingu.dto.response.CoursePageResponse;
+import org.example.qlttngoaingu.dto.response.CourseResponse;
+import org.example.qlttngoaingu.dto.response.SkillResponse;
+import org.example.qlttngoaingu.entity.Course;
+import org.example.qlttngoaingu.entity.CourseCategory;
+import org.example.qlttngoaingu.entity.CourseClass;
+import org.example.qlttngoaingu.entity.CourseSkill;
 import org.example.qlttngoaingu.entity.Module;
-import org.example.qlttngoaingu.repository.*;
-
+import org.example.qlttngoaingu.entity.Objective;
+import org.example.qlttngoaingu.entity.Promotion;
+import org.example.qlttngoaingu.entity.PromotionDetail;
+import org.example.qlttngoaingu.entity.Session;
+import org.example.qlttngoaingu.entity.Skill;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.mapper.CourseMapper;
+import org.example.qlttngoaingu.repository.CourseCategoryRepository;
+import org.example.qlttngoaingu.repository.CourseClassRepository;
+import org.example.qlttngoaingu.repository.CourseRepository;
+import org.example.qlttngoaingu.repository.CourseSkillRepository;
+import org.example.qlttngoaingu.repository.PromotionDetailRepository;
+import org.example.qlttngoaingu.repository.PromotionRepository;
+import org.example.qlttngoaingu.repository.SessionRepository;
+import org.example.qlttngoaingu.repository.SkillRepository;
 import org.example.qlttngoaingu.service.enums.ClassStatusEnum;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,10 +51,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
@@ -298,7 +327,53 @@ public class CourseService {
         response.setModules(modules);
         List<ClassResponse.ClassInfo> classInfos = getClassesForCourse(course.getCourseId());
         response.setClassInfos(classInfos);
+        
+        // Thêm thông tin combo promotions
+        List<CourseDetailResponse.ComboPromotionInfo> comboPromotions = getComboPromotionsForCourse(course.getCourseId());
+        response.setComboPromotions(comboPromotions);
+        
         return response;
+    }
+    
+    /**
+     * Lấy danh sách combo promotions có chứa khóa học này
+     */
+    private List<CourseDetailResponse.ComboPromotionInfo> getComboPromotionsForCourse(Integer courseId) {
+        LocalDate today = LocalDate.now();
+        List<CourseDetailResponse.ComboPromotionInfo> comboInfos = new ArrayList<>();
+        
+        // Tìm tất cả promotion Type 2 (combo) đang active
+        List<Promotion> activeComboPromotions = promotionRepository.findAll().stream()
+                .filter(p -> p.getPromotionType().getId() == 2) // Type 2 = Combo
+                .filter(p -> Boolean.TRUE.equals(p.getActive()))
+                .filter(p -> !today.isBefore(p.getStartDate()) && !today.isAfter(p.getEndDate()))
+                .collect(Collectors.toList());
+        
+        for (Promotion promo : activeComboPromotions) {
+            // Lấy danh sách khóa trong combo
+            List<PromotionDetail> details = promotionDetailRepository.findByPromotion(promo);
+            List<Integer> comboCourseIds = details.stream()
+                    .map(pd -> pd.getCourse().getCourseId())
+                    .collect(Collectors.toList());
+            
+            // Nếu combo chứa khóa học hiện tại
+            if (comboCourseIds.contains(courseId)) {
+                CourseDetailResponse.ComboPromotionInfo comboInfo = new CourseDetailResponse.ComboPromotionInfo();
+                comboInfo.setComboName(promo.getName());
+                comboInfo.setDiscountPercent(promo.getDiscountPercent());
+                
+                // Lấy tên các khóa học còn lại trong combo (không bao gồm khóa hiện tại)
+                List<String> requiredCourseNames = details.stream()
+                        .filter(pd -> !pd.getCourse().getCourseId().equals(courseId))
+                        .map(pd -> pd.getCourse().getCourseName())
+                        .collect(Collectors.toList());
+                
+                comboInfo.setRequiredCourseNames(requiredCourseNames);
+                comboInfos.add(comboInfo);
+            }
+        }
+        
+        return comboInfos;
     }
     private List<ClassResponse.ClassInfo> getClassesForCourse(Integer courseId) {
         Set<CourseClass> classes = courseClassRepository

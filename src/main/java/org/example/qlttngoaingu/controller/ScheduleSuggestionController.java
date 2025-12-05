@@ -120,37 +120,37 @@ public class ScheduleSuggestionController {
      *
      * POST /api/schedules/quick-check
      */
-    @PostMapping("/quick-check")
-    public ResponseEntity<?> quickCheck(
-            @RequestBody ScheduleCheckRequest request) {
-
-        ScheduleSuggestionResponse fullResponse = suggestionService.checkAndSuggest(request);
-
-        QuickCheckResponse quick = new QuickCheckResponse();
-        quick.setAvailable("AVAILABLE".equals(fullResponse.getStatus()));
-        quick.setMessage(fullResponse.getMessage());
-        quick.setAvailableRoomCount(fullResponse.getInitialCheck().getAvailableRoomCount());
-        quick.setAvailableLecturerCount(fullResponse.getInitialCheck().getAvailableLecturerCount());
-
-        if (!quick.isAvailable() && fullResponse.getAlternatives() != null) {
-            quick.setBestAlternative(fullResponse.getAlternatives().isEmpty()
-                    ? null
-                    : fullResponse.getAlternatives().get(0));
-        }
-
-        return ResponseEntity.ok().body(ApiResponse.builder().data(quick).build());
-    }
+//    @PostMapping("/quick-check")
+//    public ResponseEntity<?> quickCheck(
+//            @RequestBody ScheduleCheckRequest request) {
+//
+//        ScheduleSuggestionResponse fullResponse = suggestionService.checkAndSuggest(request);
+//
+//        QuickCheckResponse quick = new QuickCheckResponse();
+//        quick.setAvailable("AVAILABLE".equals(fullResponse.getStatus()));
+//        quick.setMessage(fullResponse.getMessage());
+//        quick.setAvailableRoomCount(fullResponse.getInitialCheck().getAvailableRoomCount());
+//        quick.setAvailableLecturerCount(fullResponse.getInitialCheck().getAvailableLecturerCount());
+//
+//        if (!quick.isAvailable() && fullResponse.getAlternatives() != null) {
+//            quick.setBestAlternative(fullResponse.getAlternatives().isEmpty()
+//                    ? null
+//                    : fullResponse.getAlternatives().get(0));
+//        }
+//
+//        return ResponseEntity.ok().body(ApiResponse.builder().data(quick).build());
+//    }
 }
 
 
-@Data
-class QuickCheckResponse {
-    private boolean available;
-    private String message;
-    private int availableRoomCount;
-    private int availableLecturerCount;
-    private ScheduleAlternative bestAlternative;
-}
+//@Data
+//class QuickCheckResponse {
+//    private boolean available;
+//    private String message;
+//    private int availableRoomCount;
+//    private int availableLecturerCount;
+//    private ScheduleAlternative bestAlternative;
+//}
 
 
 /**

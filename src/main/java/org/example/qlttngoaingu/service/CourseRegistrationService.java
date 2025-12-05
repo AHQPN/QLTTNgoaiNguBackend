@@ -27,12 +27,14 @@ import org.example.qlttngoaingu.repository.PromotionDetailRepository;
 import org.example.qlttngoaingu.repository.PromotionRepository;
 import org.example.qlttngoaingu.repository.StudentRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CourseRegistrationService {
 
     private final InvoiceRepository invoiceRepository;
@@ -43,7 +45,22 @@ public class CourseRegistrationService {
     private final PromotionRepository promotionRepository;
     private final PromotionDetailRepository promotionDetailRepository;
     private final InvoiceDetailPromotionRepository invoiceDetailPromotionRepository;
-    private final InvoiceMapper  invoiceMapper;
+    private final InvoiceMapper invoiceMapper;
+
+    /**
+     * Helper class để lưu thông tin combo promotion
+     */
+    private static class ComboInfo {
+        Promotion promotion;
+        List<Integer> courseIds;
+        BigDecimal totalDiscount; // Không dùng nữa nhưng giữ lại cho tương thích
+
+        ComboInfo(Promotion promotion, List<Integer> courseIds, BigDecimal totalDiscount) {
+            this.promotion = promotion;
+            this.courseIds = courseIds;
+            this.totalDiscount = totalDiscount;
+        }
+    }
 
     @Transactional
     public InvoiceResponse registerCourses(CourseRegistrationRequest request) {
@@ -78,7 +95,6 @@ public class CourseRegistrationService {
 
         List<InvoiceDetail> details = new ArrayList<>();
 
-        BigDecimal totalAmount = BigDecimal.ZERO;
         BigDecimal totalOriginalPrice = BigDecimal.ZERO;
         BigDecimal totalAfterCourseDiscount = BigDecimal.ZERO; // Tổng sau khi giảm Type 1
 
@@ -139,11 +155,23 @@ public class CourseRegistrationService {
             totalAfterCourseDiscount = totalAfterCourseDiscount.add(priceAfterCourseDiscount);
         }
 
-        // 5. Bước 2: Xử lý Type 2 - Giảm combo trên tổng bill sau Type 1
+        // 5. Bước 2: Xử lý Type 2 - Mỗi khóa chọn combo có % giảm cao nhất
         BigDecimal totalComboDiscount = BigDecimal.ZERO;
         List<Promotion> appliedType2Promos = new ArrayList<>();
-        int comboDiscountPercent = 0;
+        
+        // Map để lưu combo nào áp dụng cho khóa nào
+        Map<Integer, Promotion> courseComboMap = new HashMap<>();
+        
+        // Map để tra cứu giá sau Type 1 của từng khóa
+        Map<Integer, BigDecimal> coursePriceMap = new HashMap<>();
+        for (InvoiceDetail detail : details) {
+            Integer courseId = detail.getCourseClass().getCourse().getCourseId();
+            coursePriceMap.put(courseId, detail.getAmount());
+        }
 
+        // Tìm tất cả combo khả dụng
+        List<ComboInfo> eligibleCombos = new ArrayList<>();
+        
         for (Promotion promo : activePromotions) {
             if (promo.getPromotionType().getId() == 2) {
                 List<Integer> promoCourseIds = promotionDetailRepository.findByPromotion(promo)
@@ -153,21 +181,86 @@ public class CourseRegistrationService {
 
                 // Check combo: tất cả khóa trong promo phải có trong selectedCourseIds
                 if (selectedCourseIds.containsAll(promoCourseIds) && !promoCourseIds.isEmpty()) {
-                    comboDiscountPercent += promo.getDiscountPercent();
-                    appliedType2Promos.add(promo);
+                    eligibleCombos.add(new ComboInfo(promo, promoCourseIds, BigDecimal.ZERO));
+                    
+                    log.info("Combo available: {} ({}%) for courses {}", 
+                            promo.getName(), 
+                            promo.getDiscountPercent(), 
+                            promoCourseIds);
                 }
             }
         }
 
-        comboDiscountPercent = Math.min(comboDiscountPercent, 100);
-        totalComboDiscount = totalAfterCourseDiscount
-                .multiply(BigDecimal.valueOf(comboDiscountPercent))
-                .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
+        // Map: courseId -> combo có % giảm cao nhất cho khóa đó
+        Map<Integer, Promotion> bestComboPerCourse = new HashMap<>();
+        
+        for (Integer courseId : selectedCourseIds) {
+            Promotion bestPromo = null;
+            int maxPercent = 0;
+            
+            // Tìm combo có % giảm cao nhất chứa khóa này
+            for (ComboInfo combo : eligibleCombos) {
+                if (combo.courseIds.contains(courseId)) {
+                    if (combo.promotion.getDiscountPercent() > maxPercent) {
+                        maxPercent = combo.promotion.getDiscountPercent();
+                        bestPromo = combo.promotion;
+                    }
+                }
+            }
+            
+            if (bestPromo != null) {
+                bestComboPerCourse.put(courseId, bestPromo);
+                log.info("Course {} chose combo: {} ({}%)", 
+                        courseId, 
+                        bestPromo.getName(), 
+                        bestPromo.getDiscountPercent());
+            }
+        }
+
+        // Tính tổng tiền giảm và lưu mapping
+        java.util.Set<Promotion> countedCombos = new java.util.HashSet<>();
+        
+        for (Map.Entry<Integer, Promotion> entry : bestComboPerCourse.entrySet()) {
+            Integer courseId = entry.getKey();
+            Promotion combo = entry.getValue();
+            
+            courseComboMap.put(courseId, combo);
+            
+            // Chỉ tính tiền giảm 1 lần cho mỗi combo (tránh tính trùng)
+            if (!countedCombos.contains(combo)) {
+                // Lấy danh sách khóa trong combo
+                List<Integer> comboCourseIds = eligibleCombos.stream()
+                        .filter(c -> c.promotion.equals(combo))
+                        .findFirst()
+                        .map(c -> c.courseIds)
+                        .orElse(new ArrayList<>());
+                
+                // Tính tiền giảm cho combo
+                BigDecimal comboBaseAmount = comboCourseIds.stream()
+                        .map(coursePriceMap::get)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                
+                BigDecimal comboDiscount = comboBaseAmount
+                        .multiply(BigDecimal.valueOf(combo.getDiscountPercent()))
+                        .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
+                
+                totalComboDiscount = totalComboDiscount.add(comboDiscount);
+                appliedType2Promos.add(combo);
+                countedCombos.add(combo);
+                
+                log.info("APPLIED COMBO: {} ({}%) for courses: {} → Discount: {}", 
+                        combo.getName(), 
+                        combo.getDiscountPercent(), 
+                        comboCourseIds,
+                        comboDiscount);
+            }
+        }
 
         BigDecimal totalAfterComboDiscount = totalAfterCourseDiscount.subtract(totalComboDiscount);
 
         // 6. Bước 3: Xử lý Type 3 - Giảm HV cũ trên tổng bill sau Type 1 + Type 2
-        BigDecimal totalReturningDiscount = BigDecimal.ZERO;
+        BigDecimal totalReturningDiscount;
+        BigDecimal totalAmount;
         List<Promotion> appliedType3Promos = new ArrayList<>();
         int returningDiscountPercent = 0;
 
@@ -187,16 +280,29 @@ public class CourseRegistrationService {
 
         totalAmount = totalAfterComboDiscount.subtract(totalReturningDiscount);
 
-        // 7. Cập nhật lại amount cho từng InvoiceDetail (phân bổ giảm giá Type 2 & 3)
-        if (totalAfterCourseDiscount.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal totalType2And3Discount = totalComboDiscount.add(totalReturningDiscount);
+        // 7. Cập nhật lại amount cho từng InvoiceDetail
+        // Trừ combo discount (đã tính riêng cho từng khóa) và Type 3 discount (phân bổ đều)
+        for (InvoiceDetail detail : details) {
+            BigDecimal currentAmount = detail.getAmount(); // Giá sau Type 1
             
-            for (InvoiceDetail detail : details) {
-                BigDecimal ratio = detail.getAmount().divide(totalAfterCourseDiscount, 10, BigDecimal.ROUND_HALF_UP);
-                BigDecimal sharedDiscount = totalType2And3Discount.multiply(ratio).setScale(2, BigDecimal.ROUND_HALF_UP);
-                BigDecimal finalAmount = detail.getAmount().subtract(sharedDiscount);
-                detail.setAmount(finalAmount);
+            // Trừ combo discount nếu khóa này có combo
+            Integer courseId = detail.getCourseClass().getCourse().getCourseId();
+            Promotion combo = courseComboMap.get(courseId);
+            if (combo != null) {
+                BigDecimal comboDiscount = currentAmount
+                        .multiply(BigDecimal.valueOf(combo.getDiscountPercent()))
+                        .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
+                currentAmount = currentAmount.subtract(comboDiscount);
             }
+            
+            // Trừ Type 3 discount (phân bổ theo tỷ lệ)
+            if (totalAfterComboDiscount.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal ratio = currentAmount.divide(totalAfterComboDiscount, 10, BigDecimal.ROUND_HALF_UP);
+                BigDecimal type3Discount = totalReturningDiscount.multiply(ratio).setScale(2, BigDecimal.ROUND_HALF_UP);
+                currentAmount = currentAmount.subtract(type3Discount);
+            }
+            
+            detail.setAmount(currentAmount);
         }
 
         invoice.setTotalAmount(totalAmount);
@@ -224,20 +330,22 @@ public class CourseRegistrationService {
             }
         }
 
-        // 8.2. Lưu Type 2 promotions (phân bổ cho tất cả các detail)
-        if (!appliedType2Promos.isEmpty() && totalAfterCourseDiscount.compareTo(BigDecimal.ZERO) > 0) {
+        // 8.2. Lưu Type 2 promotions (chỉ cho các khóa có áp dụng combo)
+        if (!appliedType2Promos.isEmpty()) {
             for (InvoiceDetail detail : details) {
-                BigDecimal ratio = detail.getAmount().divide(totalAfterCourseDiscount, 10, BigDecimal.ROUND_HALF_UP);
+                Integer courseId = detail.getCourseClass().getCourse().getCourseId();
+                Promotion combo = courseComboMap.get(courseId);
                 
-                for (Promotion promo : appliedType2Promos) {
-                    BigDecimal discountAmount = totalComboDiscount
-                            .multiply(ratio)
-                            .multiply(BigDecimal.valueOf(promo.getDiscountPercent()))
-                            .divide(BigDecimal.valueOf(comboDiscountPercent), 2, BigDecimal.ROUND_HALF_UP);
+                if (combo != null) {
+                    // Tính discount amount cho khóa này
+                    BigDecimal priceAfterType1 = detail.getAmount(); // Giá sau khi giảm Type 1
+                    BigDecimal discountAmount = priceAfterType1
+                            .multiply(BigDecimal.valueOf(combo.getDiscountPercent()))
+                            .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
                     
                     InvoiceDetailPromotion idp = new InvoiceDetailPromotion();
                     idp.setInvoiceDetail(detail);
-                    idp.setPromotion(promo);
+                    idp.setPromotion(combo);
                     idp.setDiscountValue(discountAmount);
                     allPromotions.add(idp);
                 }

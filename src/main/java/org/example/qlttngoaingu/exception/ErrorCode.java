@@ -106,6 +106,7 @@ public enum ErrorCode {
         // Promotion errors
         PROMOTION_NOT_FOUND(HttpStatus.NOT_FOUND, 14001, "Promotion not found"),
         PROMOTION_TYPE_NOT_FOUND(HttpStatus.NOT_FOUND, 14002, "Promotion type not found"),
+        COURSE_ALREADY_IN_ACTIVE_PROMOTION(HttpStatus.CONFLICT, 14003, "Course is already in another active promotion"),
 
         // File upload errors
         FILE_EMPTY(HttpStatus.BAD_REQUEST, 13001, "File is empty"),

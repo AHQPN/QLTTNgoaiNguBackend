@@ -1,6 +1,8 @@
 package org.example.qlttngoaingu.config;
 
 
+import java.util.Arrays;
+
 import org.example.qlttngoaingu.security.jwt.AuthEntryPointJwt;
 import org.example.qlttngoaingu.security.jwt.AuthTokenFilter;
 import org.example.qlttngoaingu.security.services.UserDetailsServiceImpl;
@@ -9,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import static org.springframework.security.config.Customizer.withDefaults;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -20,10 +23,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
-
-import static org.springframework.security.config.Customizer.withDefaults;
 
 
 @Configuration
@@ -104,6 +103,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/schedules/**").permitAll()
                         .requestMatchers("/payment/**").permitAll()
                         .requestMatchers("/orders/payment/**").permitAll()
+                        .requestMatchers("/cart/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

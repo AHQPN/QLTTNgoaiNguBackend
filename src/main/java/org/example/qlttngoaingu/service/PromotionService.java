@@ -74,6 +74,11 @@ public class PromotionService {
                 throw new AppException(ErrorCode.COURSE_NOT_FOUND);
             }
 
+            // Chỉ kiểm tra cho Type 1 (khuyến mãi lẻ)
+            if (promotionType.getId() == 1) {
+                validateCourseNotInActivePromotion(request.getCourseIds(), null);
+            }
+
             for (Course course : courses) {
                 PromotionDetail detail = new PromotionDetail();
                 detail.setPromotion(savedPromotion);
@@ -125,6 +130,11 @@ public class PromotionService {
             List<Course> courses = courseRepository.findAllById(request.getCourseIds());
             if (courses.size() != request.getCourseIds().size()) {
                 throw new AppException(ErrorCode.COURSE_NOT_FOUND);
+            }
+
+            // Chỉ kiểm tra cho Type 1 (khuyến mãi lẻ), bỏ qua promotion hiện tại
+            if (promotionType.getId() == 1) {
+                validateCourseNotInActivePromotion(request.getCourseIds(), id);
             }
 
             for (Course course : courses) {
@@ -240,5 +250,42 @@ public class PromotionService {
                 .promotionTypeName(promotion.getPromotionType().getName())
                 .courses(courses)
                 .build();
+    }
+
+    /**
+     * Kiểm tra khóa học đã có trong promotion Type 1 khác còn hiệu lực chưa
+     * @param courseIds Danh sách courseId cần kiểm tra
+     * @param excludePromotionId PromotionId cần loại trừ (khi update)
+     */
+    private void validateCourseNotInActivePromotion(List<Integer> courseIds, Integer excludePromotionId) {
+        LocalDate today = LocalDate.now();
+        
+        // Tìm tất cả promotion Type 1 đang active và còn hiệu lực
+        List<Promotion> activeType1Promotions = promotionRepository.findAll().stream()
+                .filter(p -> p.getPromotionType().getId() == 1) // Type 1
+                .filter(p -> Boolean.TRUE.equals(p.getActive())) // Active
+                .filter(p -> !today.isBefore(p.getStartDate()) && !today.isAfter(p.getEndDate())) // Còn hạn
+                .filter(p -> excludePromotionId == null || !p.getId().equals(excludePromotionId)) // Loại trừ promotion hiện tại
+                .collect(Collectors.toList());
+        
+        // Kiểm tra từng khóa học
+        for (Integer courseId : courseIds) {
+            for (Promotion existingPromo : activeType1Promotions) {
+                List<Integer> existingCourseIds = promotionDetailRepository.findByPromotion(existingPromo)
+                        .stream()
+                        .map(pd -> pd.getCourse().getCourseId())
+                        .collect(Collectors.toList());
+                
+                if (existingCourseIds.contains(courseId)) {
+                    Course course = courseRepository.findById(courseId)
+                            .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+                    
+                    log.error("Course {} '{}' already exists in active promotion '{}' (valid until {})", 
+                            courseId, course.getCourseName(), existingPromo.getName(), existingPromo.getEndDate());
+                    
+                    throw new AppException(ErrorCode.COURSE_ALREADY_IN_ACTIVE_PROMOTION);
+                }
+            }
+        }
     }
 }
