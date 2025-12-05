@@ -26,6 +26,7 @@ public interface CourseMapper {
 
     void toExistingCourse(@MappingTarget Course course, CourseUpdateRequest request);
 
+    @Mapping(target = "courseCategoryId", source = "courseCategory.id")
     CourseDetailResponse toResponse(Course course);
 
     ActiveCourseResponse toActiveResponse(Course course);

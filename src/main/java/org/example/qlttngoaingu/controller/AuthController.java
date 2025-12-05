@@ -3,7 +3,7 @@ package org.example.qlttngoaingu.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.example.qlttngoaingu.dto.request.LoginRequest;
 import org.example.qlttngoaingu.dto.request.SignupRequest;
 import org.example.qlttngoaingu.dto.request.StudentSignupRequest;
@@ -30,6 +30,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,7 +40,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/auth")
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
@@ -227,5 +228,99 @@ public class AuthController {
         }
 
         return ResponseEntity.ok(ApiResponse.builder().message("Logout successful").build());
+    }
+
+    // ===== FORGOT PASSWORD =====
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse> forgotPassword(
+            @RequestBody Map<String, String> body,
+            @Value("${APP_SITE_URL}") String siteUrl) {
+        
+        String emailOrPhone = body.get("email_or_phone");
+        if (emailOrPhone == null || emailOrPhone.isBlank()) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        Optional<User> optionalUser = userService.getUserByIdentifier(emailOrPhone);
+        if (optionalUser.isEmpty()) {
+            // Trả về success để tránh leak thông tin user
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .message("If the account exists, a reset email has been sent")
+                    .build());
+        }
+
+        User user = optionalUser.get();
+        Optional<VerificationCode> code = userService.generateNewVerificationCode(user, VerificationCodeEnum.PASSWORD_RESET);
+        code.ifPresent(c -> userService.sendVerificationEmail(user, siteUrl, c));
+
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("If the account exists, a reset email has been sent")
+                .build());
+    }
+
+    // ===== VERIFY RESET CODE =====
+    @PostMapping("/verify-code")
+    public ResponseEntity<ApiResponse> verifyResetCode(@RequestBody Map<String, String> body) {
+        String code = body.get("code");
+        String emailOrPhone = body.get("email_or_phone");
+
+        if (code == null || emailOrPhone == null) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        ApiResponse result = userService.verify(code, VerificationCodeEnum.PASSWORD_RESET);
+        
+        if (result.getCode() == 1000) {
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .message("Code verified successfully")
+                    .data(Map.of("verified", true))
+                    .build());
+        } else {
+            return ResponseEntity.badRequest().body(result);
+        }
+    }
+
+    // ===== RESET PASSWORD =====
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse> resetPassword(@RequestBody Map<String, String> body) {
+        String newPassword = body.get("new_password");
+        String verificationCode = body.get("verification_code");
+        String emailOrPhone = body.get("email_or_phone");
+
+        if (newPassword == null || verificationCode == null || emailOrPhone == null) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        Optional<User> optionalUser = userService.getUserByIdentifier(emailOrPhone);
+        if (optionalUser.isEmpty()) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        User user = optionalUser.get();
+        userService.resetPassword(user, newPassword);
+
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("Password reset successfully")
+                .build());
+    }
+
+    // ===== CHANGE PASSWORD =====
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse> changePassword(
+            @RequestBody Map<String, String> body,
+            @AuthenticationPrincipal UserDetailsImpl principal) {
+        
+        String currentPassword = body.get("current_password");
+        String newPassword = body.get("new_password");
+
+        if (currentPassword == null || newPassword == null) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        userService.changePassword(principal.getId(), currentPassword, newPassword);
+
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("Password changed successfully")
+                .build());
     }
 }

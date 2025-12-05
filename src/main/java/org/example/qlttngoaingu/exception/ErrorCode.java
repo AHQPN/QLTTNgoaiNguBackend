@@ -89,6 +89,7 @@ public enum ErrorCode {
         AUTH_ACCESS_DENIED(HttpStatus.FORBIDDEN, 11003, "Access denied"),
         UNAUTHENTICATED(HttpStatus.UNAUTHORIZED, 11004, "Unauthenticated"),
         EXPIRED_VERIFICATION_CODE(HttpStatus.GONE, 11005, "Expired verification code"),
+        UNAUTHORIZED(HttpStatus.FORBIDDEN, 11006, "You don't have permission to access this resource"),
 
         // Field validation
         INVALID_EMAIL(HttpStatus.BAD_REQUEST, 12001, "Invalid email"),
@@ -97,6 +98,7 @@ public enum ErrorCode {
         INVALID_EMAIL_OR_PHONE_NUMBER(HttpStatus.BAD_REQUEST, 12004, "Invalid email or phone number"),
         INVALID_PRICE(HttpStatus.BAD_REQUEST, 12005, "Price cannot be negative"),
         INVALID_CODE(HttpStatus.BAD_REQUEST, 12006, "Invalid verification code"),
+        INVALID_REQUEST(HttpStatus.BAD_REQUEST, 12007, "Invalid request parameters"),
         INVALID_DURATION(HttpStatus.BAD_REQUEST, 12008, "Duration cannot be negative"),
         IMAGE_MISSING(HttpStatus.BAD_REQUEST, 12009, "Image missing"),
         INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, 12010, "End date must be after start date"),
@@ -111,7 +113,6 @@ public enum ErrorCode {
         INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, 13003, "Invalid file type. Only image files (JPEG, JPG, PNG, GIF, WEBP) are allowed"),
         FILE_NOT_FOUND(HttpStatus.NOT_FOUND, 13004, "File not found"),
 
-
         COURSE_STUDY_HOURS_INVALID(HttpStatus.BAD_REQUEST, 7002, "Study hours must be positive"),
         COURSE_NUMBER_OF_SESSIONS_INVALID(HttpStatus.BAD_REQUEST, 7004, "Number of sessions must be positive"),
         SKILL_MISMATCH(HttpStatus.BAD_REQUEST, 3001, "Skill IDs in request do not match skills in modules"),
@@ -120,14 +121,19 @@ public enum ErrorCode {
         DURATION_TOO_LONG(HttpStatus.BAD_REQUEST, 7008, "Duration of all modules must be less than number of sessions"),
         DURATION_MUST_POSITIVE(HttpStatus.BAD_REQUEST, 7009, "Duration must be positive"),
 
-        //JWT TOKEN
+        // JWT TOKEN
         INVALID_JWT_TOKEN(HttpStatus.UNAUTHORIZED, 8001, "Invalid JWT token"),
         EXPIRED_JWT_TOKEN(HttpStatus.UNAUTHORIZED, 8002, "JWT token is expired"),
         UNSUPPORT_TOKEN(HttpStatus.BAD_REQUEST, 8003, "JWT token is unsupported"),
-        JWT_CLAIMS_EMPTY(HttpStatus.BAD_REQUEST, 8004, "JWT claims string is empty");
+        JWT_CLAIMS_EMPTY(HttpStatus.BAD_REQUEST, 8004, "JWT claims string is empty"),
 
-        
-
+        // Grade and Review errors
+        ENROLLMENT_NOT_FOUND(HttpStatus.NOT_FOUND, 13001, "Enrollment not found - Student is not enrolled in this class"),
+        GRADE_TYPE_NOT_FOUND(HttpStatus.NOT_FOUND, 13002, "Grade type not found"),
+        GRADE_NOT_FOUND(HttpStatus.NOT_FOUND, 13003, "Grade not found"),
+        REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, 13004, "You have already reviewed this class"),
+        REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, 13005, "Review not found"),
+        LECTURER_NOT_FOUND(HttpStatus.NOT_FOUND, 13006, "Lecturer not found");
 
         private final HttpStatus httpStatus;
         private final int code;

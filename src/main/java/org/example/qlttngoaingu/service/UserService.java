@@ -2,6 +2,7 @@ package org.example.qlttngoaingu.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.example.qlttngoaingu.dto.request.AdminCreateStudentRequest;
 import org.example.qlttngoaingu.dto.request.LecturerCreationRequest;
 import org.example.qlttngoaingu.dto.request.SignupRequest;
 import org.example.qlttngoaingu.dto.request.StudentSignupRequest;
@@ -89,6 +90,46 @@ public class UserService {
         student.setJob(studentSignupRequest.getJob());
 
         student = studentRepository.save(student);
+        return studentMapper.toStudentInfo(student);
+    }
+
+    /**
+     * Admin tạo học viên mới (không gửi email xác thực)
+     * Dùng cho đăng ký nhanh tại quầy
+     */
+    @Transactional
+    public StudentInfo createStudentByAdmin(AdminCreateStudentRequest request) {
+        // Kiểm tra SĐT đã tồn tại chưa
+        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            throw new AppException(ErrorCode.USER_PHONE_OR_EMAIL_EXIST);
+        }
+        
+        // Kiểm tra email đã tồn tại chưa (nếu có nhập)
+        if (request.getEmail() != null && !request.getEmail().isEmpty() 
+                && userRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(ErrorCode.USER_PHONE_OR_EMAIL_EXIST);
+        }
+
+        // Tạo User với mật khẩu mặc định "123456"
+        User user = new User();
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setEmail(request.getEmail());
+        user.setPasswordHash(passwordEncoder.encode("123456"));
+        user.setRole(RoleEnum.STUDENT.name());
+        user.setCreatedAt(LocalDateTime.now());
+        user.setIsVerified(true); // Đã xác thực ngay (admin tạo)
+        user = userRepository.save(user);
+
+        // Tạo Student
+        Student student = new Student();
+        student.setAccount(user);
+        student.setName(request.getName());
+        student.setAddress(request.getAddress());
+        student.setGender(request.getGender());
+        student.setNgaySinh(request.getDateOfBirth());
+        student.setJob(request.getJob());
+        student = studentRepository.save(student);
+
         return studentMapper.toStudentInfo(student);
     }
 
@@ -299,6 +340,33 @@ public class UserService {
             studentRepository.save(student);
         }
 
+    }
+
+    /**
+     * Đổi mật khẩu cho user hiện tại
+     */
+    @Transactional
+    public void changePassword(Integer userId, String currentPassword, String newPassword) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        // Kiểm tra mật khẩu hiện tại
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new AppException(ErrorCode.INVALID_PASSWORD);
+        }
+        
+        // Cập nhật mật khẩu mới
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    /**
+     * Reset mật khẩu (sau khi đã verify code)
+     */
+    @Transactional
+    public void resetPassword(User user, String newPassword) {
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 
 
