@@ -194,6 +194,48 @@ public class PromotionService {
     }
 
     /**
+     * Lấy danh sách tất cả promotions (không phân trang)
+     */
+    public List<PromotionResponse> getAllPromotionsList() {
+        List<Promotion> promotions = promotionRepository.findAll();
+        
+        // Cập nhật trạng thái
+        promotions.forEach(this::updatePromotionStatus);
+        promotionRepository.saveAll(promotions);
+        
+        return promotions.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Validate mã khuyến mãi
+     */
+    public PromotionResponse validatePromotionCode(String code) {
+        LocalDate today = LocalDate.now();
+        List<Promotion> activePromotions = promotionRepository.findAllActivePromotions(today);
+        
+        Promotion promotion = activePromotions.stream()
+                .filter(p -> p.getName() != null && p.getName().equalsIgnoreCase(code))
+                .findFirst()
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
+        
+        return toResponse(promotion);
+    }
+
+    /**
+     * Lấy danh sách promotion theo courseId (Type 1)
+     */
+    public List<PromotionResponse> getPromotionsByCourse(Integer courseId) {
+        LocalDate today = LocalDate.now();
+        List<Promotion> promotions = promotionRepository.findValidPromotionsByCourseAndType1(courseId, today);
+        
+        return promotions.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Toggle trạng thái active của promotion (soft delete)
      */
     @Transactional

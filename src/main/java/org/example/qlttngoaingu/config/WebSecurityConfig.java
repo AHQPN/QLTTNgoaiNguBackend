@@ -103,6 +103,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/schedules/**").permitAll()
                         .requestMatchers("/payment/**").permitAll()
                         .requestMatchers("/orders/payment/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/promotions/**").permitAll()
                         .requestMatchers("/cart/**").permitAll()
                         .anyRequest().authenticated()
                 )
