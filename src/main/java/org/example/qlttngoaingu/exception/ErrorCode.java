@@ -1,8 +1,9 @@
 package org.example.qlttngoaingu.exception;
 
+import org.springframework.http.HttpStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
@@ -69,6 +70,9 @@ public enum ErrorCode {
         // Payment errors
         PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, 8000, "Payment not found"),
         PAYMENT_FAILED(HttpStatus.BAD_REQUEST, 8001, "Payment failed"),
+        INVOICE_NOT_FOUND(HttpStatus.NOT_FOUND, 8002, "Invoice not found"),
+        INVOICE_ALREADY_PAID(HttpStatus.BAD_REQUEST, 8003, "Invoice has already been paid"),
+        INVOICE_EXPIRED(HttpStatus.BAD_REQUEST, 8004, "Invoice has expired. Payment deadline exceeded"),
 
         // Purchase slip errors
         PURCHASE_SLIP_NOT_FOUND(HttpStatus.NOT_FOUND, 9000, "Purchase slip not found"),
@@ -95,6 +99,17 @@ public enum ErrorCode {
         INVALID_CODE(HttpStatus.BAD_REQUEST, 12006, "Invalid verification code"),
         INVALID_DURATION(HttpStatus.BAD_REQUEST, 12008, "Duration cannot be negative"),
         IMAGE_MISSING(HttpStatus.BAD_REQUEST, 12009, "Image missing"),
+        INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, 12010, "End date must be after start date"),
+
+        // Promotion errors
+        PROMOTION_NOT_FOUND(HttpStatus.NOT_FOUND, 14001, "Promotion not found"),
+        PROMOTION_TYPE_NOT_FOUND(HttpStatus.NOT_FOUND, 14002, "Promotion type not found"),
+
+        // File upload errors
+        FILE_EMPTY(HttpStatus.BAD_REQUEST, 13001, "File is empty"),
+        FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, 13002, "File size exceeds maximum limit of 5MB"),
+        INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, 13003, "Invalid file type. Only image files (JPEG, JPG, PNG, GIF, WEBP) are allowed"),
+        FILE_NOT_FOUND(HttpStatus.NOT_FOUND, 13004, "File not found"),
 
 
         COURSE_STUDY_HOURS_INVALID(HttpStatus.BAD_REQUEST, 7002, "Study hours must be positive"),

@@ -1,91 +1,61 @@
 package org.example.qlttngoaingu.controller;
 
+import java.util.Map;
+
 import org.example.qlttngoaingu.dto.response.ApiResponse;
-import org.example.qlttngoaingu.exception.AppException;
-import org.example.qlttngoaingu.exception.ErrorCode;
-import org.springframework.beans.factory.annotation.Value;
+import org.example.qlttngoaingu.service.FileService;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.*;
-import java.util.Map;
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/files")
+@RequiredArgsConstructor
 public class FileController {
 
-    @Value("${file.upload-dir}")
-    private String uploadDir;
+    private final FileService fileService;
 
-    // ----- UPLOAD FILE -----
+    /**
+     * Upload file ảnh
+     */
     @PostMapping
     public ResponseEntity<ApiResponse> uploadFile(@RequestParam("file") MultipartFile file) {
-        try {
-            Path dirPath = Paths.get(uploadDir);
-            if (!Files.exists(dirPath)) Files.createDirectories(dirPath);
-
-            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            Path filePath = dirPath.resolve(fileName);
-
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            String fileUrl = fileName; // URL trả về
-            Map<String, String> response = Map.of("fileUrl", fileUrl);
-
-            return ResponseEntity.ok().body(ApiResponse.builder().data(response).build());
-        } catch (IOException e) {
-            throw new AppException(ErrorCode.UNCATEGORIZED);
-        }
+        String fileUrl = fileService.uploadFile(file);
+        Map<String, String> response = Map.of("fileUrl", fileUrl);
+        return ResponseEntity.ok().body(ApiResponse.builder().data(response).build());
     }
 
-    // ----- GET FILE -----
+    /**
+     * Lấy file theo tên
+     */
     @GetMapping("/{fileName:.+}")
     public ResponseEntity<Resource> getFile(@PathVariable String fileName) {
-        try {
-            Path filePath = Paths.get(uploadDir).resolve(fileName).normalize();
-            if (!Files.exists(filePath)) {
-                return ResponseEntity.notFound().build();
-            }
+        Resource resource = fileService.getFile(fileName);
+        String contentType = fileService.getContentType(fileName);
 
-            Resource resource = new UrlResource(filePath.toUri());
-            String contentType = Files.probeContentType(filePath);
-            if (contentType == null) contentType = "application/octet-stream";
-
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(contentType))
-                    .body(resource);
-
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .body(resource);
     }
 
-    // ----- DELETE FILE -----
+    /**
+     * Xóa file
+     */
     @DeleteMapping("/{fileName:.+}")
     public ResponseEntity<ApiResponse> deleteFile(@PathVariable String fileName) {
-        try {
-            Path filePath = Paths.get(uploadDir).resolve(fileName).normalize();
-            if (!Files.exists(filePath)) {
-                return ResponseEntity.notFound().build();
-            }
-
-            Files.delete(filePath);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .message("File deleted successfully")
-                    .build());
-
-        } catch (IOException e) {
-            return ResponseEntity.internalServerError().body(
-                    ApiResponse.builder()
-                            .message("Failed to delete file")
-                            .build()
-            );
-        }
+        fileService.deleteFile(fileName);
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("File deleted successfully")
+                .build());
     }
 }

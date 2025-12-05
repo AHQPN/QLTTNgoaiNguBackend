@@ -1,0 +1,356 @@
+TC ID,Test Scenario,Test Case Description,Pre-condition,Test Steps,Test Data,Expected Result,Actual Result,Status (Pass/Fail),Tester,Note
+TC_001,Đăng nhập,Kiểm tra đăng nhập thành công với thông tin hợp lệ,Người dùng đã có tài khoản,"1. Mở trang Login
+2. Nhập email hợp lệ
+3. Nhập mật khẩu hợp lệ
+4. Nhấn Đăng nhập","Email: valid@email.com
+Password: valid123","Hệ thống cho phép đăng nhập và chuyển sang trang nhận tin",,,,
+TC_002,Đăng nhập,Kiểm tra bảo lỗi khi nhập sai mật khẩu,Người dùng đã có tài khoản,"1. Mở trang Login
+2. Nhập email hợp lệ
+3. Nhập mật khẩu không hợp lệ
+4. Nhấn Đăng nhập","Email: valid@email.com
+Password: invalid","Hiển thị thông báo ""Email hoặc mật khẩu không đúng""",,,,
+TC_003,Đăng nhập,Kiểm tra bảo lỗi khi nhập email không tồn tại,Không có,"1. Mở trang Login
+2. Nhập email không tồn tại
+3. Nhập mật khẩu
+4. Nhấn Đăng nhập","Email: notexist@email.com
+Password: anypass123","Hiển thị thông báo ""Email hoặc mật khẩu không đúng""",,,,
+TC_004,Đăng nhập,Kiểm tra bảo lỗi khi tài khoản chưa xác thực,Người dùng có tài khoản nhưng chưa verify email,"1. Mở trang Login
+2. Nhập email hợp lệ
+3. Nhập mật khẩu hợp lệ
+4. Nhấn Đăng nhập","Email: unverified@email.com
+Password: valid123","Hiển thị thông báo ""Tài khoản chưa được xác thực""",,,,
+TC_005,Đăng ký,Kiểm tra đăng ký thành công với thông tin hợp lệ,Không có,"1. Mở trang Signup
+2. Nhập họ tên hợp lệ
+3. Nhập email hợp lệ
+4. Nhập số điện thoại hợp lệ
+5. Nhập mật khẩu hợp lệ
+6. Nhập lại mật khẩu khớp
+7. Nhấn Đăng ký","Họ tên: Nguyễn Văn A
+Email: newuser@email.com
+SĐT: 0912345678
+Password: Pass123!
+Confirm: Pass123!","Hiển thị thông báo ""Đã gửi email xác thực, vui lòng kiểm tra hộp thư""",,,,
+TC_006,Đăng ký,Kiểm tra bảo lỗi khi email đã tồn tại,Email đã được đăng ký trước đó,"1. Mở trang Signup
+2. Nhập họ tên
+3. Nhập email đã tồn tại
+4. Nhập các thông tin khác
+5. Nhấn Đăng ký","Email: existing@email.com","Hiển thị thông báo ""Email đã được sử dụng""",,,,
+TC_007,Đăng ký,Kiểm tra bảo lỗi khi mật khẩu không khớp,Không có,"1. Mở trang Signup
+2. Nhập các thông tin
+3. Nhập mật khẩu
+4. Nhập lại mật khẩu không khớp
+5. Nhấn Đăng ký","Password: Pass123!
+Confirm: Pass456!","Hiển thị thông báo ""Mật khẩu xác nhận không khớp""",,,,
+TC_008,Đăng ký,Kiểm tra validate email không đúng format,Không có,"1. Mở trang Signup
+2. Nhập email sai format
+3. Nhập các thông tin khác
+4. Nhấn Đăng ký","Email: invalidemail","Hiển thị thông báo ""Email không hợp lệ""",,,,
+TC_009,Đăng ký,Kiểm tra validate số điện thoại không đúng format,Không có,"1. Mở trang Signup
+2. Nhập số điện thoại sai format
+3. Nhập các thông tin khác
+4. Nhấn Đăng ký","SĐT: 123","Hiển thị thông báo ""Số điện thoại không hợp lệ""",,,,
+TC_010,Khóa học,Xem danh sách khóa học đang hoạt động,Hệ thống có khóa học,"1. Truy cập trang chủ
+2. Xem danh sách khóa học","N/A","Hiển thị danh sách các khóa học đang active, nhóm theo danh mục",,,,
+TC_011,Khóa học,Xem chi tiết khóa học,Hệ thống có khóa học,"1. Truy cập danh sách khóa học
+2. Click vào một khóa học","Course ID: 1","Hiển thị đầy đủ thông tin khóa học: tên, mô tả, học phí, thời lượng, mục tiêu học tập, kỹ năng",,,,
+TC_012,Khóa học,Tạo mới khóa học (Admin),Người dùng có quyền Admin,"1. Đăng nhập với tài khoản Admin
+2. Vào trang quản lý khóa học
+3. Click Tạo khóa học mới
+4. Nhập đầy đủ thông tin
+5. Nhấn Lưu","Tên: IELTS Foundation
+Danh mục: 1
+Học phí: 5000000
+Thời lượng: 60 giờ
+Trình độ: Beginner","Khóa học được tạo thành công, hiển thị trong danh sách",,,,
+TC_013,Khóa học,Cập nhật thông tin khóa học (Admin),Khóa học đã tồn tại,"1. Đăng nhập với tài khoản Admin
+2. Vào chi tiết khóa học
+3. Click Chỉnh sửa
+4. Thay đổi thông tin
+5. Nhấn Lưu","Course ID: 1
+Học phí mới: 4500000","Thông tin khóa học được cập nhật thành công",,,,
+TC_014,Khóa học,Thay đổi trạng thái khóa học (Admin),Khóa học đã tồn tại,"1. Đăng nhập với tài khoản Admin
+2. Vào danh sách khóa học
+3. Click thay đổi trạng thái
+4. Xác nhận","Course ID: 1","Trạng thái khóa học thay đổi (active <-> inactive)",,,,
+TC_015,Khóa học,Thêm mục tiêu học tập cho khóa học,Khóa học đã tồn tại,"1. Vào chi tiết khóa học
+2. Click Thêm mục tiêu
+3. Nhập mô tả mục tiêu
+4. Nhấn Lưu","Course ID: 1
+Mục tiêu: Nắm vững ngữ pháp cơ bản","Mục tiêu được thêm thành công vào khóa học",,,,
+TC_016,Lớp học,Xem danh sách lớp học,Hệ thống có lớp học,"1. Truy cập trang quản lý lớp học
+2. Xem danh sách","N/A","Hiển thị danh sách lớp học với thông tin: tên, giảng viên, phòng, lịch học",,,,
+TC_017,Lớp học,Xem chi tiết lớp học,Lớp học đã tồn tại,"1. Vào danh sách lớp học
+2. Click vào một lớp học","Class ID: 1","Hiển thị thông tin chi tiết: tên lớp, khóa học, giảng viên, phòng, lịch học, danh sách học viên",,,,
+TC_018,Lớp học,Tạo lớp học mới (Admin),Có khóa học, giảng viên và phòng khả dụng,"1. Đăng nhập Admin
+2. Vào tạo lớp học
+3. Chọn khóa học
+4. Chọn giảng viên
+5. Chọn phòng học
+6. Chọn lịch học
+7. Nhập ngày bắt đầu
+8. Nhấn Tạo","Course ID: 1
+Lecturer ID: 1
+Room ID: 1
+Schedule: 2-4-6
+Start: 2025-01-15
+Time: 18:00","Lớp học được tạo thành công, các buổi học được tạo tự động",,,,
+TC_019,Lớp học,Kiểm tra conflict giảng viên khi tạo lớp,Giảng viên đã có lịch dạy trùng giờ,"1. Tạo lớp học mới
+2. Chọn giảng viên đang bận
+3. Chọn lịch trùng giờ
+4. Nhấn Tạo","Lecturer ID: 1
+Schedule: 2-4-6
+Time: 18:00","Hiển thị cảnh báo giảng viên bị trùng lịch",,,,
+TC_020,Lớp học,Kiểm tra conflict phòng học khi tạo lớp,Phòng học đã được sử dụng trùng giờ,"1. Tạo lớp học mới
+2. Chọn phòng đang được dùng
+3. Chọn lịch trùng giờ
+4. Nhấn Tạo","Room ID: 1
+Schedule: 2-4-6
+Time: 18:00","Hiển thị cảnh báo phòng học bị trùng",,,,
+TC_021,Lớp học,Lọc lớp học theo giảng viên,Hệ thống có lớp học,"1. Vào trang danh sách lớp
+2. Chọn bộ lọc giảng viên
+3. Chọn giảng viên cụ thể
+4. Nhấn Lọc","Lecturer ID: 1","Hiển thị danh sách lớp do giảng viên đó phụ trách",,,,
+TC_022,Lớp học,Lọc lớp học theo khóa học,Hệ thống có lớp học,"1. Vào trang danh sách lớp
+2. Chọn bộ lọc khóa học
+3. Chọn khóa học cụ thể
+4. Nhấn Lọc","Course ID: 1","Hiển thị danh sách lớp của khóa học đó",,,,
+TC_023,Lớp học,Xem lịch học theo tuần,Hệ thống có lớp học,"1. Vào trang lịch học
+2. Chọn tuần cụ thể
+3. Chọn bộ lọc (nếu cần)","Date: 2025-12-01","Hiển thị lịch học theo tuần với các buổi học được sắp xếp theo ngày",,,,
+TC_024,Đăng ký học,Đăng ký lớp học thành công,Học viên đã đăng nhập, lớp còn chỗ,"1. Đăng nhập học viên
+2. Xem chi tiết lớp học
+3. Click Đăng ký
+4. Xác nhận thông tin
+5. Nhấn Xác nhận đăng ký","Class ID: 1
+Student ID: 1","Đăng ký thành công, tạo hóa đơn, chờ thanh toán",,,,
+TC_025,Đăng ký học,Kiểm tra lỗi khi lớp đã đầy,Lớp học đã đủ số lượng,"1. Đăng nhập học viên
+2. Chọn lớp đã đầy
+3. Click Đăng ký","Class ID: 1 (full)","Hiển thị thông báo ""Lớp học đã đủ số lượng""",,,,
+TC_026,Đăng ký học,Kiểm tra lỗi khi đăng ký trùng lớp,Học viên đã đăng ký lớp này,"1. Đăng nhập học viên
+2. Chọn lớp đã đăng ký
+3. Click Đăng ký lại","Class ID: 1
+Student đã enrolled","Hiển thị thông báo ""Bạn đã đăng ký lớp này""",,,,
+TC_027,Đăng ký học,Đăng ký nhiều lớp cùng lúc,Học viên đã đăng nhập,"1. Đăng nhập học viên
+2. Chọn nhiều lớp học
+3. Thêm vào giỏ
+4. Nhấn Đăng ký","Class IDs: [1,2,3]","Tạo hóa đơn cho tất cả các lớp, tổng cộng học phí",,,,
+TC_028,Thanh toán,Xem thông tin hóa đơn,Đã có hóa đơn chờ thanh toán,"1. Đăng nhập học viên
+2. Vào trang hóa đơn
+3. Xem chi tiết hóa đơn","Invoice ID: 1","Hiển thị thông tin: danh sách lớp, học phí từng lớp, tổng tiền, trạng thái",,,,
+TC_029,Thanh toán,Thanh toán qua VNPay,Có hóa đơn chờ thanh toán,"1. Vào chi tiết hóa đơn
+2. Click Thanh toán VNPay
+3. Chuyển đến trang VNPay
+4. Nhập thông tin thẻ
+5. Xác nhận thanh toán","Invoice ID: 1
+Card: test card VNPay sandbox","Thanh toán thành công, cập nhật trạng thái hóa đơn, gửi email xác nhận",,,,
+TC_030,Thanh toán,Kiểm tra callback VNPay thành công,Đã thanh toán trên VNPay,"1. VNPay redirect về return URL
+2. Hệ thống xác thực chữ ký
+3. Cập nhật trạng thái","vnp_ResponseCode: 00
+vnp_SecureHash: valid","Hóa đơn chuyển sang đã thanh toán, học viên được thêm vào lớp",,,,
+TC_031,Thanh toán,Kiểm tra callback VNPay thất bại,Thanh toán thất bại trên VNPay,"1. VNPay redirect về return URL
+2. Hệ thống nhận response code lỗi","vnp_ResponseCode: 24","Hiển thị thông báo thanh toán thất bại, hóa đơn vẫn pending",,,,
+TC_032,Thanh toán,Kiểm tra chữ ký VNPay không hợp lệ,Giả mạo callback VNPay,"1. Gửi request với chữ ký sai
+2. Hệ thống verify chữ ký","vnp_SecureHash: invalid","Từ chối xử lý, log cảnh báo security",,,,
+TC_033,Học viên,Xem thông tin cá nhân,Học viên đã đăng nhập,"1. Đăng nhập học viên
+2. Vào trang thông tin cá nhân","Student ID: 1","Hiển thị: họ tên, email, SĐT, ngày sinh, địa chỉ, trình độ, nghề nghiệp",,,,
+TC_034,Học viên,Cập nhật thông tin cá nhân,Học viên đã đăng nhập,"1. Vào trang thông tin cá nhân
+2. Click Chỉnh sửa
+3. Thay đổi thông tin
+4. Nhấn Lưu","Địa chỉ mới: 123 Nguyễn Văn A, Q1","Thông tin được cập nhật thành công",,,,
+TC_035,Học viên,Xem danh sách lớp đã đăng ký,Học viên đã đăng ký lớp,"1. Đăng nhập học viên
+2. Vào Lớp học của tôi","Student ID: 1","Hiển thị danh sách các lớp đã đăng ký kèm trạng thái, lịch học",,,,
+TC_036,Học viên,Xem lịch học tuần của học viên,Học viên có lớp đang học,"1. Đăng nhập học viên
+2. Vào Lịch học
+3. Chọn tuần","Date: 2025-12-01","Hiển thị lịch các buổi học trong tuần",,,,
+TC_037,Điểm danh,Giảng viên điểm danh cho buổi học,Giảng viên phụ trách lớp, có buổi học,"1. Đăng nhập giảng viên
+2. Vào lớp học của mình
+3. Chọn buổi học
+4. Điểm danh từng học viên
+5. Nhấn Lưu","Session ID: 1
+Student 1: Có mặt
+Student 2: Vắng
+Student 3: Có mặt","Điểm danh được lưu thành công cho buổi học",,,,
+TC_038,Điểm danh,Xem danh sách điểm danh buổi học,Đã có điểm danh,"1. Vào chi tiết buổi học
+2. Xem điểm danh","Session ID: 1","Hiển thị danh sách học viên với trạng thái có mặt/vắng, ghi chú",,,,
+TC_039,Điểm danh,Cập nhật điểm danh đã lưu,Đã điểm danh trước đó,"1. Vào buổi học đã điểm danh
+2. Sửa trạng thái điểm danh
+3. Nhấn Lưu","Session ID: 1
+Student 2: Sửa từ Vắng -> Có mặt","Điểm danh được cập nhật thành công",,,,
+TC_040,Điểm danh,Kiểm tra quyền điểm danh,Người dùng không phải giảng viên của lớp,"1. Đăng nhập giảng viên khác
+2. Truy cập điểm danh lớp không phụ trách","Lecturer khác, Session ID: 1","Từ chối truy cập, hiển thị thông báo không có quyền",,,,
+TC_041,Giảng viên,Xem danh sách lớp đang phụ trách,Giảng viên đã được gán lớp,"1. Đăng nhập giảng viên
+2. Vào Lớp học của tôi","Lecturer ID: 1","Hiển thị danh sách lớp đang phụ trách với lịch dạy",,,,
+TC_042,Giảng viên,Xem lịch dạy theo tuần,Giảng viên có lớp dạy,"1. Đăng nhập giảng viên
+2. Vào Lịch dạy
+3. Chọn tuần","Date: 2025-12-01","Hiển thị lịch giảng dạy trong tuần",,,,
+TC_043,Giảng viên,Xem thông tin giảng viên,Có giảng viên trong hệ thống,"1. Truy cập danh sách giảng viên
+2. Xem chi tiết giảng viên","Lecturer ID: 1","Hiển thị: họ tên, email, SĐT, ngày sinh, ảnh, danh sách bằng cấp",,,,
+TC_044,Phòng học,Xem danh sách phòng học,Hệ thống có phòng học,"1. Vào trang quản lý phòng
+2. Xem danh sách","N/A","Hiển thị danh sách phòng với: tên phòng, sức chứa, trạng thái",,,,
+TC_045,Phòng học,Thêm phòng học mới,Người dùng có quyền Admin,"1. Đăng nhập Admin
+2. Vào quản lý phòng
+3. Click Thêm phòng
+4. Nhập thông tin
+5. Nhấn Lưu","Tên: A301
+Sức chứa: 25
+Trạng thái: Hoạt động","Phòng được thêm thành công",,,,
+TC_046,Phòng học,Cập nhật thông tin phòng,Phòng đã tồn tại,"1. Vào chi tiết phòng
+2. Click Chỉnh sửa
+3. Thay đổi thông tin
+4. Nhấn Lưu","Room ID: 1
+Sức chứa mới: 30","Thông tin phòng được cập nhật",,,,
+TC_047,Phòng học,Xem lịch sử dụng phòng,Phòng đã được sử dụng,"1. Vào chi tiết phòng
+2. Xem lịch sử dụng","Room ID: 1","Hiển thị lịch các buổi học sử dụng phòng này",,,,
+TC_048,Module,Xem danh sách module của khóa học,Khóa học có module,"1. Vào chi tiết khóa học
+2. Xem danh sách module","Course ID: 1","Hiển thị các module với: tên, mô tả, thứ tự",,,,
+TC_049,Module,Thêm module cho khóa học,Khóa học đã tồn tại,"1. Vào chi tiết khóa học
+2. Click Thêm module
+3. Nhập thông tin
+4. Nhấn Lưu","Course ID: 1
+Module: Grammar Basics
+Order: 1","Module được thêm thành công",,,,
+TC_050,Module,Cập nhật module,Module đã tồn tại,"1. Vào chi tiết module
+2. Click Chỉnh sửa
+3. Thay đổi thông tin
+4. Nhấn Lưu","Module ID: 1
+Mô tả mới: Updated description","Module được cập nhật thành công",,,,
+TC_051,Module,Xóa module,Module đã tồn tại,"1. Vào danh sách module
+2. Click Xóa module
+3. Xác nhận","Module ID: 1","Module bị xóa khỏi khóa học",,,,
+TC_052,Danh mục,Xem danh sách danh mục khóa học,Hệ thống có danh mục,"1. Truy cập trang danh mục
+2. Xem danh sách","N/A","Hiển thị danh sách: IELTS, TOEIC, Giao tiếp, etc.",,,,
+TC_053,Danh mục,Thêm danh mục mới,Người dùng có quyền Admin,"1. Đăng nhập Admin
+2. Vào quản lý danh mục
+3. Click Thêm danh mục
+4. Nhập tên và mô tả
+5. Nhấn Lưu","Tên: Business English
+Mô tả: Tiếng Anh thương mại","Danh mục được thêm thành công",,,,
+TC_054,Kỹ năng,Xem danh sách kỹ năng,Hệ thống có kỹ năng,"1. Truy cập danh sách kỹ năng
+2. Xem danh sách","N/A","Hiển thị: Listening, Speaking, Reading, Writing",,,,
+TC_055,Kỹ năng,Liên kết kỹ năng với khóa học,Khóa học và kỹ năng đã tồn tại,"1. Vào chi tiết khóa học
+2. Click Thêm kỹ năng
+3. Chọn kỹ năng
+4. Nhấn Lưu","Course ID: 1
+Skill: Listening, Speaking","Các kỹ năng được liên kết với khóa học",,,,
+TC_056,Refresh Token,Làm mới access token,Refresh token hợp lệ,"1. Gửi request refresh token
+2. Kèm refresh token trong cookie","RefreshToken: valid_token","Nhận access token mới",,,,
+TC_057,Refresh Token,Kiểm tra refresh token hết hạn,Refresh token đã hết hạn,"1. Gửi request với token hết hạn","RefreshToken: expired_token","Từ chối, yêu cầu đăng nhập lại",,,,
+TC_058,Xác thực email,Xác thực tài khoản mới,Đã đăng ký, nhận email,"1. Mở email xác thực
+2. Click vào link
+3. Xác nhận","Verification code: valid","Tài khoản được kích hoạt, có thể đăng nhập",,,,
+TC_059,Xác thực email,Kiểm tra mã xác thực hết hạn,Mã đã quá thời gian hiệu lực,"1. Click vào link xác thực cũ","Code: expired","Hiển thị thông báo mã hết hạn, yêu cầu gửi lại",,,,
+TC_060,Xác thực email,Gửi lại mã xác thực,Tài khoản chưa xác thực,"1. Vào trang đăng nhập
+2. Click Gửi lại mã xác thực
+3. Nhập email
+4. Nhấn Gửi","Email: unverified@email.com","Email xác thực mới được gửi",,,,
+TC_061,Đổi mật khẩu,Đổi mật khẩu thành công,Đã đăng nhập,"1. Vào trang đổi mật khẩu
+2. Nhập mật khẩu cũ
+3. Nhập mật khẩu mới
+4. Xác nhận mật khẩu mới
+5. Nhấn Lưu","Old: Pass123!
+New: NewPass456!
+Confirm: NewPass456!","Mật khẩu được thay đổi thành công",,,,
+TC_062,Đổi mật khẩu,Kiểm tra lỗi mật khẩu cũ sai,Đã đăng nhập,"1. Vào trang đổi mật khẩu
+2. Nhập sai mật khẩu cũ
+3. Nhập mật khẩu mới
+4. Nhấn Lưu","Old: WrongPass
+New: NewPass456!","Hiển thị ""Mật khẩu cũ không đúng""",,,,
+TC_063,Quên mật khẩu,Yêu cầu reset mật khẩu,Email đã đăng ký,"1. Click Quên mật khẩu
+2. Nhập email
+3. Nhấn Gửi","Email: user@email.com","Email reset password được gửi",,,,
+TC_064,Quên mật khẩu,Reset mật khẩu qua link email,Đã nhận email reset,"1. Mở email
+2. Click link reset
+3. Nhập mật khẩu mới
+4. Xác nhận
+5. Nhấn Lưu","Reset token: valid
+New Pass: NewPass789!","Mật khẩu được reset, có thể đăng nhập với pass mới",,,,
+TC_065,Upload file,Upload ảnh đại diện,Đã đăng nhập,"1. Vào trang cá nhân
+2. Click chọn ảnh
+3. Chọn file ảnh
+4. Nhấn Upload","File: avatar.jpg (< 5MB)","Ảnh được upload và hiển thị",,,,
+TC_066,Upload file,Kiểm tra lỗi file quá lớn,File > giới hạn,"1. Chọn file quá lớn
+2. Nhấn Upload","File: large.jpg (> 5MB)","Hiển thị ""File vượt quá kích thước cho phép""",,,,
+TC_067,Upload file,Kiểm tra lỗi định dạng không hỗ trợ,File không phải ảnh,"1. Chọn file không phải ảnh
+2. Nhấn Upload","File: document.pdf","Hiển thị ""Định dạng file không được hỗ trợ""",,,,
+TC_068,Gợi ý lịch học,Xem gợi ý lịch học thông minh,Có yêu cầu tạo lớp,"1. Tạo lớp học
+2. Gặp conflict
+3. Xem gợi ý","Class với conflict","Hiển thị các slot thời gian khả dụng cho giảng viên và phòng",,,,
+TC_069,Phân trang,Kiểm tra phân trang danh sách khóa học,Có nhiều khóa học,"1. Vào danh sách khóa học
+2. Xem trang 1
+3. Click Trang 2","Page: 1, Size: 15","Hiển thị đúng 15 khóa học/trang, có nút chuyển trang",,,,
+TC_070,Phân trang,Kiểm tra phân trang danh sách lớp học,Có nhiều lớp học,"1. Vào danh sách lớp
+2. Thay đổi số item/page
+3. Xem kết quả","Page: 1, Size: 10","Hiển thị đúng 10 lớp/trang",,,,
+TC_071,Tìm kiếm,Tìm kiếm khóa học theo tên,Hệ thống có khóa học,"1. Vào trang khóa học
+2. Nhập từ khóa vào ô tìm kiếm
+3. Nhấn Tìm","Keyword: IELTS","Hiển thị các khóa học có chứa ""IELTS""",,,,
+TC_072,Tìm kiếm,Tìm kiếm lớp học theo tên,Hệ thống có lớp học,"1. Vào danh sách lớp
+2. Nhập tên lớp
+3. Nhấn Tìm","Class name: A1","Hiển thị các lớp có tên chứa ""A1""",,,,
+TC_073,Bộ lọc,Lọc khóa học theo danh mục,Khóa học thuộc nhiều danh mục,"1. Vào danh sách khóa học
+2. Chọn bộ lọc danh mục
+3. Chọn danh mục IELTS
+4. Áp dụng","Category: IELTS","Hiển thị chỉ các khóa IELTS",,,,
+TC_074,Bộ lọc,Lọc khóa học theo mức giá,Khóa học có giá khác nhau,"1. Vào danh sách khóa học
+2. Chọn khoảng giá
+3. Áp dụng","Price: 3000000-5000000","Hiển thị khóa học trong khoảng giá",,,,
+TC_075,Bộ lọc,Lọc lớp theo trạng thái,Lớp có nhiều trạng thái,"1. Vào danh sách lớp
+2. Chọn bộ lọc trạng thái
+3. Chọn ""Đang học""
+4. Áp dụng","Status: InProgress","Hiển thị chỉ lớp đang học",,,,
+TC_076,Sắp xếp,Sắp xếp khóa học theo giá,Có nhiều khóa học,"1. Vào danh sách khóa học
+2. Click sắp xếp theo giá
+3. Chọn tăng dần/giảm dần","Sort: Price ASC","Danh sách được sắp xếp theo giá tăng dần",,,,
+TC_077,Sắp xếp,Sắp xếp lớp theo ngày bắt đầu,Có nhiều lớp học,"1. Vào danh sách lớp
+2. Click sắp xếp theo ngày
+3. Chọn mới nhất","Sort: Start Date DESC","Lớp mới nhất hiển thị trước",,,,
+TC_078,Khuyến mãi,Áp dụng mã giảm giá,Có mã giảm giá hợp lệ,"1. Vào giỏ hàng
+2. Nhập mã giảm giá
+3. Nhấn Áp dụng","Code: DISCOUNT10","Giảm 10% tổng hóa đơn",,,,
+TC_079,Khuyến mãi,Kiểm tra mã giảm giá hết hạn,Mã đã hết hạn,"1. Nhập mã hết hạn
+2. Nhấn Áp dụng","Code: EXPIRED","Hiển thị ""Mã giảm giá đã hết hạn""",,,,
+TC_080,Khuyến mãi,Kiểm tra mã giảm giá không tồn tại,Mã không có trong hệ thống,"1. Nhập mã không tồn tại
+2. Nhấn Áp dụng","Code: INVALID","Hiển thị ""Mã giảm giá không hợp lệ""",,,,
+TC_081,Báo cáo,Xem báo cáo doanh thu (Admin),Có dữ liệu thanh toán,"1. Đăng nhập Admin
+2. Vào trang báo cáo
+3. Chọn khoảng thời gian
+4. Xem báo cáo","From: 2025-01-01
+To: 2025-01-31","Hiển thị tổng doanh thu, số lượng đơn, biểu đồ",,,,
+TC_082,Báo cáo,Xem báo cáo học viên đăng ký,Có dữ liệu đăng ký,"1. Vào báo cáo
+2. Chọn báo cáo học viên
+3. Xem thống kê","Period: Tháng 1/2025","Hiển thị số học viên mới, tổng học viên, biểu đồ tăng trưởng",,,,
+TC_083,Báo cáo,Xem báo cáo lớp học,Có dữ liệu lớp học,"1. Vào báo cáo
+2. Chọn báo cáo lớp học
+3. Xem thống kê","Period: Quý 1/2025","Hiển thị số lớp mở, tỷ lệ lấp đầy, lớp phổ biến nhất",,,,
+TC_084,Thông báo,Nhận thông báo qua email khi đăng ký,Đăng ký khóa học thành công,"1. Đăng ký khóa học
+2. Kiểm tra email","Email: student@email.com","Nhận email xác nhận đăng ký với thông tin lớp học",,,,
+TC_085,Thông báo,Nhận email nhắc nhở buổi học,Có buổi học sắp diễn ra,"1. Hệ thống tự động gửi
+2. Kiểm tra email","Session: Tomorrow","Nhận email nhắc nhở trước 1 ngày",,,,
+TC_086,Thông báo,Nhận email xác nhận thanh toán,Thanh toán thành công,"1. Hoàn tất thanh toán
+2. Kiểm tra email","Invoice ID: 1","Nhận email xác nhận với chi tiết hóa đơn",,,,
+TC_087,Phân quyền,Kiểm tra quyền Admin,User không phải Admin,"1. Đăng nhập user thường
+2. Truy cập chức năng Admin","User role: STUDENT","Từ chối truy cập, hiển thị ""Không có quyền""",,,,
+TC_088,Phân quyền,Kiểm tra quyền Giảng viên,User không phải Giảng viên,"1. Đăng nhập học viên
+2. Truy cập chức năng giảng viên","User role: STUDENT","Từ chối truy cập",,,,
+TC_089,Phân quyền,Kiểm tra quyền xem thông tin cá nhân,User truy cập profile người khác,"1. Đăng nhập user A
+2. Truy cập profile user B","User A ID: 1
+User B ID: 2","Từ chối hoặc chỉ hiển thị thông tin công khai",,,,
+TC_090,API Security,Kiểm tra JWT token hợp lệ,Đã đăng nhập,"1. Gọi API với token
+2. Kiểm tra response","JWT: valid_token","API trả về dữ liệu thành công",,,,
+TC_091,API Security,Kiểm tra JWT token hết hạn,Token đã expire,"1. Gọi API với token hết hạn","JWT: expired_token","API trả về 401 Unauthorized",,,,
+TC_092,API Security,Kiểm tra request không có token,Không gửi token,"1. Gọi API protected mà không có token","No Authorization header","API trả về 401 Unauthorized",,,,
+TC_093,Validate,Kiểm tra validate email format,Email không đúng format,"1. Nhập email sai format
+2. Submit form","Email: notanemail","Hiển thị ""Email không hợp lệ""",,,,
+TC_094,Validate,Kiểm tra validate required fields,Bỏ trống trường bắt buộc,"1. Để trống trường required
+2. Submit form","Field: empty","Hiển thị ""Trường này là bắt buộc""",,,,
+TC_095,Validate,Kiểm tra validate độ dài password,Password quá ngắn,"1. Nhập password < 6 ký tự
+2. Submit form","Password: 123","Hiển thị ""Mật khẩu phải có ít nhất 6 ký tự""",,,,
+TC_096,Validate,Kiểm tra validate số điện thoại,SĐT không đúng format,"1. Nhập SĐT sai format
+2. Submit form","Phone: abc123","Hiển thị ""Số điện thoại không hợp lệ""",,,,
+TC_097,Error Handling,Kiểm tra xử lý lỗi 404,Truy cập resource không tồn tại,"1. Truy cập URL không tồn tại","URL: /api/courses/99999","Trả về 404 Not Found với message rõ ràng",,,,
+TC_098,Error Handling,Kiểm tra xử lý lỗi 500,Lỗi server nội bộ,"1. Gây ra lỗi server
+2. Kiểm tra response","Server error","Trả về 500 Internal Server Error, không lộ thông tin nhạy cảm",,,,
+TC_099,Performance,Kiểm tra thời gian load danh sách,Có nhiều bản ghi,"1. Truy cập danh sách có nhiều item
+2. Đo thời gian load","1000 records","Load < 2 giây",,,,
+TC_100,Performance,Kiểm tra pagination performance,Phân trang với nhiều trang,"1. Navigate qua nhiều trang
+2. Đo thời gian","Page 1, 50, 100","Mỗi page load < 1 giây",,,,
