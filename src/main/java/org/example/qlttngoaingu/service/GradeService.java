@@ -1,21 +1,35 @@
 package org.example.qlttngoaingu.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.example.qlttngoaingu.dto.request.GradeRequest;
 import org.example.qlttngoaingu.dto.response.ClassGradesResponse;
 import org.example.qlttngoaingu.dto.response.GradeResponse;
-import org.example.qlttngoaingu.entity.*;
+import org.example.qlttngoaingu.entity.CourseClass;
+import org.example.qlttngoaingu.entity.GradeSheet;
+import org.example.qlttngoaingu.entity.InvoiceDetail;
+import org.example.qlttngoaingu.entity.Lecturer;
+import org.example.qlttngoaingu.entity.Student;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
-import org.example.qlttngoaingu.repository.*;
+import org.example.qlttngoaingu.repository.CourseClassRepository;
+import org.example.qlttngoaingu.repository.GradeSheetRepository;
+import org.example.qlttngoaingu.repository.InvoiceDetailRepository;
+import org.example.qlttngoaingu.repository.LecturerRepository;
+import org.example.qlttngoaingu.repository.SessionRepository;
+import org.example.qlttngoaingu.repository.StudentRepository;
+import org.example.qlttngoaingu.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -28,11 +42,17 @@ public class GradeService {
     private final CourseClassRepository courseClassRepository;
     private final UserRepository userRepository;
     private final LecturerRepository lecturerRepository;
+    private final SessionRepository sessionRepository;
 
     // Các loại điểm hỗ trợ
     private static final String GRADE_TYPE_ATTENDANCE = "Chuyên cần";
     private static final String GRADE_TYPE_MIDTERM = "Giữa kỳ";
     private static final String GRADE_TYPE_FINAL = "Cuối kỳ";
+    
+    // ID loại điểm
+    private static final int GRADE_TYPE_ID_ATTENDANCE = 1;
+    private static final int GRADE_TYPE_ID_MIDTERM = 2;
+    private static final int GRADE_TYPE_ID_FINAL = 3;
 
     /**
      * STU-01: Lấy tất cả điểm của học viên đang đăng nhập
@@ -147,13 +167,19 @@ public class GradeService {
      */
     @Transactional
     public GradeSheet submitGrade(Integer userId, GradeRequest request) {
-        // Verify người dùng là giảng viên hoặc admin
-        User user = userRepository.findById(userId)
+        // Verify người dùng tồn tại
+        userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         // Lấy enrollment
         InvoiceDetail enrollment = invoiceDetailRepository.findById(request.getEnrollmentId())
                 .orElseThrow(() -> new AppException(ErrorCode.ENROLLMENT_NOT_FOUND));
+
+        // Lấy classId từ enrollment
+        Integer classId = enrollment.getCourseClass().getClassId();
+        
+        // **KIỂM TRA ĐIỀU KIỆN NHẬP ĐIỂM THEO LOẠI**
+        validateGradeTimingByType(classId, request.getGradeTypeId());
 
         // Chuyển đổi gradeTypeId thành tên loại điểm
         String gradeTypeName = convertGradeTypeIdToName(request.getGradeTypeId());
@@ -169,6 +195,7 @@ public class GradeService {
             gradeSheet.setScore(request.getScore());
             gradeSheet.setComment(request.getComment());
             gradeSheet.setGradedAt(LocalDateTime.now());
+            log.info("Updated {} grade for enrollment {}: {}", gradeTypeName, request.getEnrollmentId(), request.getScore());
         } else {
             // Tạo điểm mới
             gradeSheet = new GradeSheet();
@@ -177,6 +204,7 @@ public class GradeService {
             gradeSheet.setScore(request.getScore());
             gradeSheet.setComment(request.getComment());
             gradeSheet.setGradedAt(LocalDateTime.now());
+            log.info("Created {} grade for enrollment {}: {}", gradeTypeName, request.getEnrollmentId(), request.getScore());
         }
 
         return gradeSheetRepository.save(gradeSheet);
@@ -187,7 +215,8 @@ public class GradeService {
      */
     @Transactional
     public GradeSheet updateGrade(Integer userId, Integer gradeId, GradeRequest request) {
-        User user = userRepository.findById(userId)
+        // Verify người dùng tồn tại
+        userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         GradeSheet gradeSheet = gradeSheetRepository.findById(gradeId)
@@ -314,4 +343,54 @@ public class GradeService {
                 .finalGrade(finalGrade)
                 .build();
     }
+
+    /**
+     * Kiểm tra điều kiện nhập điểm dựa trên loại điểm
+     * - Chuyên cần (1): Chỉ được nhập sau buổi học cuối cùng
+     * - Giữa kỳ (2): Chỉ được nhập sau khi học được 1/2 số buổi
+     * - Cuối kỳ (3): Chỉ được nhập sau buổi học cuối cùng
+     */
+    private void validateGradeTimingByType(Integer classId, int gradeTypeId) {
+        java.time.LocalDate today = java.time.LocalDate.now();
+        
+        // Đếm tổng số buổi học
+        long totalSessions = sessionRepository.countTotalSessionsByClassId(classId);
+        
+        // Đếm số buổi đã hoàn thành (sessionDate <= hôm nay)
+        long completedSessions = sessionRepository.countCompletedSessionsByClassId(classId, today);
+        
+        log.info("Class {}: Total sessions = {}, Completed sessions = {}, Grade type = {}", 
+                classId, totalSessions, completedSessions, gradeTypeId);
+        
+        switch (gradeTypeId) {
+            case GRADE_TYPE_ID_ATTENDANCE -> {
+                // Chỉ được nhập sau buổi cuối cùng (tất cả buổi đã hoàn thành)
+                if (completedSessions < totalSessions) {
+                    log.warn("Cannot grade attendance for class {}: Only {}/{} sessions completed",
+                            classId, completedSessions, totalSessions);
+                    throw new AppException(ErrorCode.CANNOT_GRADE_ATTENDANCE_YET);
+                }
+            }
+            case GRADE_TYPE_ID_MIDTERM -> {
+                // Chỉ được nhập sau khi học được ít nhất 1/2 số buổi
+                long halfSessions = totalSessions / 2;
+                if (completedSessions < halfSessions) {
+                    log.warn("Cannot grade midterm for class {}: Only {}/{} sessions completed (need at least {})",
+                            classId, completedSessions, totalSessions, halfSessions);
+                    throw new AppException(ErrorCode.CANNOT_GRADE_MIDTERM_YET);
+                }
+            }
+            case GRADE_TYPE_ID_FINAL -> {
+                // Chỉ được nhập sau buổi cuối cùng (tất cả buổi đã hoàn thành)
+                if (completedSessions < totalSessions) {
+                    log.warn("Cannot grade final exam for class {}: Only {}/{} sessions completed",
+                            classId, completedSessions, totalSessions);
+                    throw new AppException(ErrorCode.CANNOT_GRADE_FINAL_YET);
+                }
+            }
+            default -> throw new AppException(ErrorCode.INVALID_GRADE_TYPE);
+        }
+    }
+
 }
+

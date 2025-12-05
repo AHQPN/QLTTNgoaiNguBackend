@@ -134,7 +134,11 @@ public enum ErrorCode {
         GRADE_NOT_FOUND(HttpStatus.NOT_FOUND, 13003, "Grade not found"),
         REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, 13004, "You have already reviewed this class"),
         REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, 13005, "Review not found"),
-        LECTURER_NOT_FOUND(HttpStatus.NOT_FOUND, 13006, "Lecturer not found");
+        LECTURER_NOT_FOUND(HttpStatus.NOT_FOUND, 13006, "Lecturer not found"),
+        CANNOT_GRADE_ATTENDANCE_YET(HttpStatus.BAD_REQUEST, 13007, "Cannot grade attendance - Class must have completed all sessions"),
+        CANNOT_GRADE_FINAL_YET(HttpStatus.BAD_REQUEST, 13008, "Cannot grade final exam - Class must have completed all sessions"),
+        CANNOT_GRADE_MIDTERM_YET(HttpStatus.BAD_REQUEST, 13009, "Cannot grade midterm - Class must have completed at least half of sessions"),
+        INVALID_GRADE_TYPE(HttpStatus.BAD_REQUEST, 13010, "Invalid grade type - Must be 1 (Attendance), 2 (Midterm), or 3 (Final)");
 
         private final HttpStatus httpStatus;
         private final int code;

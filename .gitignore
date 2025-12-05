@@ -32,3 +32,4 @@ build/
 ### VS Code ###
 .vscode/
 .env
+GRADE_SYSTEM_API.md
