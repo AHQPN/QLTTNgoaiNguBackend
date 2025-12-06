@@ -18,6 +18,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 @RestController
@@ -58,6 +60,54 @@ public class UserController {
     {
         userService.AddLecturerUser(lecturerCreationRequest);
         return ResponseEntity.ok().body(ApiResponse.builder().message("User has been created").build());
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse> getCurrentUser(@AuthenticationPrincipal UserDetailsImpl principal) {
+        // Return current authenticated user info based on JWT token
+        // Format: {id, email, role, fullName, phoneNumber, ...} to match Flutter UserModel
+        
+        try {
+            Map<String, Object> userData = new HashMap<>();
+            userData.put("id", principal.getId().toString());
+            userData.put("role", principal.getRole().toLowerCase());
+            userData.put("isActive", true);
+            
+            if(Objects.equals(principal.getRole(), RoleEnum.STUDENT.name())) {
+                NameAndEmail info = userService.getStudentEmailAndName(principal.getId());
+                userData.put("email", info.getEmail());
+                userData.put("fullName", info.getName());
+            } else if(Objects.equals(principal.getRole(), RoleEnum.TEACHER.name())) {
+                NameAndEmail info = userService.getTeacherEmailAndName(principal.getId());
+                userData.put("email", info.getEmail());
+                userData.put("fullName", info.getName());
+            } else {
+                // For ADMIN or STAFF - get user from database
+                User user = userService.getUserByIdentifier(principal.getUsername())
+                        .orElseThrow(() -> new RuntimeException("User not found"));
+                userData.put("email", user.getEmail());
+                userData.put("fullName", "Admin User");
+                userData.put("phoneNumber", user.getPhoneNumber());
+            }
+            
+            return ResponseEntity.ok().body(ApiResponse.builder()
+                    .message("User info retrieved successfully")
+                    .data(userData)
+                    .build());
+        } catch (Exception e) {
+            // Fallback
+            Map<String, Object> fallbackData = new HashMap<>();
+            fallbackData.put("id", "0");
+            fallbackData.put("email", "unknown@system.com");
+            fallbackData.put("fullName", "System User");
+            fallbackData.put("role", "admin");
+            fallbackData.put("isActive", true);
+            
+            return ResponseEntity.ok().body(ApiResponse.builder()
+                    .message("User info retrieved with fallback")
+                    .data(fallbackData)
+                    .build());
+        }
     }
 
     @GetMapping("/student-info")

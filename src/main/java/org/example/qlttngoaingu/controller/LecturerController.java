@@ -2,20 +2,26 @@ package org.example.qlttngoaingu.controller;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
 import org.example.qlttngoaingu.dto.request.AttendanceSessionRequest;
 import org.example.qlttngoaingu.dto.request.CheckConflictRequest;
+import org.example.qlttngoaingu.dto.request.GradeRequest;
 import org.example.qlttngoaingu.dto.response.ApiResponse;
 import org.example.qlttngoaingu.dto.response.AttendanceSessionResponse;
 import org.example.qlttngoaingu.dto.response.AvailableLecturerResponse;
+import org.example.qlttngoaingu.dto.response.ClassGradesResponse;
+import org.example.qlttngoaingu.entity.GradeSheet;
 import org.example.qlttngoaingu.entity.Lecturer;
 import org.example.qlttngoaingu.security.model.UserDetailsImpl;
 import org.example.qlttngoaingu.service.AttendanceService;
+import org.example.qlttngoaingu.service.GradeService;
 import org.example.qlttngoaingu.service.LecturerService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 public class LecturerController {
     private final LecturerService lecturerService;
     private final AttendanceService attendanceService;
+    private final GradeService gradeService;
 
     @PostMapping("/available")
     public ResponseEntity<List<AvailableLecturerResponse>> getAvailableLecturers(
@@ -78,12 +85,54 @@ public class LecturerController {
         return ResponseEntity.ok().body(ApiResponse.<AttendanceSessionResponse>builder().data(resp).build());
     }
 
+    // ==================== GRADES APIs (TEA-01, TEA-02, TEA-03) ====================
 
+    /**
+     * TEA-01: GET /lecturers/grades/class/{classId}
+     * Lấy danh sách điểm của tất cả học viên trong lớp
+     */
+    @GetMapping("/grades/class/{classId}")
+    public ResponseEntity<ApiResponse> getClassGrades(
+            @AuthenticationPrincipal UserDetailsImpl principal,
+            @PathVariable Integer classId
+    ) {
+        ClassGradesResponse grades = gradeService.getClassGrades(principal.getId(), classId);
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("Lấy điểm lớp thành công")
+                .data(grades)
+                .build());
+    }
 
+    /**
+     * TEA-02: POST /lecturers/grades
+     * Nhập điểm cho học viên
+     */
+    @PostMapping("/grades")
+    public ResponseEntity<ApiResponse> submitGrade(
+            @AuthenticationPrincipal UserDetailsImpl principal,
+            @Valid @RequestBody GradeRequest request
+    ) {
+        GradeSheet gradeSheet = gradeService.submitGrade(principal.getId(), request);
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("Nhập điểm thành công")
+                .data(gradeSheet.getGradeSheetId())
+                .build());
+    }
 
-
-
-
-
-
+    /**
+     * TEA-03: PUT /lecturers/grades/{gradeId}
+     * Cập nhật điểm
+     */
+    @PutMapping("/grades/{gradeId}")
+    public ResponseEntity<ApiResponse> updateGrade(
+            @AuthenticationPrincipal UserDetailsImpl principal,
+            @PathVariable Integer gradeId,
+            @Valid @RequestBody GradeRequest request
+    ) {
+        GradeSheet gradeSheet = gradeService.updateGrade(principal.getId(), gradeId, request);
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("Cập nhật điểm thành công")
+                .data(gradeSheet.getGradeSheetId())
+                .build());
+    }
 }

@@ -2,6 +2,7 @@ package org.example.qlttngoaingu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.qlttngoaingu.dto.request.ClassCreationRequest;
+import org.example.qlttngoaingu.dto.request.SessionUpdateRequest;
 import org.example.qlttngoaingu.dto.response.*;
 import org.example.qlttngoaingu.entity.CourseClass;
 import org.example.qlttngoaingu.exception.AppException;
@@ -10,6 +11,7 @@ import org.example.qlttngoaingu.repository.CourseClassRepository;
 import org.example.qlttngoaingu.security.model.UserDetailsImpl;
 import org.example.qlttngoaingu.service.AttendanceService;
 import org.example.qlttngoaingu.service.CourseClassService;
+import org.example.qlttngoaingu.service.ReviewService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +28,7 @@ import java.util.*;
 public class CourseClassController {
     private final CourseClassService courseClassService;
     private final AttendanceService attendanceService;
+    private final ReviewService reviewService;
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getCourseClass(@PathVariable Integer id) {
 
@@ -121,6 +124,36 @@ public class CourseClassController {
     public ResponseEntity<ApiResponse<AttendanceSessionResponse>> getAttendance(@AuthenticationPrincipal UserDetailsImpl principal, @PathVariable Integer sessionId) {
         AttendanceSessionResponse resp = attendanceService.getAttendanceForSession(principal.getId(), sessionId);
         return ResponseEntity.ok().body(ApiResponse.<AttendanceSessionResponse>builder().data(resp).build());
+    }
+
+    /**
+     * PUT /courseclasses/sessions/{sessionId}
+     * Cập nhật trạng thái và ghi chú của buổi học
+     */
+    @PutMapping("/sessions/{sessionId}")
+    public ResponseEntity<ApiResponse> updateSession(
+            @PathVariable Integer sessionId,
+            @RequestBody SessionUpdateRequest request) {
+        var sessionInfo = courseClassService.updateSession(sessionId, request);
+        return ResponseEntity.ok().body(
+            ApiResponse.builder()
+                .message("Cập nhật buổi học thành công")
+                .data(sessionInfo)
+                .build()
+        );
+    }
+
+    /**
+     * GET /courseclasses/{classId}/reviews
+     * Lấy danh sách đánh giá của lớp học
+     */
+    @GetMapping("/{classId}/reviews")
+    public ResponseEntity<ApiResponse> getClassReviews(@PathVariable Integer classId) {
+        return ResponseEntity.ok().body(
+            ApiResponse.builder()
+                .data(reviewService.getClassReviews(classId))
+                .build()
+        );
     }
 
 

@@ -9,4 +9,6 @@ public interface LecturerRepository extends JpaRepository<Lecturer, Integer> {
     Lecturer getByUser_UserId(Integer id);
 
     Optional<Lecturer> getLecturersByLecturerId(Integer lecturerId);
+    
+    Optional<Lecturer> findByUser_UserId(Integer userId);
 }

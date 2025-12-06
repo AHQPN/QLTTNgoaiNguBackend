@@ -10,6 +10,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface SessionMapper {
 
+    @Mapping(source = "courseClass.classId", target = "classId")
     @Mapping(source = "courseClass.className", target = "className")
     @Mapping(source = "courseClass.course.courseName", target = "courseName")
     @Mapping(source = "courseClass.room.roomName", target = "roomName")
@@ -18,5 +19,7 @@ public interface SessionMapper {
     @Mapping(source = "sessionDate", target = "sessionDate")
     @Mapping(source = "status", target = "status")
     @Mapping(source = "note", target = "note")
+    @Mapping(target = "startTime", expression = "java(session.getCourseClass().getStartTime() != null ? session.getCourseClass().getStartTime().toString() : null)")
+    @Mapping(source = "courseClass.minutesPerSession", target = "durationMinutes")
     WeeklyScheduleResponse.SessionInfo toDto(Session session);
 }
