@@ -1,7 +1,10 @@
 package org.example.qlttngoaingu.service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+import java.io.UnsupportedEncodingException;
+import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.example.qlttngoaingu.dto.request.LecturerCreationRequest;
 import org.example.qlttngoaingu.dto.request.SignupRequest;
 import org.example.qlttngoaingu.dto.request.StudentSignupRequest;
@@ -20,7 +23,6 @@ import org.example.qlttngoaingu.repository.StudentRepository;
 import org.example.qlttngoaingu.repository.UserRepository;
 import org.example.qlttngoaingu.repository.VerificationCodeRepository;
 import org.example.qlttngoaingu.service.enums.RoleEnum;
-import lombok.AllArgsConstructor;
 import org.example.qlttngoaingu.service.enums.VerificationCodeEnum;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -28,11 +30,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.UnsupportedEncodingException;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import lombok.AllArgsConstructor;
 
 @Service @AllArgsConstructor
 public class UserService {
@@ -358,6 +358,43 @@ public class UserService {
                 .code(1000)
                 .message("Password has been reset successfully. Please login with your new password.")
                 .build();
+    }
+
+    // ====================== ADMIN CREATE STUDENT ======================
+    @Transactional
+    public StudentInfo createStudentByAdmin(org.example.qlttngoaingu.dto.request.AdminCreateStudentRequest request) {
+        // Kiểm tra số điện thoại đã tồn tại
+        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            throw new AppException(ErrorCode.USER_PHONE_OR_EMAIL_EXIST);
+        }
+        
+        // Kiểm tra email nếu có
+        if (request.getEmail() != null && !request.getEmail().isEmpty() 
+            && userRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(ErrorCode.USER_PHONE_OR_EMAIL_EXIST);
+        }
+
+        // Tạo user với mật khẩu mặc định "123456", không gửi email xác thực
+        User user = new User();
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setEmail(request.getEmail());
+        user.setRole(RoleEnum.STUDENT.name());
+        user.setPasswordHash(passwordEncoder.encode("123456")); // Mật khẩu mặc định
+        user.setIsVerified(true); // Admin tạo nên đã xác thực sẵn
+        user.setCreatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        // Tạo Student
+        Student student = new Student();
+        student.setAccount(user);
+        student.setName(request.getName());
+        student.setNgaySinh(request.getDateOfBirth());
+        student.setGender(request.getGender());
+        student.setAddress(request.getAddress());
+        student.setJob(request.getJob());
+        studentRepository.save(student);
+
+        return studentMapper.toStudentInfo(student);
     }
 
 

@@ -139,7 +139,7 @@ public class AuthController {
         )
     })
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse> signup(@Valid @RequestBody StudentSignupRequest studentSignupRequest, HttpServletRequest request, @Value("${APP_SITE_URL}") String siteUrl) {
+    public ResponseEntity<ApiResponse> signup(@Valid @RequestBody StudentSignupRequest studentSignupRequest, HttpServletRequest request, @Value("${app.site-url}") String siteUrl) {
 
         RoleEnum role = RoleEnum.STUDENT;
         StudentInfo user = userService.signUpForStudent(studentSignupRequest,role, true, siteUrl);
@@ -230,7 +230,7 @@ public class AuthController {
     public ResponseEntity<String> sendVerification(
             @RequestParam String email,
             @RequestParam VerificationCodeEnum type,
-            @Value("${APP_SITE_URL}") String siteUrl) {
+            @Value("${app.site-url}") String siteUrl) {
 
         // 1️⃣ Tìm user theo email
         Optional<User> optionalUser = userService.getUserByIdentifier(email);
@@ -351,7 +351,7 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request,
-            @Value("${APP_SITE_URL}") String siteUrl) {
+            @Value("${app.site-url}") String siteUrl) {
         
         userService.requestPasswordReset(request.getEmail(), siteUrl);
         

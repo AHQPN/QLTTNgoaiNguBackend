@@ -1,6 +1,9 @@
 package org.example.qlttngoaingu.controller;
 
-import lombok.AllArgsConstructor;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
 import org.example.qlttngoaingu.dto.request.LecturerCreationRequest;
 import org.example.qlttngoaingu.dto.request.SignupRequest;
 import org.example.qlttngoaingu.dto.request.UserCreateRequest;
@@ -16,11 +19,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import lombok.AllArgsConstructor;
 
 @RestController
 @RequestMapping("/users")
@@ -30,7 +36,7 @@ public class UserController {
     private final LecturerService lecturerService;
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> createUser(@RequestBody UserCreateRequest user, @Value("${APP_SITE_URL}") String siteUrl) {
+    public ResponseEntity<ApiResponse> createUser(@RequestBody UserCreateRequest user, @Value("${app.site-url}") String siteUrl) {
         SignupRequest signupRequest = new SignupRequest();
         signupRequest.setEmail(user.getEmail());
         signupRequest.setPassword(user.getPhoneNumber());
@@ -40,7 +46,7 @@ public class UserController {
     }
 
     @PostMapping("/seedUser")
-    public ResponseEntity<ApiResponse> createSeedUser(@RequestBody UserCreateRequest user,@Value("${APP_SITE_URL}") String siteUrl) {
+    public ResponseEntity<ApiResponse> createSeedUser(@RequestBody UserCreateRequest user,@Value("${app.site-url}") String siteUrl) {
         SignupRequest signupRequest = new SignupRequest();
         signupRequest.setEmail(user.getEmail());
         signupRequest.setPhoneNumber(user.getPhoneNumber());
