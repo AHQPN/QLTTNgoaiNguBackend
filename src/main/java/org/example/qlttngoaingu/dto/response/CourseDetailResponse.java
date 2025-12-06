@@ -24,9 +24,16 @@ public class CourseDetailResponse {
     private String category;
     private String level;
     private List<Objective> objectives;
-    private List<Module> modules;
+    private List<SkillModuleGroup> skillModules; // Modules nhóm theo skill
     private List<ClassResponse.ClassInfo> classInfos;
     private List<ComboPromotionInfo> comboPromotions;
+    
+    @Getter @Setter
+    public static class SkillModuleGroup {
+        private Integer skillId;
+        private String skillName;
+        private List<Module> modules;
+    }
     
     @Getter @Setter
     public static class ComboPromotionInfo {

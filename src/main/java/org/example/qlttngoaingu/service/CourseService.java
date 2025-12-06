@@ -319,12 +319,20 @@ public class CourseService {
         response.setStatus(course.getStatus());
         response.setCategory(course.getCourseCategory().getName());
         response.setLevel(course.getCourseCategory().getLevel());
-        List<Module> modules = new ArrayList<>();
+        
+        // Nhóm modules theo skill
         List<CourseSkill> courseSkills = courseSkillRepository.findByCourse_CourseId(course.getCourseId());
-        courseSkills.forEach(courseSkill -> {
-            modules.addAll(courseSkill.getModules());
-        });
-        response.setModules(modules);
+        List<CourseDetailResponse.SkillModuleGroup> skillModules = courseSkills.stream()
+                .map(courseSkill -> {
+                    CourseDetailResponse.SkillModuleGroup group = new CourseDetailResponse.SkillModuleGroup();
+                    group.setSkillId(courseSkill.getSkill().getSkillId());
+                    group.setSkillName(courseSkill.getSkill().getSkillName());
+                    group.setModules(new ArrayList<>(courseSkill.getModules()));
+                    return group;
+                })
+                .collect(Collectors.toList());
+        response.setSkillModules(skillModules);
+        
         List<ClassResponse.ClassInfo> classInfos = getClassesForCourse(course.getCourseId());
         response.setClassInfos(classInfos);
         

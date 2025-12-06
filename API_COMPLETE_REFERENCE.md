@@ -335,40 +335,64 @@ GET /courses/{id}
         "objectiveDescription": "Nắm vững ngữ pháp cơ bản"
       }
     ],
-    "modules": [
+    "skillModules": [
       {
-        "moduleId": 1,
-        "moduleName": "Module 1: Listening Skills",
-        "duration": 10,
-        "contents": [
+        "skillId": 1,
+        "skillName": "Listening",
+        "modules": [
           {
-            "contentId": 1,
-            "contentDescription": "Introduction to IELTS Listening"
+            "moduleId": 1,
+            "moduleName": "Module 1: Basic Listening",
+            "duration": 10,
+            "contents": [
+              {
+                "contentId": 1,
+                "contentDescription": "Introduction to IELTS Listening"
+              },
+              {
+                "contentId": 2,
+                "contentDescription": "Note-taking strategies"
+              }
+            ],
+            "documents": [
+              {
+                "documentId": 1,
+                "documentTitle": "Listening Guide",
+                "documentUrl": "docs/listening-guide.pdf"
+              }
+            ]
           },
           {
-            "contentId": 2,
-            "contentDescription": "Note-taking strategies"
-          }
-        ],
-        "documents": [
-          {
-            "documentId": 1,
-            "documentTitle": "Listening Guide",
-            "documentUrl": "docs/listening-guide.pdf"
-          },
-          {
-            "documentId": 2,
-            "documentTitle": "Practice Tests",
-            "documentUrl": "docs/practice-tests.pdf"
+            "moduleId": 2,
+            "moduleName": "Module 2: Advanced Listening",
+            "duration": 8,
+            "contents": [...],
+            "documents": [...]
           }
         ]
       },
       {
-        "moduleId": 2,
-        "moduleName": "Module 2: Speaking Skills",
-        "duration": 8,
-        "contents": [...],
-        "documents": [...]
+        "skillId": 2,
+        "skillName": "Speaking",
+        "modules": [
+          {
+            "moduleId": 3,
+            "moduleName": "Module 1: Speaking Part 1",
+            "duration": 6,
+            "contents": [...],
+            "documents": [...]
+          }
+        ]
+      },
+      {
+        "skillId": 3,
+        "skillName": "Reading",
+        "modules": [...]
+      },
+      {
+        "skillId": 4,
+        "skillName": "Writing",
+        "modules": [...]
       }
     ],
     "classInfos": [
@@ -385,6 +409,17 @@ GET /courses/{id}
         "endDate": "2025-03-15",
         "status": "InProgress"
       }
+    ],
+    "comboPromotions": [
+      {
+        "comboName": "Combo IELTS Full Skills",
+        "discountPercent": 10,
+        "requiredCourseNames": [
+          "IELTS Foundation",
+          "IELTS Intermediate",
+          "IELTS Advanced"
+        ]
+      }
     ]
   }
 }
@@ -392,14 +427,17 @@ GET /courses/{id}
 
 **Mô tả:**
 - `promotionPrice`: Giá sau khi áp dụng khuyến mãi khóa học lẻ (Type 1)
-- `modules`: Bao gồm nội dung và **tài liệu học tập (documents)** 
+- `skillModules`: **Modules được nhóm theo skill** (Listening, Speaking, Reading, Writing)
+  - Mỗi skill có danh sách modules riêng
+  - Mỗi module có nội dung và tài liệu học tập
 - `classInfos`: Danh sách lớp học đang mở cho khóa học này
+- `comboPromotions`: Danh sách các combo khuyến mãi có chứa khóa học này
 - `video`: Link video giới thiệu khóa học
 - `entryLevel`: Trình độ đầu vào yêu cầu
 - `targetLevel`: Trình độ đầu ra mục tiêu
 
 **💡 Combo Promotion:**
-Nếu học viên đăng ký nhiều khóa học cùng lúc, sẽ được **giảm giá thêm** (Promotion Type 2 - Combo).
+Nếu học viên đăng ký nhiều khóa học cùng lúc theo combo, sẽ được **giảm giá thêm** (Promotion Type 2 - Combo).
 Chi tiết giảm giá combo được tính khi gọi API đăng ký khóa học (`POST /orders`).
 
 ---
