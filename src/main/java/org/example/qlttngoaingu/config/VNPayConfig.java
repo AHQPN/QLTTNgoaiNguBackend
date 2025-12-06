@@ -1,8 +1,9 @@
 package org.example.qlttngoaingu.config;
 
-import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+
+import lombok.Getter;
 
 @Configuration
 @Getter
@@ -20,6 +21,9 @@ public class VNPayConfig {
     @Value("${vnpay.return-url}")
     private String returnUrl;
 
+    @Value("${vnpay.frontend-redirect-url}")
+    private String frontendRedirectUrl;
+
     @Value("${vnpay.version}")
     private String version;
 
@@ -34,4 +38,7 @@ public class VNPayConfig {
 
     @Value("${vnpay.currency-code}")
     private String currencyCode;
+
+    @Value("${vnpay.timezone:Asia/Ho_Chi_Minh}")
+    private String timezone;
 }

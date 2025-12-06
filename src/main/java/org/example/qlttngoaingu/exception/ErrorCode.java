@@ -1,8 +1,9 @@
 package org.example.qlttngoaingu.exception;
 
+import org.springframework.http.HttpStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
@@ -93,6 +94,7 @@ public enum ErrorCode {
         INVALID_EMAIL_OR_PHONE_NUMBER(HttpStatus.BAD_REQUEST, 12004, "Invalid email or phone number"),
         INVALID_PRICE(HttpStatus.BAD_REQUEST, 12005, "Price cannot be negative"),
         INVALID_CODE(HttpStatus.BAD_REQUEST, 12006, "Invalid verification code"),
+        PASSWORD_NOT_MATCH(HttpStatus.BAD_REQUEST, 12007, "Password and confirm password do not match"),
         INVALID_DURATION(HttpStatus.BAD_REQUEST, 12008, "Duration cannot be negative"),
         IMAGE_MISSING(HttpStatus.BAD_REQUEST, 12009, "Image missing"),
 

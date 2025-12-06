@@ -132,15 +132,16 @@ public class UserService {
         String senderName = "Ipower IELTS";
         String fromAddress = "nguyenbro9721@gmail.com";
         VerificationCodeEnum type = verificationCode.getType();
-        String verifyURL = siteURL + "/auth/verify?code="
-                + verificationCode.getVerificationCode()
-                + "&type=" + type.name();
-
+        
+        String verifyURL;
         String subject;
         String content;
 
         switch (type) {
             case EMAIL_VERIFICATION -> {
+                verifyURL = siteURL + "/auth/verify?code="
+                        + verificationCode.getVerificationCode()
+                        + "&type=" + type.name();
                 subject = "Please verify your registration";
                 content = String.format("""
                         Please click the link below to verify your email:<br>
@@ -149,15 +150,22 @@ public class UserService {
                         """, verifyURL, senderName);
             }
             case PASSWORD_RESET -> {
+                // Redirect đến trang reset password của frontend
+                verifyURL = siteURL + "/reset-password?code=" + verificationCode.getVerificationCode();
                 subject = "Password Reset Request";
                 content = String.format("""
                         You requested to reset your password.<br>
                         Click below to continue:<br>
                         <h3><a href="%s" target="_self">RESET PASSWORD</a></h3>
+                        <p>This link will expire in 2 minutes.</p>
+                        <p>If you did not request this, please ignore this email.</p>
                         Thank you,<br>%s.
                         """, verifyURL, senderName);
             }
             case CHANGE_MAIL -> {
+                verifyURL = siteURL + "/auth/verify?code="
+                        + verificationCode.getVerificationCode()
+                        + "&type=" + type.name();
                 subject = "Confirm your new email";
                 content = String.format("""
                         Please verify your new email by clicking the link below:<br>
@@ -299,6 +307,57 @@ public class UserService {
             studentRepository.save(student);
         }
 
+    }
+
+    // ====================== FORGOT PASSWORD ======================
+    @Transactional
+    public void requestPasswordReset(String email, String siteUrl) {
+        // Tìm user theo email
+        User user = userRepository.findByPhoneNumberOrEmail(email, email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        // Tạo mã xác minh reset password
+        Optional<VerificationCode> verificationCode = generateNewVerificationCode(user, VerificationCodeEnum.PASSWORD_RESET);
+        
+        // Gửi email
+        verificationCode.ifPresent(code -> sendVerificationEmail(user, siteUrl, code));
+    }
+
+    @Transactional
+    public ApiResponse resetPassword(String code, String newPassword, String confirmPassword) {
+        // Kiểm tra mật khẩu khớp
+        if (!newPassword.equals(confirmPassword)) {
+            throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
+        }
+        
+        // Tìm mã xác minh
+        VerificationCode verificationCode = verificationCodeRepository.findByVerificationCode(code)
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_CODE));
+        
+        // Kiểm tra mã hết hạn
+        if (verificationCode.getExpiresAt() != null && 
+            verificationCode.getExpiresAt().isBefore(LocalDateTime.now())) {
+            verificationCodeRepository.delete(verificationCode);
+            throw new AppException(ErrorCode.EXPIRED_VERIFICATION_CODE);
+        }
+        
+        // Kiểm tra đúng loại mã
+        if (!verificationCode.getType().equals(VerificationCodeEnum.PASSWORD_RESET)) {
+            throw new AppException(ErrorCode.INVALID_CODE);
+        }
+        
+        // Cập nhật mật khẩu mới
+        User user = verificationCode.getUser();
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        
+        // Xóa mã xác minh
+        verificationCodeRepository.delete(verificationCode);
+        
+        return ApiResponse.builder()
+                .code(1000)
+                .message("Password has been reset successfully. Please login with your new password.")
+                .build();
     }
 
 
