@@ -5,13 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.example.qlttngoaingu.dto.request.ReviewRequest;
-import org.example.qlttngoaingu.dto.response.ApiResponse;
-import org.example.qlttngoaingu.dto.response.ClassResponse;
-import org.example.qlttngoaingu.dto.response.GradeResponse;
-import org.example.qlttngoaingu.dto.response.ReviewResponse;
-import org.example.qlttngoaingu.dto.response.StudentDocumentResponse;
-import org.example.qlttngoaingu.dto.response.StudentInfo;
-import org.example.qlttngoaingu.dto.response.WeeklyScheduleResponse;
+import org.example.qlttngoaingu.dto.response.*;
 import org.example.qlttngoaingu.security.model.UserDetailsImpl;
 import org.example.qlttngoaingu.service.CourseClassService;
 import org.example.qlttngoaingu.service.CourseService;
@@ -183,6 +177,31 @@ public class StudentController {
             @AuthenticationPrincipal UserDetailsImpl principal
     ) {
         List<StudentDocumentResponse> documents = documentService.getStudentDocuments(principal.getId());
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("Lấy tài liệu thành công")
+                .data(documents)
+                .build());
+    }
+
+    /**
+     * STU-06: GET /students/documents/search
+     * Tìm kiếm và lọc tài liệu với phân trang
+     * @param courseId - Lọc theo khóa học (optional)
+     * @param keyword - Tìm kiếm trong tên file và mô tả (optional)
+     * @param page - Số trang (default = 1)
+     * @param size - Số items per page (default = 10)
+     */
+    @GetMapping("/documents/search")
+    public ResponseEntity<ApiResponse> searchMyDocuments(
+            @AuthenticationPrincipal UserDetailsImpl principal,
+            @RequestParam(required = false) Integer courseId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        PaginatedDocumentResponse documents = documentService.getStudentDocumentsWithFilters(
+                principal.getId(), courseId, keyword, page, size
+        );
         return ResponseEntity.ok(ApiResponse.builder()
                 .message("Lấy tài liệu thành công")
                 .data(documents)

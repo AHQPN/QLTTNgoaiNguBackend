@@ -4,6 +4,8 @@ package org.example.qlttngoaingu.repository;
 import java.util.List;
 
 import org.example.qlttngoaingu.entity.Document;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -27,4 +29,29 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     ORDER BY c.courseName, m.moduleName, d.fileName
     """)
     List<Document> findDocumentsByStudentId(@Param("studentId") Integer studentId);
+    
+    @Query("""
+    SELECT d
+    FROM Document d
+    JOIN d.module m
+    JOIN m.courseSkill cs
+    JOIN cs.course c
+    WHERE c.courseId IN (
+        SELECT DISTINCT cl.course.courseId
+        FROM InvoiceDetail detail
+        JOIN detail.courseClass cl
+        WHERE detail.invoice.student.id = :studentId
+    )
+    AND (:courseId IS NULL OR c.courseId = :courseId)
+    AND (:keyword IS NULL OR :keyword = '' OR 
+         LOWER(d.fileName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+         LOWER(d.description) LIKE LOWER(CONCAT('%', :keyword, '%')))
+    ORDER BY c.courseName, m.moduleName, d.fileName
+    """)
+    Page<Document> findDocumentsByStudentIdWithFilters(
+        @Param("studentId") Integer studentId,
+        @Param("courseId") Integer courseId,
+        @Param("keyword") String keyword,
+        Pageable pageable
+    );
 }

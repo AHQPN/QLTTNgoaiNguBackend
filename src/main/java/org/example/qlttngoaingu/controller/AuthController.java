@@ -232,18 +232,18 @@ public class AuthController {
             @RequestParam VerificationCodeEnum type,
             @Value("${app.site-url}") String siteUrl) {
 
-        // 1️⃣ Tìm user theo email
+        //  Tìm user theo email
         Optional<User> optionalUser = userService.getUserByIdentifier(email);
         if (optionalUser.isEmpty()) {
             return ResponseEntity.badRequest().body("User not found");
         }
         User user = optionalUser.get();
 
-        // 2️⃣ Tạo mã xác minh mới
+        // Tạo mã xác minh mới
         Optional<VerificationCode> optionalCode = userService.generateNewVerificationCode(user, type);
 
 
-        // 3️⃣ Gửi email xác minh
+        //  Gửi email xác minh
         optionalCode.ifPresent(code ->
                 userService.sendVerificationEmail(user, siteUrl, code)
         );
