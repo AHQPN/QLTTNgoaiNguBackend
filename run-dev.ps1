@@ -1,1 +1,0 @@
-.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev" *>&1 | Tee-Object -FilePath ".\spring-boot-log.txt"
