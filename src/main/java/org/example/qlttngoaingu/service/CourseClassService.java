@@ -857,4 +857,91 @@ public class CourseClassService {
         
         return info;
     }
+
+    /**
+     * Hủy buổi học - đổi status thành "Đã hủy"
+     */
+    @Transactional
+    public ClassDetailResponse.SessionInfoDetail cancelSession(Integer sessionId) {
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new AppException(ErrorCode.CLASS_NOT_FOUND));
+        
+        // Kiểm tra buổi học đã bị hủy chưa
+        if ("Đã hủy".equals(session.getStatus())) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+        
+        session.setStatus("Đã hủy");
+        sessionRepository.save(session);
+        
+        // Trả về thông tin session đã hủy
+        ClassDetailResponse.SessionInfoDetail info = new ClassDetailResponse.SessionInfoDetail();
+        info.setSessionId(session.getSessionId());
+        info.setDate(session.getSessionDate());
+        info.setNote(session.getNote());
+        info.setStatus(session.getStatus());
+        
+        return info;
+    }
+
+    /**
+     * Thêm buổi học mới vào lớp
+     * Chỉ được thêm khi có buổi học đã bị hủy
+     * Logic: Mỗi lần thêm buổi, kiểm tra có còn "slot" từ buổi đã hủy không
+     */
+    @Transactional
+    public ClassDetailResponse.SessionInfoDetail addSession(
+            Integer classId,
+            org.example.qlttngoaingu.dto.request.SessionCreateRequest request) {
+        
+        // Kiểm tra lớp học có tồn tại không
+        CourseClass courseClass = classRepository.findById(classId)
+                .orElseThrow(() -> new AppException(ErrorCode.CLASS_NOT_FOUND));
+        
+        // Lấy tất cả buổi học của lớp
+        List<Session> allSessions = sessionRepository.findByCourseClass_ClassIdOrderBySessionDate(classId);
+        
+        // Đếm số buổi đã hủy
+        long canceledCount = allSessions.stream()
+                .filter(s -> "Đã hủy".equals(s.getStatus()))
+                .count();
+        
+        // Nếu không có buổi nào bị hủy, không cho phép thêm
+        if (canceledCount == 0) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+        
+        // Lấy số giờ học từ khóa học
+        Integer courseStudyHours = courseClass.getCourse().getStudyHours();
+        Integer minutesPerSession = courseClass.getMinutesPerSession();
+        
+        // Tính số buổi học ban đầu dựa trên giờ học
+        // Giả sử: sobuoihoc = (sogiohoc * 60) / sogiohocmoibuoi
+        int originalSessionCount = (courseStudyHours * 60) / minutesPerSession;
+        
+        // Số buổi đã thêm = tổng số buổi hiện tại - số buổi ban đầu
+        long addedSessions = allSessions.size() - originalSessionCount;
+        
+        if (addedSessions >= canceledCount) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+        
+        // Tạo buổi học mới
+        Session newSession = new Session();
+        newSession.setCourseClass(courseClass);
+        newSession.setSessionDate(request.getSessionDate());
+        newSession.setStatus("Chưa học");
+        newSession.setNote(request.getNote());
+        
+        sessionRepository.save(newSession);
+        
+        // Trả về thông tin buổi học mới
+        ClassDetailResponse.SessionInfoDetail info = new ClassDetailResponse.SessionInfoDetail();
+        info.setSessionId(newSession.getSessionId());
+        info.setDate(newSession.getSessionDate());
+        info.setNote(newSession.getNote());
+        info.setStatus(newSession.getStatus());
+        
+        return info;
+    }
 }

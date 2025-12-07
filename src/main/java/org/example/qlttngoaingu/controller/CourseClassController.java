@@ -1,26 +1,35 @@
 package org.example.qlttngoaingu.controller;
 
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.example.qlttngoaingu.dto.request.ClassCreationRequest;
+import org.example.qlttngoaingu.dto.request.SessionCreateRequest;
 import org.example.qlttngoaingu.dto.request.SessionUpdateRequest;
-import org.example.qlttngoaingu.dto.response.*;
-import org.example.qlttngoaingu.entity.CourseClass;
-import org.example.qlttngoaingu.exception.AppException;
-import org.example.qlttngoaingu.exception.ErrorCode;
-import org.example.qlttngoaingu.repository.CourseClassRepository;
+import org.example.qlttngoaingu.dto.response.ApiResponse;
+import org.example.qlttngoaingu.dto.response.AttendanceSessionResponse;
+import org.example.qlttngoaingu.dto.response.ClassCreationResponse;
+import org.example.qlttngoaingu.dto.response.ClassResponse;
+import org.example.qlttngoaingu.dto.response.WeeklyScheduleResponse;
 import org.example.qlttngoaingu.security.model.UserDetailsImpl;
 import org.example.qlttngoaingu.service.AttendanceService;
 import org.example.qlttngoaingu.service.CourseClassService;
 import org.example.qlttngoaingu.service.ReviewService;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.util.*;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/courseclasses")
@@ -144,6 +153,39 @@ public class CourseClassController {
     }
 
     /**
+     * DELETE /courseclasses/sessions/{sessionId}/cancel
+     * Hủy buổi học (đổi status thành "Đã hủy")
+     */
+    @DeleteMapping("/sessions/{sessionId}/cancel")
+    public ResponseEntity<ApiResponse> cancelSession(@PathVariable Integer sessionId) {
+        var sessionInfo = courseClassService.cancelSession(sessionId);
+        return ResponseEntity.ok().body(
+            ApiResponse.builder()
+                .message("Hủy buổi học thành công")
+                .data(sessionInfo)
+                .build()
+        );
+    }
+
+    /**
+     * POST /courseclasses/{classId}/sessions
+     * Thêm buổi học mới vào lớp
+     * Chỉ được thêm số buổi bằng hoặc ít hơn số buổi đã hủy
+     */
+    @PostMapping("/{classId}/sessions")
+    public ResponseEntity<ApiResponse> addSession(
+            @PathVariable Integer classId,
+            @RequestBody SessionCreateRequest request) {
+        var sessionInfo = courseClassService.addSession(classId, request);
+        return ResponseEntity.ok().body(
+            ApiResponse.builder()
+                .message("Thêm buổi học thành công")
+                .data(sessionInfo)
+                .build()
+        );
+    }
+
+    /**
      * GET /courseclasses/{classId}/reviews
      * Lấy danh sách đánh giá của lớp học
      */
@@ -155,6 +197,7 @@ public class CourseClassController {
                 .build()
         );
     }
+
 
 
 

@@ -39,4 +39,10 @@ public interface SessionRepository extends JpaRepository<Session, Integer> {
     @Query("SELECT COUNT(s) FROM Session s WHERE s.courseClass.classId = :classId AND s.sessionDate <= :currentDate")
     long countCompletedSessionsByClassId(@Param("classId") Integer classId, @Param("currentDate") LocalDate currentDate);
 
+    /**
+     * Đếm số buổi học đã bị hủy
+     */
+    @Query("SELECT COUNT(s) FROM Session s WHERE s.courseClass.classId = :classId AND s.status = 'Đã hủy'")
+    long countCanceledSessionsByClassId(@Param("classId") Integer classId);
+
 }
