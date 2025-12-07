@@ -39,7 +39,7 @@ public class CourseReview {
     @Column(name = "diemcosovatchat")
     private Integer facilityRating;
 
-    @Column(name = "diemhailang")
+    @Column(name = "diemhailong")
     private Integer overallRating;
 
     @Column(name = "ngaylap")
