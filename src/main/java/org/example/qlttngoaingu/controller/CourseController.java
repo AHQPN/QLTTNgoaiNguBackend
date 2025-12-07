@@ -1,28 +1,44 @@
 package org.example.qlttngoaingu.controller;
 
-import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
+import java.util.List;
+
 import org.example.qlttngoaingu.dto.request.CourseCreateRequest;
 import org.example.qlttngoaingu.dto.request.CourseUpdateRequest;
 import org.example.qlttngoaingu.dto.request.ObjectiveRequest;
-import org.example.qlttngoaingu.dto.response.*;
+import org.example.qlttngoaingu.dto.response.ActiveCourseNameResponse;
+import org.example.qlttngoaingu.dto.response.ActiveCourseResponse;
+import org.example.qlttngoaingu.dto.response.ApiResponse;
+import org.example.qlttngoaingu.dto.response.CourseDetailResponse;
+import org.example.qlttngoaingu.dto.response.CourseGroupResponse;
+import org.example.qlttngoaingu.dto.response.CoursePageResponse;
+import org.example.qlttngoaingu.dto.response.ReviewResponse;
+import org.example.qlttngoaingu.entity.Course;
 import org.example.qlttngoaingu.entity.Objective;
 import org.example.qlttngoaingu.service.CourseService;
-import org.example.qlttngoaingu.entity.Course;
 import org.example.qlttngoaingu.service.ObjectiveService;
+import org.example.qlttngoaingu.service.ReviewService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 
 @RestController
 @RequestMapping("/courses")
 @AllArgsConstructor
 public class CourseController {
 
-    private CourseService courseService;
-    private ObjectiveService objectiveService;
+    private final CourseService courseService;
+    private final ObjectiveService objectiveService;
+    private final ReviewService reviewService;
     // Get all courses (overview)
     @GetMapping("/activecourses")
     public ResponseEntity<ApiResponse> getAllActiveCourses() {
@@ -111,6 +127,18 @@ public class CourseController {
         objectiveService.deleteObjective(objectiveId);
         return ResponseEntity.ok(ApiResponse.builder()
                 .message("Objective deleted successfully")
+                .build());
+    }
+
+    /**
+     * GET /courses/{courseId}/reviews
+     * Lấy tất cả đánh giá của khóa học (từ tất cả lớp)
+     */
+    @GetMapping("/{courseId}/reviews")
+    public ResponseEntity<ApiResponse> getCourseReviews(@PathVariable Integer courseId) {
+        List<ReviewResponse> reviews = reviewService.getCourseReviews(courseId);
+        return ResponseEntity.ok(ApiResponse.builder()
+                .data(reviews)
                 .build());
     }
 }

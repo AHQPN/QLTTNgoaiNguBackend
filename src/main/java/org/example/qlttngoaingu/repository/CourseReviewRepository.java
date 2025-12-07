@@ -1,13 +1,13 @@
 package org.example.qlttngoaingu.repository;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.example.qlttngoaingu.entity.CourseReview;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface CourseReviewRepository extends JpaRepository<CourseReview, Integer> {
@@ -23,7 +23,6 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Inte
         JOIN e.invoice i
         JOIN i.student s
         WHERE s.id = :studentId
-        ORDER BY r.createdAt DESC
     """)
     List<CourseReview> findAllByStudentId(@Param("studentId") Integer studentId);
 
@@ -46,7 +45,6 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Inte
         JOIN FETCH e.invoice i
         JOIN FETCH i.student s
         WHERE c.classId = :classId
-        ORDER BY r.createdAt DESC
     """)
     List<CourseReview> findAllByClassId(@Param("classId") Integer classId);
 
@@ -61,7 +59,6 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Inte
         JOIN e.invoice i
         JOIN FETCH i.student s
         WHERE course.courseId = :courseId
-        ORDER BY r.createdAt DESC
     """)
     List<CourseReview> findAllByCourseId(@Param("courseId") Integer courseId);
 
@@ -69,7 +66,7 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Inte
      * Tính điểm đánh giá trung bình của giảng viên
      */
     @Query("""
-        SELECT AVG(r.teacherRating) FROM CourseReview r
+        SELECT AVG(r.rating) FROM CourseReview r
         JOIN r.enrollment e
         JOIN e.courseClass c
         WHERE c.lecturer.lecturerId = :lecturerId

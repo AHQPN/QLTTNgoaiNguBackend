@@ -1,13 +1,18 @@
 package org.example.qlttngoaingu.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.Data;
-
-import java.time.LocalDateTime;
 
 /**
  * Entity cho bảng danhgia (Course Review / Đánh giá khóa học)
- * Học viên đánh giá khóa học sau khi hoàn thành
  */
 @Entity
 @Data
@@ -19,45 +24,13 @@ public class CourseReview {
     @Column(name = "madanhgia")
     private Integer reviewId;
 
-    /**
-     * Link tới chi tiết hóa đơn (enrollment của học viên vào lớp)
-     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "macthd", referencedColumnName = "macthd", nullable = false)
     private InvoiceDetail enrollment;
 
-    /**
-     * Nhận xét văn bản
-     */
     @Column(name = "nhanxet", columnDefinition = "NVARCHAR(MAX)")
     private String comment;
 
-    /**
-     * Điểm đánh giá giảng viên (1-5 sao)
-     */
-    @Column(name = "diemgiangvien")
-    private Integer teacherRating;
-
-    /**
-     * Điểm đánh giá cơ sở vật chất (1-5 sao)
-     */
-    @Column(name = "diemcosovatchat")
-    private Integer facilityRating;
-
-    /**
-     * Điểm hài lòng tổng thể (1-5 sao)
-     */
-    @Column(name = "diemhailong")
-    private Integer overallRating;
-
-    /**
-     * Ngày lập đánh giá
-     */
-    @Column(name = "ngaylap")
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
+    @Column(name = "sosao")
+    private Integer rating;
 }

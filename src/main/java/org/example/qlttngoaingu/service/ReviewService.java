@@ -1,18 +1,26 @@
 package org.example.qlttngoaingu.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.example.qlttngoaingu.dto.request.ReviewRequest;
 import org.example.qlttngoaingu.dto.response.ReviewResponse;
-import org.example.qlttngoaingu.entity.*;
+import org.example.qlttngoaingu.entity.Course;
+import org.example.qlttngoaingu.entity.CourseClass;
+import org.example.qlttngoaingu.entity.CourseReview;
+import org.example.qlttngoaingu.entity.InvoiceDetail;
+import org.example.qlttngoaingu.entity.Student;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
-import org.example.qlttngoaingu.repository.*;
+import org.example.qlttngoaingu.repository.CourseClassRepository;
+import org.example.qlttngoaingu.repository.CourseReviewRepository;
+import org.example.qlttngoaingu.repository.InvoiceDetailRepository;
+import org.example.qlttngoaingu.repository.StudentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -50,9 +58,7 @@ public class ReviewService {
         // Tạo đánh giá mới
         CourseReview review = new CourseReview();
         review.setEnrollment(enrollment);
-        review.setTeacherRating(request.getTeacherRating());
-        review.setFacilityRating(request.getFacilityRating());
-        review.setOverallRating(request.getOverallRating());
+        review.setRating(request.getRating());
         review.setComment(request.getComment());
 
         CourseReview savedReview = reviewRepository.save(review);
@@ -121,19 +127,11 @@ public class ReviewService {
                 .courseId(course.getCourseId())
                 .courseName(course.getCourseName())
                 .courseImage(course.getImage())
-                .teacherRating(review.getTeacherRating())
-                .facilityRating(review.getFacilityRating())
-                .overallRating(review.getOverallRating())
-                .averageRating(ReviewResponse.calculateAverageRating(
-                        review.getTeacherRating(),
-                        review.getFacilityRating(),
-                        review.getOverallRating()
-                ))
+                .rating(review.getRating())
                 .comment(review.getComment())
                 .studentId(student.getId())
                 .studentName(student.getName())
                 .studentAvatar(student.getAvatar())
-                .createdAt(review.getCreatedAt())
                 .build();
     }
 }

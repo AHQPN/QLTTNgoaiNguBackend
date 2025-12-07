@@ -12,6 +12,8 @@ import org.springframework.data.repository.query.Param;
 public interface SessionRepository extends JpaRepository<Session, Integer> {
     List<Session> findByCourseClass_ClassIdOrderBySessionDate(Integer classId);
 
+    List<Session> findBySessionDate(LocalDate sessionDate);
+
     List<Session> findBySessionDateBetween(LocalDate weekStart, LocalDate weekEnd);
 
     List<Session> findByCourseClass_ClassIdInAndSessionDateBetween(

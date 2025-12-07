@@ -10,8 +10,6 @@ import lombok.NoArgsConstructor;
 
 /**
  * Request DTO để học viên gửi đánh giá khóa học
- * Các trường chi tiết (teacherRating, materialRating, facilityRating) là optional
- * để tương thích với hệ thống cũ chỉ có overallRating
  */
 @Data
 @Builder
@@ -19,33 +17,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ReviewRequest {
     
-    /**
-     * ID lớp học cần đánh giá
-     */
     @NotNull(message = "classId là bắt buộc")
     private Integer classId;
     
-    /**
-     * Điểm đánh giá giảng viên (1-5 sao) - Optional
-     */
+    @NotNull(message = "rating là bắt buộc")
     @Min(value = 1, message = "Điểm tối thiểu là 1")
     @Max(value = 5, message = "Điểm tối đa là 5")
-    private Integer teacherRating;
-    
-    /**
-     * Điểm đánh giá cơ sở vật chất (1-5 sao) - Optional
-     */
-    @Min(value = 1, message = "Điểm tối thiểu là 1")
-    @Max(value = 5, message = "Điểm tối đa là 5")
-    private Integer facilityRating;
-    
-    /**
-     * Điểm hài lòng tổng thể (1-5 sao) - Bắt buộc
-     */
-    @NotNull(message = "overallRating là bắt buộc")
-    @Min(value = 1, message = "Điểm tối thiểu là 1")
-    @Max(value = 5, message = "Điểm tối đa là 5")
-    private Integer overallRating;
+    private Integer rating;
     
     /**
      * Nhận xét văn bản (không bắt buộc)

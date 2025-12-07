@@ -1,25 +1,38 @@
 package org.example.qlttngoaingu.controller;
 
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.example.qlttngoaingu.dto.request.ReviewRequest;
-import org.example.qlttngoaingu.dto.response.*;
-import org.example.qlttngoaingu.entity.Student;
+import org.example.qlttngoaingu.dto.response.ApiResponse;
+import org.example.qlttngoaingu.dto.response.ClassResponse;
+import org.example.qlttngoaingu.dto.response.GradeResponse;
+import org.example.qlttngoaingu.dto.response.ReviewResponse;
+import org.example.qlttngoaingu.dto.response.StudentDocumentResponse;
+import org.example.qlttngoaingu.dto.response.StudentInfo;
+import org.example.qlttngoaingu.dto.response.WeeklyScheduleResponse;
 import org.example.qlttngoaingu.security.model.UserDetailsImpl;
 import org.example.qlttngoaingu.service.CourseClassService;
 import org.example.qlttngoaingu.service.CourseService;
+import org.example.qlttngoaingu.service.DocumentService;
 import org.example.qlttngoaingu.service.GradeService;
 import org.example.qlttngoaingu.service.ReviewService;
 import org.example.qlttngoaingu.service.UserService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("students")
@@ -30,6 +43,7 @@ public class StudentController {
     private final CourseClassService courseClassService;
     private final GradeService gradeService;
     private final ReviewService reviewService;
+    private final DocumentService documentService;
 
     @GetMapping
     public ResponseEntity<ApiResponse> getStudentInfo(@AuthenticationPrincipal UserDetailsImpl principal) {
@@ -155,6 +169,23 @@ public class StudentController {
         return ResponseEntity.ok(ApiResponse.builder()
                 .message("Lấy lịch sử đánh giá thành công")
                 .data(reviews)
+                .build());
+    }
+
+    // ==================== DOCUMENTS API (STU-05) ====================
+
+    /**
+     * STU-05: GET /students/documents
+     * Lấy tài liệu của các khóa học mà học viên tham gia, group by khóa học
+     */
+    @GetMapping("/documents")
+    public ResponseEntity<ApiResponse> getMyDocuments(
+            @AuthenticationPrincipal UserDetailsImpl principal
+    ) {
+        List<StudentDocumentResponse> documents = documentService.getStudentDocuments(principal.getId());
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("Lấy tài liệu thành công")
+                .data(documents)
                 .build());
     }
 }

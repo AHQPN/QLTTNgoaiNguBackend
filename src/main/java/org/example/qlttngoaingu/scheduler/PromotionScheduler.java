@@ -25,6 +25,7 @@ public class PromotionScheduler {
     /**
      * Chạy mỗi ngày lúc 00:01 để kiểm tra và tắt các khuyến mãi đã hết hạn
      * Cron format: second minute hour day month weekday
+     * Logic: Chỉ tắt các promotion đang ACTIVE và ĐÃ HẾT HẠN
      */
     @Scheduled(cron = "0 1 0 * * *")
     @Transactional
@@ -32,20 +33,18 @@ public class PromotionScheduler {
         log.info("Running scheduled task: disable expired promotions");
         
         LocalDate today = LocalDate.now();
-        List<Promotion> allPromotions = promotionRepository.findAll();
+        List<Promotion> activePromotions = promotionRepository.findAll().stream()
+                .filter(p -> Boolean.TRUE.equals(p.getActive()))
+                .filter(p -> today.isAfter(p.getEndDate())) // Chỉ lấy những cái HẾT HẠN
+                .toList();
         
         int disabledCount = 0;
-        for (Promotion promotion : allPromotions) {
-            // Nếu hết hạn và vẫn đang active → tắt đi
-            if (Boolean.TRUE.equals(promotion.getActive())) {
-                if (today.isAfter(promotion.getEndDate())) {
-                    promotion.setActive(false);
-                    promotionRepository.save(promotion);
-                    disabledCount++;
-                    log.info("Auto-disabled expired promotion: {} - {} (expired on {})", 
-                            promotion.getId(), promotion.getName(), promotion.getEndDate());
-                }
-            }
+        for (Promotion promotion : activePromotions) {
+            promotion.setActive(false);
+            promotionRepository.save(promotion);
+            disabledCount++;
+            log.info("Auto-disabled expired promotion: {} - {} (expired on {})", 
+                    promotion.getId(), promotion.getName(), promotion.getEndDate());
         }
         
         log.info("Completed scheduled task: disabled {} expired promotions", disabledCount);
@@ -53,6 +52,9 @@ public class PromotionScheduler {
 
     /**
      * Chạy mỗi ngày lúc 00:01 để tự động kích hoạt các khuyến mãi đến hạn
+     * Logic thông minh: CHỈ bật các promotion có startDate = hôm nay
+     * → Nếu promotion đã qua startDate mà vẫn inactive → là do người dùng TẮT THỦ CÔNG
+     * → KHÔNG tự động bật lại!
      */
     @Scheduled(cron = "0 1 0 * * *")
     @Transactional
@@ -60,20 +62,19 @@ public class PromotionScheduler {
         log.info("Running scheduled task: activate scheduled promotions");
         
         LocalDate today = LocalDate.now();
-        List<Promotion> allPromotions = promotionRepository.findAll();
+        List<Promotion> promotionsToActivate = promotionRepository.findAll().stream()
+                .filter(p -> Boolean.FALSE.equals(p.getActive()) || p.getActive() == null)
+                .filter(p -> today.equals(p.getStartDate())) // CHỈ bật vào đúng ngày bắt đầu
+                .filter(p -> !today.isAfter(p.getEndDate())) // Và chưa hết hạn
+                .toList();
         
         int activatedCount = 0;
-        for (Promotion promotion : allPromotions) {
-            // Nếu đã đến ngày bắt đầu, chưa hết hạn, và đang tắt → bật lên
-            if (Boolean.FALSE.equals(promotion.getActive())) {
-                if (!today.isBefore(promotion.getStartDate()) && !today.isAfter(promotion.getEndDate())) {
-                    promotion.setActive(true);
-                    promotionRepository.save(promotion);
-                    activatedCount++;
-                    log.info("Auto-activated scheduled promotion: {} - {} (started on {})", 
-                            promotion.getId(), promotion.getName(), promotion.getStartDate());
-                }
-            }
+        for (Promotion promotion : promotionsToActivate) {
+            promotion.setActive(true);
+            promotionRepository.save(promotion);
+            activatedCount++;
+            log.info("Auto-activated scheduled promotion: {} - {} (started on {})", 
+                    promotion.getId(), promotion.getName(), promotion.getStartDate());
         }
         
         log.info("Completed scheduled task: activated {} scheduled promotions", activatedCount);

@@ -33,10 +33,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SmartScheduleSuggestionService {
 
-    private final CourseRepository courseRepository;
     private final RoomRepository roomRepository;
     private final LecturerRepository lecturerRepository;
-    private final CourseClassRepository classRepository;
     private final ConflictCheckService conflictCheckService;
 
     /**
