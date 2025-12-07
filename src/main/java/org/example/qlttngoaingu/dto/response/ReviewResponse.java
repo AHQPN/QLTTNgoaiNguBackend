@@ -21,7 +21,9 @@ public class ReviewResponse {
     private String courseName;
     private String courseImage;
     
-    private Integer rating;
+    private Integer teacherRating;       // Điểm giảng viên
+    private Integer facilityRating;      // Điểm cơ sở vật chất
+    private Integer overallRating;       // Điểm hài lòng chung
     private String comment;
     
     // Thông tin học viên (cho view admin/teacher)

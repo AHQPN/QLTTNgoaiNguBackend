@@ -63,10 +63,10 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Inte
     List<CourseReview> findAllByCourseId(@Param("courseId") Integer courseId);
 
     /**
-     * Tính điểm đánh giá trung bình của giảng viên
+     * Tính điểm đánh giá giảng viên trung bình của giảng viên
      */
     @Query("""
-        SELECT AVG(r.rating) FROM CourseReview r
+        SELECT AVG(r.teacherRating) FROM CourseReview r
         JOIN r.enrollment e
         JOIN e.courseClass c
         WHERE c.lecturer.lecturerId = :lecturerId

@@ -58,8 +58,11 @@ public class ReviewService {
         // Tạo đánh giá mới
         CourseReview review = new CourseReview();
         review.setEnrollment(enrollment);
-        review.setRating(request.getRating());
+        review.setTeacherRating(request.getTeacherRating());
+        review.setFacilityRating(request.getFacilityRating());
+        review.setOverallRating(request.getOverallRating());
         review.setComment(request.getComment());
+        review.setCreatedAt(java.time.LocalDateTime.now());
 
         CourseReview savedReview = reviewRepository.save(review);
 
@@ -127,7 +130,9 @@ public class ReviewService {
                 .courseId(course.getCourseId())
                 .courseName(course.getCourseName())
                 .courseImage(course.getImage())
-                .rating(review.getRating())
+                .teacherRating(review.getTeacherRating())
+                .facilityRating(review.getFacilityRating())
+                .overallRating(review.getOverallRating())
                 .comment(review.getComment())
                 .studentId(student.getId())
                 .studentName(student.getName())

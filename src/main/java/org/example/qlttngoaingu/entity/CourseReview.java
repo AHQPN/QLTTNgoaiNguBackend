@@ -1,5 +1,7 @@
 package org.example.qlttngoaingu.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -31,6 +33,15 @@ public class CourseReview {
     @Column(name = "nhanxet", columnDefinition = "NVARCHAR(MAX)")
     private String comment;
 
-    @Column(name = "sosao")
-    private Integer rating;
+    @Column(name = "diemgiangvien")
+    private Integer teacherRating;
+
+    @Column(name = "diemcosovatchat")
+    private Integer facilityRating;
+
+    @Column(name = "diemhailang")
+    private Integer overallRating;
+
+    @Column(name = "ngaylap")
+    private LocalDateTime createdAt;
 }
