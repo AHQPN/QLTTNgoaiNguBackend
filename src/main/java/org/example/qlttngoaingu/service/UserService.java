@@ -132,6 +132,7 @@ public class UserService {
         String senderName = "Ipower IELTS";
         String fromAddress = "nguyenbro9721@gmail.com";
         VerificationCodeEnum type = verificationCode.getType();
+        RoleEnum userRole = RoleEnum.valueOf(user.getRole());
         
         String verifyURL;
         String subject;
@@ -150,7 +151,7 @@ public class UserService {
                         """, verifyURL, senderName);
             }
             case PASSWORD_RESET -> {
-                // Redirect đến trang reset password của frontend
+                // Redirect đến trang reset password: frontendUrl cho STUDENT, adminUrl cho ADMIN/TEACHER/ACADEMIC_MANAGER
                 verifyURL = siteURL + "/reset-password?code=" + verificationCode.getVerificationCode();
                 subject = "Password Reset Request";
                 content = String.format("""
@@ -311,7 +312,7 @@ public class UserService {
 
     // ====================== FORGOT PASSWORD ======================
     @Transactional
-    public void requestPasswordReset(String email, String siteUrl) {
+    public void requestPasswordReset(String email, String frontendUrl, String adminUrl) {
         // Tìm user theo email
         User user = userRepository.findByPhoneNumberOrEmail(email, email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
@@ -319,8 +320,12 @@ public class UserService {
         // Tạo mã xác minh reset password
         Optional<VerificationCode> verificationCode = generateNewVerificationCode(user, VerificationCodeEnum.PASSWORD_RESET);
         
-        // Gửi email
-        verificationCode.ifPresent(code -> sendVerificationEmail(user, siteUrl, code));
+        // Xác định URL dựa trên role: STUDENT dùng frontendUrl, các role còn lại (ADMIN, TEACHER, ACADEMIC_MANAGER) dùng adminUrl
+        RoleEnum role = RoleEnum.valueOf(user.getRole());
+        String targetUrl = (role == RoleEnum.STUDENT) ? frontendUrl : adminUrl;
+        
+        // Gửi email với URL phù hợp
+        verificationCode.ifPresent(code -> sendVerificationEmail(user, targetUrl, code));
     }
 
     @Transactional

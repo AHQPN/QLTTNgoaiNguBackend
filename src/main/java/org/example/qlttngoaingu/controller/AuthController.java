@@ -351,9 +351,10 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request,
-            @Value("${app.site-url}") String siteUrl) {
+            @Value("${app.frontend-url}") String frontendUrl,
+            @Value("${app.admin-url}") String adminUrl) {
         
-        userService.requestPasswordReset(request.getEmail(), siteUrl);
+        userService.requestPasswordReset(request.getEmail(), frontendUrl, adminUrl);
         
         return ResponseEntity.ok().body(ApiResponse.builder()
                 .message("Password reset email has been sent. Please check your inbox.")
