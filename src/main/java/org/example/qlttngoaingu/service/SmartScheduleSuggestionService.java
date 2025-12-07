@@ -19,8 +19,6 @@ import org.example.qlttngoaingu.entity.Course;
 import org.example.qlttngoaingu.entity.CourseClass;
 import org.example.qlttngoaingu.entity.Lecturer;
 import org.example.qlttngoaingu.entity.Room;
-import org.example.qlttngoaingu.repository.CourseClassRepository;
-import org.example.qlttngoaingu.repository.CourseRepository;
 import org.example.qlttngoaingu.repository.LecturerRepository;
 import org.example.qlttngoaingu.repository.RoomRepository;
 import org.example.qlttngoaingu.utils.CustomSchedulePattern;
@@ -123,8 +121,10 @@ public class SmartScheduleSuggestionService {
                 allConflicts.add(conflict);
             }
         } else {
-            // User chưa chọn phòng → check tất cả phòng để tìm conflict
-            List<Room> allRooms = roomRepository.findAll();
+            // User chưa chọn phòng → check tất cả phòng có status "Sẵn sàng" để tìm conflict
+            List<Room> allRooms = roomRepository.findAll().stream()
+                    .filter(room -> "Sẵn sàng".equals(room.getStatus()))
+                    .toList();
             for (Room room : allRooms) {
                 List<ConflictInfo> roomConflicts = conflictCheckService.checkRoomConflicts(
                         room.getRoomId(),
@@ -435,7 +435,10 @@ public class SmartScheduleSuggestionService {
      * Lấy danh sách phòng available
      */
     private List<Room> getAvailableRooms(ScheduleCheckRequest request) {
-        List<Room> allRooms = roomRepository.findAll();
+        // Chỉ lấy phòng có status = "Sẵn sàng"
+        List<Room> allRooms = roomRepository.findAll().stream()
+                .filter(room -> "Sẵn sàng".equals(room.getStatus()))
+                .toList();
         List<Room> available = new ArrayList<>();
 
         for (Room room : allRooms) {
