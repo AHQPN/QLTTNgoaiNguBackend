@@ -20,12 +20,16 @@ public class ReviewRequest {
     @NotNull(message = "classId là bắt buộc")
     private Integer classId;
     
-    @NotNull(message = "Điểm giảng viên là bắt buộc")
+    /**
+     * Điểm giảng viên (không bắt buộc, 1-5)
+     */
     @Min(value = 1, message = "Điểm tối thiểu là 1")
     @Max(value = 5, message = "Điểm tối đa là 5")
     private Integer teacherRating;
     
-    @NotNull(message = "Điểm cơ sở vật chất là bắt buộc")
+    /**
+     * Điểm cơ sở vật chất (không bắt buộc, 1-5)
+     */
     @Min(value = 1, message = "Điểm tối thiểu là 1")
     @Max(value = 5, message = "Điểm tối đa là 5")
     private Integer facilityRating;

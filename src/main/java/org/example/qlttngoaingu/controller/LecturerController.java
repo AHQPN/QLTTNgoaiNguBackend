@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import org.example.qlttngoaingu.dto.request.AttendanceSessionRequest;
 import org.example.qlttngoaingu.dto.request.CheckConflictRequest;
 import org.example.qlttngoaingu.dto.request.GradeRequest;
+import org.example.qlttngoaingu.dto.request.LecturerUpdateRequest;
 import org.example.qlttngoaingu.dto.response.ApiResponse;
 import org.example.qlttngoaingu.dto.response.AttendanceSessionResponse;
 import org.example.qlttngoaingu.dto.response.AvailableLecturerResponse;
@@ -71,6 +72,45 @@ public class LecturerController {
         return ResponseEntity.ok(
                 ApiResponse.builder()
                         .data(lecturerService.getLecturerById(user.getId(), null))
+                        .build()
+        );
+    }
+
+    /**
+     * PUT /lecturers/{id}
+     * Cập nhật thông tin giảng viên
+     * - Admin: có thể cập nhật bất kỳ giảng viên nào
+     * - Teacher: chỉ có thể cập nhật chính mình
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse> updateLecturer(
+            @AuthenticationPrincipal UserDetailsImpl user,
+            @PathVariable Integer id,
+            @Valid @RequestBody LecturerUpdateRequest request
+    ) {
+        var updatedInfo = lecturerService.updateLecturer(user.getId(), id, request);
+        return ResponseEntity.ok(
+                ApiResponse.builder()
+                        .message("Cập nhật thông tin giảng viên thành công")
+                        .data(updatedInfo)
+                        .build()
+        );
+    }
+
+    /**
+     * PUT /lecturers/me
+     * Giảng viên tự cập nhật thông tin của mình
+     */
+    @PutMapping("/me")
+    public ResponseEntity<ApiResponse> updateMyInfo(
+            @AuthenticationPrincipal UserDetailsImpl user,
+            @Valid @RequestBody LecturerUpdateRequest request
+    ) {
+        var updatedInfo = lecturerService.updateLecturer(user.getId(), null, request);
+        return ResponseEntity.ok(
+                ApiResponse.builder()
+                        .message("Cập nhật thông tin thành công")
+                        .data(updatedInfo)
                         .build()
         );
     }

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.example.qlttngoaingu.dto.request.LecturerCreationRequest;
+import org.example.qlttngoaingu.dto.request.LecturerUpdateRequest;
 import org.example.qlttngoaingu.dto.response.AvailableLecturerResponse;
 import org.example.qlttngoaingu.dto.response.TeacherInfo;
 import org.example.qlttngoaingu.entity.*;
@@ -286,6 +287,79 @@ public class LecturerService {
         return dto;
     }
 
+    /**
+     * Cập nhật thông tin giảng viên
+     * @param userId ID của user đang đăng nhập
+     * @param lecturerId ID của giảng viên cần cập nhật (null nếu tự cập nhật)
+     * @param request Dữ liệu cập nhật
+     * @return TeacherInfo sau khi cập nhật
+     */
+    @Transactional
+    public TeacherInfo updateLecturer(Integer userId, Integer lecturerId, LecturerUpdateRequest request) {
+        // 1. Lấy user hiện tại
+        User currentUser = userRepository.getUserByUserId(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
+        Lecturer lecturer;
+        boolean isAdmin = currentUser.getRole().equalsIgnoreCase("ADMIN");
+
+        // 2. Xác định giảng viên cần cập nhật
+        if (isAdmin && lecturerId != null) {
+            // Admin có thể cập nhật bất kỳ giảng viên nào
+            lecturer = lecturerRepository.getLecturersByLecturerId(lecturerId)
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        } else if (currentUser.getRole().equalsIgnoreCase(RoleEnum.TEACHER.name())) {
+            // Giảng viên chỉ có thể cập nhật chính mình
+            lecturer = lecturerRepository.getByUser_UserId(userId);
+            if (lecturer == null) {
+                throw new AppException(ErrorCode.USER_NOT_FOUND);
+            }
+            // Nếu truyền lecturerId khác với ID của mình → không cho phép
+            if (lecturerId != null && !lecturerId.equals(lecturer.getLecturerId())) {
+                throw new AppException(ErrorCode.UNCATEGORIZED);
+            }
+        } else {
+            throw new AppException(ErrorCode.UNCATEGORIZED);
+        }
+
+        // 3. Cập nhật thông tin giảng viên
+        if (request.getFullName() != null && !request.getFullName().isBlank()) {
+            lecturer.setFullName(request.getFullName());
+        }
+        if (request.getDateOfBirth() != null) {
+            lecturer.setDateOfBirth(request.getDateOfBirth());
+        }
+        if (request.getImagePath() != null) {
+            lecturer.setImagePath(request.getImagePath());
+        }
+
+        // 4. Cập nhật thông tin user liên quan (email, phone)
+        User lecturerUser = lecturer.getUser();
+        if (lecturerUser != null) {
+            if (request.getEmail() != null && !request.getEmail().isBlank()) {
+                // Kiểm tra email không trùng với user khác
+                var existingUser = userRepository.findByEmail(request.getEmail());
+                if (existingUser.isPresent() && !existingUser.get().getUserId().equals(lecturerUser.getUserId())) {
+                    throw new AppException(ErrorCode.EMAIL_EXISTED);
+                }
+                lecturerUser.setEmail(request.getEmail());
+            }
+            if (request.getPhoneNumber() != null && !request.getPhoneNumber().isBlank()) {
+                // Kiểm tra phone không trùng với user khác
+                var existingUser = userRepository.findByPhoneNumber(request.getPhoneNumber());
+                if (existingUser.isPresent() && !existingUser.get().getUserId().equals(lecturerUser.getUserId())) {
+                    throw new AppException(ErrorCode.PHONE_EXISTED);
+                }
+                lecturerUser.setPhoneNumber(request.getPhoneNumber());
+            }
+            userRepository.save(lecturerUser);
+        }
+
+        // 5. Lưu giảng viên
+        lecturerRepository.save(lecturer);
+
+        // 6. Trả về thông tin đã cập nhật
+        return getLecturerById(userId, lecturer.getLecturerId());
+    }
 
 }
