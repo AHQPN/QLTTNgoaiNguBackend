@@ -21,6 +21,7 @@ import org.example.qlttngoaingu.entity.Student;
 import org.example.qlttngoaingu.mapper.InvoiceMapper;
 import org.example.qlttngoaingu.repository.CourseClassRepository;
 import org.example.qlttngoaingu.repository.InvoiceDetailPromotionRepository;
+import org.example.qlttngoaingu.repository.InvoiceDetailRepository;
 import org.example.qlttngoaingu.repository.InvoiceRepository;
 import org.example.qlttngoaingu.repository.PaymentMethodRepository;
 import org.example.qlttngoaingu.repository.PromotionDetailRepository;
@@ -41,6 +42,7 @@ public class CourseRegistrationService {
     private final StudentRepository studentRepository;
     private final CourseClassRepository courseClassRepository;
     private final PaymentMethodRepository paymentMethodRepository;
+    private final InvoiceDetailRepository invoiceDetailRepository;
 
     private final PromotionRepository promotionRepository;
     private final PromotionDetailRepository promotionDetailRepository;
@@ -78,6 +80,23 @@ public class CourseRegistrationService {
         List<CourseClass> selectedClasses = courseClassRepository.findAllById(request.getClassIds());
         if (selectedClasses.size() != request.getClassIds().size()) {
             throw new RuntimeException("Một số lớp học không tồn tại.");
+        }
+
+        // 2.1. Kiểm tra sĩ số lớp học (so với sức chứa phòng)
+        for (CourseClass courseClass : selectedClasses) {
+            if (courseClass.getRoom() != null && courseClass.getRoom().getCapacity() != null) {
+                Integer currentEnrollment = invoiceDetailRepository.countByClassIdAndActiveInvoice(courseClass.getClassId());
+                Integer roomCapacity = courseClass.getRoom().getCapacity();
+                
+                if (currentEnrollment >= roomCapacity) {
+                    throw new RuntimeException(String.format(
+                            "Lớp '%s' đã đủ sĩ số (%d/%d học viên). Không thể đăng ký thêm.",
+                            courseClass.getClassName(),
+                            currentEnrollment,
+                            roomCapacity
+                    ));
+                }
+            }
         }
 
         List<Integer> selectedCourseIds = selectedClasses.stream()

@@ -186,6 +186,23 @@ public class CourseClassController {
     }
 
     /**
+     * GET /courseclasses/{classId}/sessions/suggest-dates
+     * Gợi ý các ngày phù hợp để thêm buổi học bù (không trùng lịch)
+     */
+    @GetMapping("/{classId}/sessions/suggest-dates")
+    public ResponseEntity<ApiResponse> suggestMakeupDates(
+            @PathVariable Integer classId,
+            @RequestParam(defaultValue = "7") Integer daysAhead) {
+        var suggestions = courseClassService.suggestMakeupDates(classId, daysAhead);
+        return ResponseEntity.ok().body(
+            ApiResponse.builder()
+                .message("Gợi ý ngày học bù")
+                .data(suggestions)
+                .build()
+        );
+    }
+
+    /**
      * GET /courseclasses/{classId}/reviews
      * Lấy danh sách đánh giá của lớp học
      */

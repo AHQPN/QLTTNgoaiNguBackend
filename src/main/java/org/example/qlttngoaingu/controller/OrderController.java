@@ -17,7 +17,12 @@ import org.example.qlttngoaingu.repository.InvoiceRepository;
 import org.example.qlttngoaingu.service.CourseRegistrationService;
 import org.example.qlttngoaingu.service.VNPayService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -98,6 +103,45 @@ public class OrderController {
 
         return ResponseEntity.ok(ApiResponse.<VNPayCreatePaymentResponse>builder()
                 .data(paymentResponse)
+                .build());
+    }
+
+    /**
+     * Thanh toán tiền mặt - Xác nhận thanh toán trực tiếp tại quầy
+     * Chỉ nhân viên/admin mới có quyền gọi endpoint này
+     */
+    @PostMapping("/payment/cash")
+    public ResponseEntity<ApiResponse<InvoiceResponse>> payByCash(
+            @RequestParam Integer invoiceId,
+            @RequestParam(required = false) String note) {
+        
+        // Kiểm tra hóa đơn tồn tại
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new AppException(ErrorCode.INVOICE_NOT_FOUND));
+
+        // Kiểm tra hóa đơn đã thanh toán chưa
+        if (Boolean.TRUE.equals(invoice.getStatus())) {
+            throw new AppException(ErrorCode.INVOICE_ALREADY_PAID);
+        }
+
+        // Cập nhật trạng thái hóa đơn
+        invoice.setStatus(true); // true = đã thanh toán
+        invoiceRepository.save(invoice);
+        
+        log.info("Invoice {} paid by cash. Amount: {}, Note: {}", 
+                invoiceId, invoice.getTotalAmount(), note);
+
+        // Map to response
+        InvoiceResponse response = new InvoiceResponse();
+        response.setInvoiceId(invoice.getInvoiceId());
+        response.setTotalAmount(invoice.getTotalAmount());
+        response.setPaymentMethod(invoice.getPaymentMethod().getName());
+        response.setDateCreated(invoice.getDateCreated());
+        response.setStatus(true); // Boolean: true = đã thanh toán
+
+        return ResponseEntity.ok(ApiResponse.<InvoiceResponse>builder()
+                .message("Xác nhận thanh toán tiền mặt thành công")
+                .data(response)
                 .build());
     }
 
