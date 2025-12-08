@@ -65,12 +65,8 @@ public class WebSecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // MUST use OriginPatterns when allowCredentials = true
-        config.setAllowedOriginPatterns(Arrays.asList(
-                "http://localhost:*",
-                "https://*.vercel.app",
-                "https://*.azurewebsites.net"
-        ));
+        // Allow ALL origins for testing
+        config.setAllowedOriginPatterns(Arrays.asList("*"));
 
         // Allow ALL headers (Chrome preflight sends nhiều header đặc biệt)
         config.setAllowedHeaders(Arrays.asList("*"));
