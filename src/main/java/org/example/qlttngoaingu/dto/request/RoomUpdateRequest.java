@@ -1,8 +1,6 @@
 package org.example.qlttngoaingu.dto.request;
 
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,16 +11,13 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RoomRequest {
+public class RoomUpdateRequest {
     
-    @NotBlank(message = "Tên phòng không được để trống")
     private String roomName;
     
-    @NotNull(message = "Sức chứa không được để trống")
     @Min(value = 1, message = "Sức chứa phải lớn hơn 0")
     private Integer capacity;
     
-    @NotBlank(message = "Trạng thái không được để trống")
     @Pattern(regexp = "^(Sẵn sàng|Bảo trì)$", message = "Trạng thái phải là 'Sẵn sàng' hoặc 'Bảo trì'")
     private String status;
 }

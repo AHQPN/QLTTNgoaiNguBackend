@@ -12,14 +12,22 @@ import java.util.List;
 import java.util.Set;
 
 import org.example.qlttngoaingu.dto.request.RoomRequest;
+import org.example.qlttngoaingu.dto.request.RoomUpdateRequest;
 import org.example.qlttngoaingu.dto.response.AvailableRoomResponse;
+import org.example.qlttngoaingu.dto.response.RoomResponse;
 import org.example.qlttngoaingu.entity.Course;
 import org.example.qlttngoaingu.entity.CourseClass;
 import org.example.qlttngoaingu.entity.Room;
+import org.example.qlttngoaingu.exception.AppException;
+import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.repository.CourseClassRepository;
 import org.example.qlttngoaingu.repository.RoomRepository;
 import org.example.qlttngoaingu.service.enums.ClassStatusEnum;
 import org.example.qlttngoaingu.service.enums.SchedulePattern;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -202,6 +210,91 @@ public class RoomService {
             throw new RuntimeException("Room Not Found");
         }
         roomRepository.deleteById(id);
+    }
+
+    // ==================== CRUD với Phân trang ====================
+
+    public Page<RoomResponse> getAllRoomsPaginated(int page, int size, String sortBy, String sortDirection) {
+        Sort sort = sortDirection.equalsIgnoreCase("desc") 
+            ? Sort.by(sortBy).descending() 
+            : Sort.by(sortBy).ascending();
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Room> roomsPage = roomRepository.findAll(pageable);
+        
+        return roomsPage.map(this::convertToResponse);
+    }
+
+    public RoomResponse getRoomByIdDetail(Integer roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new AppException(ErrorCode.UNCATEGORIZED));
+        
+        return convertToResponse(room);
+    }
+
+    public RoomResponse createRoomFull(RoomRequest request) {
+        Room room = new Room();
+        room.setRoomName(request.getRoomName());
+        room.setCapacity(request.getCapacity());
+        room.setStatus(request.getStatus());
+        
+        Room savedRoom = roomRepository.save(room);
+        return convertToResponse(savedRoom);
+    }
+
+    public RoomResponse updateRoomFull(Integer roomId, RoomUpdateRequest request) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new AppException(ErrorCode.UNCATEGORIZED));
+        
+        if (request.getRoomName() != null) {
+            room.setRoomName(request.getRoomName());
+        }
+        
+        if (request.getCapacity() != null) {
+            room.setCapacity(request.getCapacity());
+        }
+        
+        if (request.getStatus() != null) {
+            if ("Bảo trì".equals(request.getStatus())) {
+                List<CourseClass> activeClasses = classRepository.findByRoom_RoomIdAndStatus(
+                        roomId, ClassStatusEnum.InProgress.name());
+                
+                if (!activeClasses.isEmpty()) {
+                    throw new AppException(ErrorCode.UNCATEGORIZED);
+                }
+            }
+            room.setStatus(request.getStatus());
+        }
+        
+        Room updatedRoom = roomRepository.save(room);
+        return convertToResponse(updatedRoom);
+    }
+
+    public void deleteRoomFull(Integer roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new AppException(ErrorCode.UNCATEGORIZED));
+        
+        if (room.getClasses() != null && !room.getClasses().isEmpty()) {
+            throw new AppException(ErrorCode.UNCATEGORIZED);
+        }
+        
+        roomRepository.delete(room);
+    }
+
+    private RoomResponse convertToResponse(Room room) {
+        List<CourseClass> allClasses = room.getClasses() != null ? room.getClasses() : new ArrayList<>();
+        List<CourseClass> activeClasses = allClasses.stream()
+                .filter(c -> ClassStatusEnum.InProgress.name().equals(c.getStatus()))
+                .toList();
+        
+        return RoomResponse.builder()
+                .roomId(room.getRoomId())
+                .roomName(room.getRoomName())
+                .capacity(room.getCapacity())
+                .status(room.getStatus())
+                .totalClasses(allClasses.size())
+                .activeClasses(activeClasses.size())
+                .build();
     }
 
 }
