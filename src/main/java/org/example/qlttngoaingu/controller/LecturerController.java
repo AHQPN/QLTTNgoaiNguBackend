@@ -11,6 +11,7 @@ import org.example.qlttngoaingu.dto.response.ApiResponse;
 import org.example.qlttngoaingu.dto.response.AttendanceSessionResponse;
 import org.example.qlttngoaingu.dto.response.AvailableLecturerResponse;
 import org.example.qlttngoaingu.dto.response.ClassGradesResponse;
+import org.example.qlttngoaingu.dto.response.LecturerDashboardStatsResponse;
 import org.example.qlttngoaingu.dto.response.LecturerResponse;
 import org.example.qlttngoaingu.entity.GradeSheet;
 import org.example.qlttngoaingu.security.model.UserDetailsImpl;
@@ -126,6 +127,24 @@ public class LecturerController {
                                 request.getStartDate());
 
                 return ResponseEntity.ok(lecturers);
+        }
+
+        // ==================== Dashboard API ====================
+
+        /**
+         * GET /lecturers/dashboard/stats
+         * Lấy thống kê dashboard cho giảng viên đang đăng nhập
+         */
+        @GetMapping("/dashboard/stats")
+        public ResponseEntity<ApiResponse<LecturerDashboardStatsResponse>> getDashboardStats(
+                        @AuthenticationPrincipal UserDetailsImpl userDetails) {
+                // Lấy lecturerId từ userId
+                var lecturer = lecturerService.getLecturerByUserId(userDetails.getId());
+                LecturerDashboardStatsResponse stats = lecturerService.getDashboardStats(lecturer.getLecturerId());
+                return ResponseEntity.ok(ApiResponse.<LecturerDashboardStatsResponse>builder()
+                                .message("Lấy thống kê thành công")
+                                .data(stats)
+                                .build());
         }
 
         // ==================== Các API khác ====================

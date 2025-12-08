@@ -3,11 +3,15 @@ package org.example.qlttngoaingu.controller;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.example.qlttngoaingu.dto.request.CourseRegistrationRequest;
 import org.example.qlttngoaingu.dto.request.VNPayCreatePaymentRequest;
 import org.example.qlttngoaingu.dto.response.ApiResponse;
+import org.example.qlttngoaingu.dto.response.InvoiceListResponse;
+import org.example.qlttngoaingu.dto.response.InvoicePageResponse;
 import org.example.qlttngoaingu.dto.response.InvoiceResponse;
 import org.example.qlttngoaingu.dto.response.VNPayCreatePaymentResponse;
 import org.example.qlttngoaingu.entity.Invoice;
@@ -265,29 +269,44 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<InvoiceResponse>>> getAllInvoices(
+    public ResponseEntity<ApiResponse<InvoicePageResponse>> getAllInvoices(
             @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "15") Integer size,
             @RequestParam(required = false) Boolean status,
-            @RequestParam(required = false) String keyword) {
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) LocalDate fromDate,
+            @RequestParam(required = false) LocalDate toDate) {
         
         Pageable pageable = PageRequest.of(page, size);
-        Page<Invoice> invoices;
         
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            // Tìm kiếm theo keyword
-            invoices = invoiceRepository.searchInvoices(keyword.trim(), pageable);
-        } else if (status != null) {
-            // Lọc theo trạng thái
-            invoices = invoiceRepository.findByStatusOrderByDateCreatedDesc(status, pageable);
-        } else {
-            // Lấy tất cả
-            invoices = invoiceRepository.findAllOrderByDateCreatedDesc(pageable);
-        }
+        // Convert LocalDate to LocalDateTime for precise date range filtering
+        // fromDate: start of day (00:00:00)
+        // toDate: use next day start (exclusive) to include all records on toDate
+        LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
+        LocalDateTime toDateTime = toDate != null ? toDate.plusDays(1).atStartOfDay() : null;
         
-        Page<InvoiceResponse> response = invoices.map(invoiceMapper::toInvoiceResponse);
+        // Use advanced filter query
+        Page<Invoice> invoices = invoiceRepository.searchInvoicesWithFilters(
+                keyword != null && !keyword.trim().isEmpty() ? keyword.trim() : null,
+                status,
+                fromDateTime,
+                toDateTime,
+                pageable
+        );
         
-        return ResponseEntity.ok(ApiResponse.<Page<InvoiceResponse>>builder()
+        // Map to InvoiceListResponse (minimal fields)
+        List<InvoiceListResponse> invoiceList = invoices.getContent().stream()
+                .map(invoiceMapper::toInvoiceListResponse)
+                .toList();
+        
+        InvoicePageResponse response = new InvoicePageResponse(
+                invoiceList,
+                invoices.getNumber(),
+                invoices.getTotalElements(),
+                invoices.getTotalPages()
+        );
+        
+        return ResponseEntity.ok(ApiResponse.<InvoicePageResponse>builder()
                 .data(response)
                 .message("Lấy danh sách hóa đơn thành công")
                 .build());

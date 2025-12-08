@@ -63,21 +63,23 @@ public class WebSecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"
-                , "http://localhost:3001"
-                ,"https://quan-ly-trung-tam-ngoai-ngu.vercel.app"
-                ,"https://quan-ly-trung-tam-ngoai-ngu-admin.vercel.app")); // Thêm các domain khác nếu cần
+        CorsConfiguration config = new CorsConfiguration();
 
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        // Allow ALL origins for testing
+        config.setAllowedOriginPatterns(Arrays.asList("*"));
 
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Auth-Token"));
+        // Allow ALL headers (Chrome preflight sends nhiều header đặc biệt)
+        config.setAllowedHeaders(Arrays.asList("*"));
+        config.setExposedHeaders(Arrays.asList("*"));
 
-        configuration.setAllowCredentials(true);
+        config.setAllowedMethods(Arrays.asList(
+                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
+        ));
+
+        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-
+        source.registerCorsConfiguration("/**", config);
         return source;
     }
 

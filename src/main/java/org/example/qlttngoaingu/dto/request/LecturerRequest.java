@@ -52,8 +52,8 @@ public class LecturerRequest {
     @AllArgsConstructor
     public static class CertificateRequest {
         @NotNull(message = "Loại bằng cấp không được để trống")
-        private Integer degreeId;
+        private Integer degreeTypeId;  // ID của loại bằng cấp (bảng loaibangcap: IELTS, TOEIC...)
         
-        private String level; // Trình độ (VD: "Xuất sắc", "Giỏi", "Band 8.0")
+        private String level; // Trình độ cụ thể (VD: "Band 8.0", "950 điểm", "Giỏi")
     }
 }

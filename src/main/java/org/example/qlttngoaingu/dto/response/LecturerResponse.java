@@ -30,8 +30,9 @@ public class LecturerResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class CertificateInfo {
-        private Integer certificateId;
-        private String certificateName;
-        private String level;
+        private Integer certificateId;  // ID bằng cấp cụ thể (bảng bangcap) - để tracking
+        private Integer degreeTypeId;   // ID loại bằng cấp (bảng loaibangcap)
+        private String degreeTypeName;  // Tên loại: IELTS, TOEIC, TOEFL...
+        private String level;           // Trình độ: Band 8.0, 950 điểm...
     }
 }

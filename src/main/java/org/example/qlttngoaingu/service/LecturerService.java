@@ -5,24 +5,43 @@ import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
 import org.example.qlttngoaingu.dto.request.LecturerCreationRequest;
 import org.example.qlttngoaingu.dto.request.LecturerRequest;
 import org.example.qlttngoaingu.dto.request.LecturerUpdateRequest;
 import org.example.qlttngoaingu.dto.response.AvailableLecturerResponse;
+import org.example.qlttngoaingu.dto.response.LecturerDashboardStatsResponse;
 import org.example.qlttngoaingu.dto.response.LecturerResponse;
 import org.example.qlttngoaingu.dto.response.TeacherInfo;
 import org.example.qlttngoaingu.entity.*;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
-import org.example.qlttngoaingu.repository.*;
+import org.example.qlttngoaingu.repository.AttendanceRepository;
+import org.example.qlttngoaingu.repository.CourseClassRepository;
+import org.example.qlttngoaingu.repository.CourseReviewRepository;
+import org.example.qlttngoaingu.repository.DegreeRepository;
+import org.example.qlttngoaingu.repository.InvoiceDetailRepository;
+import org.example.qlttngoaingu.repository.LecturerDegreeRepository;
+import org.example.qlttngoaingu.repository.LecturerRepository;
+import org.example.qlttngoaingu.repository.SessionRepository;
+import org.example.qlttngoaingu.repository.UserRepository;
 import org.example.qlttngoaingu.service.enums.ClassStatusEnum;
 import org.example.qlttngoaingu.service.enums.RoleEnum;
 import org.example.qlttngoaingu.service.enums.SchedulePattern;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -37,6 +56,8 @@ public class LecturerService {
     private final CourseReviewRepository courseReviewRepository;
     private final DegreeRepository degreeRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SessionRepository sessionRepository;
+    private final AttendanceRepository attendanceRepository;
 
     // ADD LECTURER BASIC INFO (User đã tồn tại)
 
@@ -306,7 +327,7 @@ public class LecturerService {
         // certificates
         if (request.getCertificates() != null) {
             for (LecturerRequest.CertificateRequest c : request.getCertificates()) {
-                Degree degree = degreeRepository.findById(c.getDegreeId())
+                Degree degree = degreeRepository.findById(c.getDegreeTypeId())
                         .orElseThrow(() -> new AppException(ErrorCode.UNCATEGORIZED));
 
                 LecturerDegree ld = new LecturerDegree();
@@ -354,15 +375,19 @@ public class LecturerService {
             userRepository.save(user);
         }
 
-        // update certificates
+        // Update certificates - REPLACE ALL strategy
+        // - null: Không thay đổi gì
+        // - []: Xóa tất cả bằng cấp
+        // - [{...}]: Xóa tất cả cũ, thêm mới theo list
         if (request.getCertificates() != null) {
+            // Xóa tất cả bằng cấp hiện có
             List<LecturerDegree> olds = lecturerDegreeRepository.findByLecturer_LecturerId(lecturerId);
-
             lecturerDegreeRepository.deleteAll(olds);
 
+            // Thêm lại bằng cấp từ request
             for (LecturerUpdateRequest.CertificateRequest c : request.getCertificates()) {
-                if (c.getDegreeId() != null) {
-                    Degree degree = degreeRepository.findById(c.getDegreeId())
+                if (c.getDegreeTypeId() != null) {
+                    Degree degree = degreeRepository.findById(c.getDegreeTypeId())
                             .orElseThrow(() -> new AppException(ErrorCode.UNCATEGORIZED));
 
                     LecturerDegree ld = new LecturerDegree();
@@ -408,9 +433,10 @@ public class LecturerService {
         List<LecturerResponse.CertificateInfo> certs = degrees.stream()
                 .filter(ld -> ld.getDegree() != null)
                 .map(ld -> LecturerResponse.CertificateInfo.builder()
-                        .certificateId(ld.getDegree().getId())
-                        .certificateName(ld.getDegree().getName())
-                        .level(ld.getLevel())
+                        .certificateId(ld.getMa())                 // ID bằng cấp cụ thể (bangcap)
+                        .degreeTypeId(ld.getDegree().getId())      // ID loại bằng cấp (loaibangcap)
+                        .degreeTypeName(ld.getDegree().getName())  // Tên: IELTS, TOEIC...
+                        .level(ld.getLevel())                      // Trình độ: Band 8.0...
                         .build())
                 .toList();
 
@@ -429,5 +455,222 @@ public class LecturerService {
                 .activeClasses(activeClasses.size())
                 .certificates(certs)
                 .build();
+    }
+
+    /**
+     * Lấy thống kê dashboard đầy đủ cho giảng viên theo spec
+     */
+    public LecturerDashboardStatsResponse getDashboardStats(Integer lecturerId) {
+        LocalDate today = LocalDate.now();
+        LocalDate firstDayOfMonth = today.withDayOfMonth(1);
+        
+        // 1. OVERVIEW STATISTICS
+        // Lấy tất cả lớp đang hoạt động (không bao gồm Closed)
+        List<CourseClass> activeClasses = classRepository.findByLecturer_LecturerIdAndStatusNot(
+            lecturerId, 
+            ClassStatusEnum.Closed.name()
+        );
+        
+        // Lấy tất cả classIds để query sessions
+        List<Integer> classIds = activeClasses.stream()
+            .map(CourseClass::getClassId)
+            .toList();
+        
+        // Đếm lớp dạy hôm nay
+        int todayClasses = classIds.isEmpty() ? 0 : 
+            (int) sessionRepository.findByCourseClass_ClassIdInAndSessionDateBetween(
+                classIds, today, today
+            ).size();
+        
+        // Tổng số học viên
+        int totalStudents = (int) invoiceDetailRepository.countDistinctStudentsByLecturerAndClassStatus(
+            lecturerId, 
+            ClassStatusEnum.InProgress.name()
+        );
+        
+        // Tính tổng giờ dạy trong tháng (completed sessions)
+        int hoursTaught = classIds.isEmpty() ? 0 : 
+            sessionRepository.findByCourseClass_ClassIdInAndSessionDateBetween(
+                classIds, firstDayOfMonth, today
+            ).stream()
+            .filter(s -> "Completed".equalsIgnoreCase(s.getStatus()) || 
+                        "Đã hoàn thành".equalsIgnoreCase(s.getStatus()))
+            .mapToInt(s -> s.getCourseClass().getMinutesPerSession() / 60)
+            .sum();
+        
+        LecturerDashboardStatsResponse.Overview overview = 
+            LecturerDashboardStatsResponse.Overview.builder()
+                .classesInCharge(activeClasses.size())
+                .todayClasses(todayClasses)
+                .totalStudents(totalStudents)
+                .hoursTaught(hoursTaught)
+                .build();
+        
+        // 2. WEEKLY SCHEDULE (Today's classes)
+        List<LecturerDashboardStatsResponse.WeeklyScheduleItem> weeklySchedule = 
+            classIds.isEmpty() ? List.of() :
+            sessionRepository.findByCourseClass_ClassIdInAndSessionDateBetween(
+                classIds, today, today
+            ).stream()
+            .map(session -> {
+                CourseClass cls = session.getCourseClass();
+                LocalTime startTime = cls.getStartTime();
+                LocalTime endTime = startTime.plusMinutes(cls.getMinutesPerSession());
+                
+                String status = "Upcoming";
+                if ("Completed".equalsIgnoreCase(session.getStatus()) || 
+                    "Đã hoàn thành".equalsIgnoreCase(session.getStatus())) {
+                    status = "Completed";
+                } else if ("Canceled".equalsIgnoreCase(session.getStatus()) || 
+                          "Đã hủy".equalsIgnoreCase(session.getStatus())) {
+                    status = "Canceled";
+                }
+                
+                return LecturerDashboardStatsResponse.WeeklyScheduleItem.builder()
+                    .id(session.getSessionId())
+                    .className(cls.getClassName())
+                    .room(cls.getRoom() != null ? cls.getRoom().getRoomName() : "")
+                    .time(startTime.toString() + " - " + endTime.toString())
+                    .date(session.getSessionDate())
+                    .status(status)
+                    .build();
+            })
+            .toList();
+        
+        // 3. ACTIVE CLASSES with progress
+        List<LecturerDashboardStatsResponse.ActiveClass> activeClassesList = 
+            activeClasses.stream()
+            .map(cls -> {
+                long totalSessions = sessionRepository.countTotalSessionsByClassId(cls.getClassId());
+                long completedSessions = sessionRepository.countCompletedSessionsByClassId(
+                    cls.getClassId(), today
+                );
+                int studentCount = invoiceDetailRepository.countByClassIdAndActiveInvoice(
+                    cls.getClassId()
+                );
+                
+                int progressPercent = totalSessions > 0 ? 
+                    (int) Math.round(completedSessions * 100.0 / totalSessions) : 0;
+                
+                return LecturerDashboardStatsResponse.ActiveClass.builder()
+                    .id(cls.getClassId())
+                    .className(cls.getClassName())
+                    .course(cls.getCourse() != null ? cls.getCourse().getCourseName() : "")
+                    .students(studentCount)
+                    .progress(completedSessions + "/" + totalSessions)
+                    .progressPercent(progressPercent)
+                    .build();
+            })
+            .toList();
+        
+        // 4. REMINDERS
+        List<LecturerDashboardStatsResponse.Reminder> reminders = new java.util.ArrayList<>();
+        int reminderIdCounter = 1;
+        
+        // Check missing attendance (completed sessions without attendance records)
+        for (CourseClass cls : activeClasses) {
+            List<Session> completedSessions = sessionRepository
+                .findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId())
+                .stream()
+                .filter(s -> ("Completed".equalsIgnoreCase(s.getStatus()) || 
+                             "Đã hoàn thành".equalsIgnoreCase(s.getStatus())) &&
+                            s.getSessionDate().isAfter(today.minusDays(7)))
+                .toList();
+            
+            for (Session session : completedSessions) {
+                List<Attendance> attendances = attendanceRepository.findBySessionSessionId(session.getSessionId());
+                if (attendances.isEmpty()) {
+                    reminders.add(LecturerDashboardStatsResponse.Reminder.builder()
+                        .id(reminderIdCounter++)
+                        .message("Chưa điểm danh lớp " + cls.getClassName() + 
+                                " ngày " + session.getSessionDate().getDayOfMonth() + "/" + 
+                                session.getSessionDate().getMonthValue())
+                        .type("warning")
+                        .build());
+                    break; // Only one reminder per class
+                }
+            }
+        }
+        
+        // Check classes ending soon (less than 5 sessions remaining)
+        for (CourseClass cls : activeClasses) {
+            long remainingSessions = sessionRepository
+                .findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId())
+                .stream()
+                .filter(s -> !"Completed".equalsIgnoreCase(s.getStatus()) && 
+                            !"Đã hoàn thành".equalsIgnoreCase(s.getStatus()) &&
+                            !"Canceled".equalsIgnoreCase(s.getStatus()) &&
+                            !"Đã hủy".equalsIgnoreCase(s.getStatus()))
+                .count();
+            
+            if (remainingSessions > 0 && remainingSessions <= 5) {
+                reminders.add(LecturerDashboardStatsResponse.Reminder.builder()
+                    .id(reminderIdCounter++)
+                    .message("Lớp " + cls.getClassName() + " sắp kết thúc (Còn " + 
+                            remainingSessions + " buổi)")
+                    .type("info")
+                    .build());
+            }
+        }
+        
+        // 5. ATTENDANCE STATISTICS (top 3 classes)
+        List<LecturerDashboardStatsResponse.AttendanceStats> attendanceStatsList = 
+            activeClasses.stream()
+            .limit(3)
+            .map(cls -> {
+                List<Integer> sessionIds = sessionRepository
+                    .findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId())
+                    .stream()
+                    .filter(s -> "Completed".equalsIgnoreCase(s.getStatus()) || 
+                                "Đã hoàn thành".equalsIgnoreCase(s.getStatus()))
+                    .map(Session::getSessionId)
+                    .toList();
+                
+                if (sessionIds.isEmpty()) {
+                    return LecturerDashboardStatsResponse.AttendanceStats.builder()
+                        .className(shortenClassName(cls.getClassName()))
+                        .attendancePercent(0)
+                        .absentPercent(0)
+                        .build();
+                }
+                
+                List<Attendance> attendances = attendanceRepository.findBySessionSessionIdIn(sessionIds);
+                long total = attendances.size();
+                long present = attendances.stream()
+                    .filter(a -> Boolean.FALSE.equals(a.getAbsent()))
+                    .count();
+                
+                int presentPercent = total > 0 ? (int) Math.round(present * 100.0 / total) : 0;
+                int absentPercent = 100 - presentPercent;
+                
+                return LecturerDashboardStatsResponse.AttendanceStats.builder()
+                    .className(shortenClassName(cls.getClassName()))
+                    .attendancePercent(presentPercent)
+                    .absentPercent(absentPercent)
+                    .build();
+            })
+            .toList();
+        
+        return LecturerDashboardStatsResponse.builder()
+            .overview(overview)
+            .weeklySchedule(weeklySchedule)
+            .activeClasses(activeClassesList)
+            .reminders(reminders)
+            .attendanceStats(attendanceStatsList)
+            .build();
+    }
+    
+    /**
+     * Rút gọn tên lớp cho hiển thị (IELTS Foundation - K12 → IELTS K12)
+     */
+    private String shortenClassName(String className) {
+        if (className == null) return "";
+        // Remove middle part, keep first and last
+        String[] parts = className.split(" - ");
+        if (parts.length >= 2) {
+            String firstWord = parts[0].split(" ")[0]; // Get first word
+            return firstWord + " " + parts[parts.length - 1];
+        }
+        return className;
     }
 }
