@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.example.qlttngoaingu.entity.Session;
 import org.example.qlttngoaingu.repository.SessionRepository;
+import org.example.qlttngoaingu.service.enums.SessionStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,14 +46,14 @@ public class SessionScheduler {
             String currentStatus = session.getStatus();
             
             // Neu da huy thi khong thay doi
-            if ("Đã hủy".equals(currentStatus) || "Da huy".equals(currentStatus)) {
+            if (SessionStatus.Canceled.name().equals(currentStatus) ) {
                 continue;
             }
             
             // Neu chua hoc va da toi gio hoc thi chuyen thanh da hoc
-            if (("Chưa học".equals(currentStatus) || "Chua hoc".equals(currentStatus) || currentStatus == null) 
+            if ((SessionStatus.NotCompleted.name().equals(currentStatus) )
                     && shouldMarkAsCompleted(session, now)) {
-                session.setStatus("Đã học");
+                session.setStatus(SessionStatus.Completed.name());
                 sessionRepository.save(session);
                 updated++;
                 log.info("Updated session {} from '{}' to 'Da hoc' (date: {}, class: {})", 

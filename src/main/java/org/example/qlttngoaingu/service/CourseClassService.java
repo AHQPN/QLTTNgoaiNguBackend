@@ -867,11 +867,11 @@ public class CourseClassService {
                 .orElseThrow(() -> new AppException(ErrorCode.CLASS_NOT_FOUND));
         
         // Kiểm tra buổi học đã bị hủy chưa
-        if ("Đã hủy".equals(session.getStatus())) {
+        if (SessionStatus.Canceled.name().equals(session.getStatus())) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
         
-        session.setStatus("Đã hủy");
+        session.setStatus(SessionStatus.Canceled.name());
         sessionRepository.save(session);
         
         // Trả về thông tin session đã hủy
@@ -1006,7 +1006,7 @@ public class CourseClassService {
         
         // Kiểm tra có thể thêm buổi học không
         long canceledCount = allSessions.stream()
-                .filter(s -> "Đã hủy".equals(s.getStatus()))
+                .filter(s -> SessionStatus.Canceled.name().equals(s.getStatus()))
                 .count();
         
         if (canceledCount == 0) {
