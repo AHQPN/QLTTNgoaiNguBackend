@@ -316,6 +316,14 @@ public class CourseClassService {
             if (!sessions.isEmpty()) {
                 info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
             }
+            
+            // Đếm số buổi học bị hủy (chưa bù)
+            long canceledCount = sessions.stream()
+                .filter(session -> "Canceled".equalsIgnoreCase(session.getStatus()))
+                .count();
+            info.setHasPendingMakeup(canceledCount > 0);
+            info.setCanceledSessionsCount((int) canceledCount);
+            
             info.setMaxCapacity(cls.getRoom().getCapacity());
             Integer enrollmentCount = invoiceDetailRepository.countByClassIdAndActiveInvoice(cls.getClassId());
 
@@ -383,6 +391,14 @@ public class CourseClassService {
                     if (!sessions.isEmpty()) {
                         info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
                     }
+                    
+                    // Đếm số buổi học bị hủy (chưa bù)
+                    long canceledCount = sessions.stream()
+                        .filter(session -> "Canceled".equalsIgnoreCase(session.getStatus()))
+                        .count();
+                    info.setHasPendingMakeup(canceledCount > 0);
+                    info.setCanceledSessionsCount((int) canceledCount);
+                    
                     info.setMaxCapacity(cls.getRoom().getCapacity());
                     Integer enrollmentCount = invoiceDetailRepository.countByClassIdAndActiveInvoice(cls.getClassId());
                     if (!sessions.isEmpty()) {

@@ -1,18 +1,22 @@
 package org.example.qlttngoaingu.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.example.qlttngoaingu.dto.response.ActivityResponse;
-import org.example.qlttngoaingu.dto.response.DashboardStatsResponse;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.example.qlttngoaingu.dto.response.ActivityResponse;
+import org.example.qlttngoaingu.dto.response.CourseProgressResponse;
+import org.example.qlttngoaingu.dto.response.DashboardStatsResponse;
+import org.example.qlttngoaingu.dto.response.EndingClassResponse;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service để lấy dữ liệu thống kê Dashboard cho Admin
@@ -192,5 +196,142 @@ public class AdminDashboardService {
                 .soPhongTrong(0)
                 .dangKyHomNay(0)
                 .build();
+    }
+    
+    /**
+     * Lấy tiến độ khóa học (Course Progress)
+     * Theo dõi tiến độ hoàn thành các buổi học của từng lớp đang hoạt động
+     */
+    public List<CourseProgressResponse> getCourseProgress() {
+        String sql = """
+            SELECT TOP 10
+                l.malop AS classId,
+                l.tenlop AS className,
+                k.tenkh AS courseName,
+                COUNT(CASE WHEN b.trangthai = 'Completed' THEN 1 END) AS completedSessions,
+                k.sotiet AS totalSessions,
+                CAST(COUNT(CASE WHEN b.trangthai = 'Completed' THEN 1 END) * 100.0 / 
+                    NULLIF(k.sotiet, 0) AS DECIMAL(5,2)) AS progressRate
+            FROM lop l
+            INNER JOIN khoahoc k ON l.makhoahoc = k.makhoahoc
+            LEFT JOIN buoihoc b ON b.malop = l.malop
+            WHERE l.trangthai IN ('InProgress', 'Pending')
+            GROUP BY l.malop, l.tenlop, k.tenkh, k.sotiet
+            ORDER BY progressRate DESC
+            """;
+        
+        try {
+            List<Map<String, Object>> results = jdbcTemplate.queryForList(sql);
+            List<CourseProgressResponse> progressList = new ArrayList<>();
+            
+            for (Map<String, Object> row : results) {
+                CourseProgressResponse progress = CourseProgressResponse.builder()
+                        .classId(getIntValue(row, "classId"))
+                        .className(String.valueOf(row.get("className")))
+                        .courseName(String.valueOf(row.get("courseName")))
+                        .completedSessions(getIntValue(row, "completedSessions"))
+                        .totalSessions(getIntValue(row, "totalSessions"))
+                        .progressRate(getDoubleValue(row, "progressRate"))
+                        .build();
+                progressList.add(progress);
+            }
+            
+            return progressList;
+        } catch (Exception e) {
+            log.error("Lỗi khi lấy tiến độ khóa học: {}", e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
+     * Lấy danh sách lớp học sắp kết thúc
+     * Cảnh báo các lớp học sắp kết thúc để admin chuẩn bị các công việc kế tiếp
+     */
+    public List<EndingClassResponse> getEndingClasses() {
+        String sql = """
+            WITH ClassProgress AS (
+                SELECT 
+                    l.malop AS classId,
+                    l.tenlop AS className,
+                    k.tenkh AS courseName,
+                    k.sotiet AS totalSessions,
+                    COUNT(CASE WHEN b.trangthai = 'Completed' THEN 1 END) AS completedSessions,
+                    (k.sotiet - COUNT(CASE WHEN b.trangthai = 'Completed' THEN 1 END)) AS remainingSessions,
+                    l.ngaybatdau AS startDate,
+                    l.lich AS schedule
+                FROM lop l
+                INNER JOIN khoahoc k ON l.makhoahoc = k.makhoahoc
+                LEFT JOIN buoihoc b ON b.malop = l.malop
+                WHERE l.trangthai = 'InProgress'
+                GROUP BY l.malop, l.tenlop, k.tenkh, k.sotiet, l.ngaybatdau, l.lich
+            )
+            SELECT TOP 5
+                classId,
+                className,
+                courseName,
+                remainingSessions,
+                DATEADD(DAY, 
+                    CASE 
+                        WHEN remainingSessions <= 0 THEN 0
+                        ELSE remainingSessions * 3
+                    END, 
+                    startDate
+                ) AS endDate
+            FROM ClassProgress
+            WHERE remainingSessions <= 5
+            ORDER BY remainingSessions ASC, endDate ASC
+            """;
+        
+        try {
+            List<Map<String, Object>> results = jdbcTemplate.queryForList(sql);
+            List<EndingClassResponse> endingClasses = new ArrayList<>();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            
+            for (Map<String, Object> row : results) {
+                // Format endDate
+                String endDate = "";
+                Object endDateObj = row.get("endDate");
+                if (endDateObj != null) {
+                    if (endDateObj instanceof java.sql.Timestamp) {
+                        endDate = ((java.sql.Timestamp) endDateObj).toLocalDateTime().toLocalDate().format(formatter);
+                    } else if (endDateObj instanceof LocalDateTime) {
+                        endDate = ((LocalDateTime) endDateObj).toLocalDate().format(formatter);
+                    } else if (endDateObj instanceof LocalDate) {
+                        endDate = ((LocalDate) endDateObj).format(formatter);
+                    }
+                }
+                
+                EndingClassResponse endingClass = EndingClassResponse.builder()
+                        .classId(getIntValue(row, "classId"))
+                        .className(String.valueOf(row.get("className")))
+                        .courseName(String.valueOf(row.get("courseName")))
+                        .remainingSessions(getIntValue(row, "remainingSessions"))
+                        .endDate(endDate)
+                        .build();
+                endingClasses.add(endingClass);
+            }
+            
+            return endingClasses;
+        } catch (Exception e) {
+            log.error("Lỗi khi lấy danh sách lớp sắp kết thúc: {}", e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
+     * Helper method để lấy giá trị Double từ Map
+     */
+    private Double getDoubleValue(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value == null) return 0.0;
+        if (value instanceof Double) return (Double) value;
+        if (value instanceof BigDecimal) return ((BigDecimal) value).doubleValue();
+        if (value instanceof Integer) return ((Integer) value).doubleValue();
+        if (value instanceof Long) return ((Long) value).doubleValue();
+        try {
+            return Double.parseDouble(value.toString());
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
     }
 }
