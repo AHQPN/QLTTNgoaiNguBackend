@@ -81,7 +81,19 @@ public class AttendanceService {
             }
         }
 
-        return new AttendanceSessionResponse(request.getSessionId(), responses);
+        // Tính toán thống kê
+        int totalStudents = responses.size();
+        int absentCount = (int) responses.stream().filter(AttendanceEntryResponse::getAbsent).count();
+        int presentCount = totalStudents - absentCount;
+        
+        AttendanceSessionResponse response = new AttendanceSessionResponse();
+        response.setSessionId(request.getSessionId());
+        response.setEntries(responses);
+        response.setTotalStudents(totalStudents);
+        response.setPresentCount(presentCount);
+        response.setAbsentCount(absentCount);
+        
+        return response;
     }
 
     public AttendanceSessionResponse getAttendanceForSession(Integer lecturerId, Integer sessionId) {
@@ -115,6 +127,18 @@ public class AttendanceService {
                 responses.add(new AttendanceEntryResponse(s.getId(), s.getName(), existing.getAbsent(), existing.getNote()));
             }
         }
-        return new AttendanceSessionResponse(sessionId, responses);
+        // Tính toán thống kê
+        int totalStudents = responses.size();
+        int absentCount = (int) responses.stream().filter(AttendanceEntryResponse::getAbsent).count();
+        int presentCount = totalStudents - absentCount;
+        
+        AttendanceSessionResponse response = new AttendanceSessionResponse();
+        response.setSessionId(sessionId);
+        response.setEntries(responses);
+        response.setTotalStudents(totalStudents);
+        response.setPresentCount(presentCount);
+        response.setAbsentCount(absentCount);
+        
+        return response;
     }
 }

@@ -12,4 +12,9 @@ import lombok.NoArgsConstructor;
 public class AttendanceSessionResponse {
     private Integer sessionId;
     private List<AttendanceEntryResponse> entries;
+    
+    // Thống kê điểm danh
+    private Integer totalStudents;   // Tổng số học viên
+    private Integer presentCount;    // Số học viên có mặt
+    private Integer absentCount;     // Số học viên vắng
 }

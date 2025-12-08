@@ -306,7 +306,7 @@ public class LecturerService {
         // certificates
         if (request.getCertificates() != null) {
             for (LecturerRequest.CertificateRequest c : request.getCertificates()) {
-                Degree degree = degreeRepository.findById(c.getDegreeId())
+                Degree degree = degreeRepository.findById(c.getDegreeTypeId())
                         .orElseThrow(() -> new AppException(ErrorCode.UNCATEGORIZED));
 
                 LecturerDegree ld = new LecturerDegree();
@@ -354,15 +354,19 @@ public class LecturerService {
             userRepository.save(user);
         }
 
-        // update certificates
+        // Update certificates - REPLACE ALL strategy
+        // - null: Không thay đổi gì
+        // - []: Xóa tất cả bằng cấp
+        // - [{...}]: Xóa tất cả cũ, thêm mới theo list
         if (request.getCertificates() != null) {
+            // Xóa tất cả bằng cấp hiện có
             List<LecturerDegree> olds = lecturerDegreeRepository.findByLecturer_LecturerId(lecturerId);
-
             lecturerDegreeRepository.deleteAll(olds);
 
+            // Thêm lại bằng cấp từ request
             for (LecturerUpdateRequest.CertificateRequest c : request.getCertificates()) {
-                if (c.getDegreeId() != null) {
-                    Degree degree = degreeRepository.findById(c.getDegreeId())
+                if (c.getDegreeTypeId() != null) {
+                    Degree degree = degreeRepository.findById(c.getDegreeTypeId())
                             .orElseThrow(() -> new AppException(ErrorCode.UNCATEGORIZED));
 
                     LecturerDegree ld = new LecturerDegree();
@@ -408,9 +412,10 @@ public class LecturerService {
         List<LecturerResponse.CertificateInfo> certs = degrees.stream()
                 .filter(ld -> ld.getDegree() != null)
                 .map(ld -> LecturerResponse.CertificateInfo.builder()
-                        .certificateId(ld.getDegree().getId())
-                        .certificateName(ld.getDegree().getName())
-                        .level(ld.getLevel())
+                        .certificateId(ld.getMa())                 // ID bằng cấp cụ thể (bangcap)
+                        .degreeTypeId(ld.getDegree().getId())      // ID loại bằng cấp (loaibangcap)
+                        .degreeTypeName(ld.getDegree().getName())  // Tên: IELTS, TOEIC...
+                        .level(ld.getLevel())                      // Trình độ: Band 8.0...
                         .build())
                 .toList();
 

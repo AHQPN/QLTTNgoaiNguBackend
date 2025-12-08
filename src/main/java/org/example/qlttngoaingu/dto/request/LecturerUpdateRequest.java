@@ -76,9 +76,12 @@ public class LecturerUpdateRequest {
     private String password;
 
     /**
-     * Danh sách bằng cấp
-     * - Nếu null → không cập nhật
-     * - Nếu có → replace toàn bộ
+     * Danh sách bằng cấp - REPLACE ALL strategy:
+     * - null: Không thay đổi bằng cấp hiện có
+     * - []: Xóa tất cả bằng cấp
+     * - [{degreeTypeId: 1, level: "Band 8.0"}]: Xóa tất cả cũ, chỉ giữ list này
+     * 
+     * Frontend cần gửi TOÀN BỘ bằng cấp muốn giữ lại
      */
     @Valid
     private List<CertificateRequest> certificates;
@@ -88,7 +91,7 @@ public class LecturerUpdateRequest {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class CertificateRequest {
-        private Integer degreeId;
-        private String level;
+        private Integer degreeTypeId;  // ID của loại bằng cấp (bảng loaibangcap: IELTS, TOEIC...)
+        private String level;          // Trình độ cụ thể (Band 8.0, 950 điểm...)
     }
 }
