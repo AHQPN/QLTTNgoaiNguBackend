@@ -47,4 +47,22 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
            "OR a.phoneNumber LIKE CONCAT('%', :keyword, '%') " +
            "ORDER BY i.dateCreated DESC")
     Page<Invoice> searchInvoices(@Param("keyword") String keyword, Pageable pageable);
+    
+    /**
+     * Tìm kiếm hóa đơn với filter nâng cao (ngày, trạng thái, keyword)
+     */
+    @Query("SELECT i FROM Invoice i JOIN i.student s JOIN s.account a " +
+           "WHERE (:keyword IS NULL OR LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "   OR a.phoneNumber LIKE CONCAT('%', :keyword, '%')) " +
+           "AND (:status IS NULL OR i.status = :status) " +
+           "AND (:fromDate IS NULL OR i.dateCreated >= :fromDate) " +
+           "AND (:toDate IS NULL OR i.dateCreated <= :toDate) " +
+           "ORDER BY i.dateCreated DESC")
+    Page<Invoice> searchInvoicesWithFilters(
+            @Param("keyword") String keyword,
+            @Param("status") Boolean status,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate,
+            Pageable pageable
+    );
 }

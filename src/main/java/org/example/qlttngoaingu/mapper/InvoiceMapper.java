@@ -1,6 +1,7 @@
 package org.example.qlttngoaingu.mapper;
 
 import org.example.qlttngoaingu.dto.response.InvoiceDetailResponse;
+import org.example.qlttngoaingu.dto.response.InvoiceListResponse;
 import org.example.qlttngoaingu.dto.response.InvoiceResponse;
 import org.example.qlttngoaingu.entity.Invoice;
 import org.example.qlttngoaingu.entity.InvoiceDetail;
@@ -12,7 +13,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface InvoiceMapper {
 
-    // --- MAP INVOICE ---
+    // --- MAP INVOICE (Full details) ---
     @Mapping(target = "studentName", source = "student.name")
     // @Mapping(target = "studentCode", source = "student.studentCode")
     @Mapping(target = "paymentMethod", source = "paymentMethod.name")
@@ -20,6 +21,12 @@ public interface InvoiceMapper {
     @Mapping(target = "details", source = "details")
     @Mapping(target = "studentId", source = "student.id")
     InvoiceResponse toInvoiceResponse(Invoice invoice);
+
+    // --- MAP INVOICE (For list - minimal fields) ---
+    @Mapping(target = "studentName", source = "student.name")
+    @Mapping(target = "studentId", source = "student.id")
+    @Mapping(target = "paymentMethod", source = "paymentMethod.name")
+    InvoiceListResponse toInvoiceListResponse(Invoice invoice);
 
     // --- MAP DETAIL ---
     @Mapping(target = "finalAmount", source = "amount")
