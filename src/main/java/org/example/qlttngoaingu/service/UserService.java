@@ -33,8 +33,11 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-@Service @AllArgsConstructor
+@Service
+@AllArgsConstructor
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
@@ -45,6 +48,7 @@ public class UserService {
     private final StudentRepository studentRepository;
     private final StudentMapper studentMapper;
     LecturerService lecturerService;
+
     @Transactional
     public User createUser(SignupRequest signupRequest, RoleEnum userType, Boolean sendVerification, String siteURL) {
 
@@ -64,22 +68,23 @@ public class UserService {
         user.setCreatedAt(LocalDateTime.now());
         user.setPasswordHash(passwordEncoder.encode(signupRequest.getPassword()));
         userRepository.save(user);
-        if (!user.getIsVerified())
-        {
-            Optional<VerificationCode>  verificationCode = generateNewVerificationCode(user, VerificationCodeEnum.EMAIL_VERIFICATION);
+        if (!user.getIsVerified()) {
+            Optional<VerificationCode> verificationCode = generateNewVerificationCode(user,
+                    VerificationCodeEnum.EMAIL_VERIFICATION);
             verificationCode.ifPresent(code -> sendVerificationEmail(user, siteURL, code));
         }
 
         return user;
     }
+
     @Transactional
-    public StudentInfo signUpForStudent(StudentSignupRequest studentSignupRequest,RoleEnum role,Boolean sendVerification, String siteURL)
-    {
+    public StudentInfo signUpForStudent(StudentSignupRequest studentSignupRequest, RoleEnum role,
+            Boolean sendVerification, String siteURL) {
         SignupRequest signupRequest = new SignupRequest();
         signupRequest.setPhoneNumber(studentSignupRequest.getPhoneNumber());
         signupRequest.setEmail(studentSignupRequest.getEmail());
         signupRequest.setPassword(studentSignupRequest.getPassword());
-        User usr = createUser(signupRequest,role,sendVerification,siteURL);
+        User usr = createUser(signupRequest, role, sendVerification, siteURL);
         Student student = new Student();
         student.setAccount(usr);
         student.setName(studentSignupRequest.getName());
@@ -93,9 +98,8 @@ public class UserService {
     }
 
     public Optional<User> getUserByIdentifier(String identifier) {
-        return userRepository.findByPhoneNumberOrEmail(identifier,identifier);
+        return userRepository.findByPhoneNumberOrEmail(identifier, identifier);
     }
-
 
     // ====================== TẠO CODE MỚI ======================
     @Transactional
@@ -133,7 +137,7 @@ public class UserService {
         String fromAddress = "nguyenbro9721@gmail.com";
         VerificationCodeEnum type = verificationCode.getType();
         RoleEnum userRole = RoleEnum.valueOf(user.getRole());
-        
+
         String verifyURL;
         String subject;
         String content;
@@ -151,7 +155,8 @@ public class UserService {
                         """, verifyURL, senderName);
             }
             case PASSWORD_RESET -> {
-                // Redirect đến trang reset password: frontendUrl cho STUDENT, adminUrl cho ADMIN/TEACHER/ACADEMIC_MANAGER
+                // Redirect đến trang reset password: frontendUrl cho STUDENT, adminUrl cho
+                // ADMIN/TEACHER/ACADEMIC_MANAGER
                 verifyURL = siteURL + "/reset-password?code=" + verificationCode.getVerificationCode();
                 subject = "Password Reset Request";
                 content = String.format("""
@@ -187,26 +192,33 @@ public class UserService {
             helper.setText(content, true);
             mailSender.send(message);
 
-        } catch (UnsupportedEncodingException | MessagingException e) {
-            throw new AppException(ErrorCode.FAIL_TO_VERIFY_EMAIL);
+        } catch (Exception e) {
+            // Catch all mail exceptions (including MailAuthenticationException) and log
+            // instead of failing
+            log.warn(
+                    "Failed to send verification email to {}: {}. Registration will continue without email verification.",
+                    toAddress, e.getMessage());
         }
     }
 
     public ApiResponse verify(String code, VerificationCodeEnum type) {
 
         Optional<VerificationCode> verificationCode = verificationCodeRepository.findByVerificationCode(code);
-        if(verificationCode.isEmpty()) {
-            return ApiResponse.builder().code(ErrorCode.INVALID_CODE.getCode()).message(ErrorCode.INVALID_CODE.getMessage()).build();
+        if (verificationCode.isEmpty()) {
+            return ApiResponse.builder().code(ErrorCode.INVALID_CODE.getCode())
+                    .message(ErrorCode.INVALID_CODE.getMessage()).build();
         }
         VerificationCode verificationCode1 = verificationCode.get();
         if (verificationCode1.getExpiresAt() != null &&
                 verificationCode1.getExpiresAt().isBefore(LocalDateTime.now())) {
             verificationCodeRepository.delete(verificationCode1);
-            return ApiResponse.builder().code(ErrorCode.EXPIRED_VERIFICATION_CODE.getCode()).message(ErrorCode.EXPIRED_VERIFICATION_CODE.getMessage()).build();
+            return ApiResponse.builder().code(ErrorCode.EXPIRED_VERIFICATION_CODE.getCode())
+                    .message(ErrorCode.EXPIRED_VERIFICATION_CODE.getMessage()).build();
         }
 
         if (!verificationCode1.getType().equals(type)) {
-            return ApiResponse.builder().code(ErrorCode.INVALID_CODE.getCode()).message(ErrorCode.INVALID_CODE.getMessage()).build();
+            return ApiResponse.builder().code(ErrorCode.INVALID_CODE.getCode())
+                    .message(ErrorCode.INVALID_CODE.getMessage()).build();
         }
 
         User user = verificationCode1.getUser();
@@ -222,7 +234,8 @@ public class UserService {
             }
             default -> {
 
-            return ApiResponse.builder().code(ErrorCode.INVALID_CODE.getCode()).message(ErrorCode.INVALID_CODE.getMessage()).build();
+                return ApiResponse.builder().code(ErrorCode.INVALID_CODE.getCode())
+                        .message(ErrorCode.INVALID_CODE.getMessage()).build();
             }
         }
         verificationCodeRepository.delete(verificationCode1);
@@ -241,22 +254,19 @@ public class UserService {
         signupRequest.setEmail(lecturerCreationRequest.getEmail());
         signupRequest.setPhoneNumber(lecturerCreationRequest.getPhoneNumber());
 
-        User user = createUser(signupRequest,RoleEnum.TEACHER,false,"abc");
+        User user = createUser(signupRequest, RoleEnum.TEACHER, false, "abc");
 
-        lecturerService.addLecturerInfo(lecturerCreationRequest,user.getUserId());
+        lecturerService.addLecturerInfo(lecturerCreationRequest, user.getUserId());
 
     }
 
-
     public StudentInfo getStudentInfo(Integer id) {
         User usr = userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        if(usr.getRole().equals(RoleEnum.STUDENT.name())) {
-            Student student = studentRepository.findByAccount_UserId(usr.getUserId()).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-
-
+        if (usr.getRole().equals(RoleEnum.STUDENT.name())) {
+            Student student = studentRepository.findByAccount_UserId(usr.getUserId())
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
             StudentInfo studentInfo = studentMapper.toStudentInfo(student);
-
 
             return studentInfo;
         }
@@ -281,27 +291,28 @@ public class UserService {
         nameAndEmail.setEmail(user.getEmail());
         return nameAndEmail;
     }
+
     @Transactional
     public void updateStudentInfo(Integer id, StudentInfo studentInfo) {
-        User user = userRepository.getUserByUserId(id).orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND));
+        User user = userRepository.getUserByUserId(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        if(user.getRole().equals(RoleEnum.STUDENT.name())) {
-            if(studentInfo.getEmail() != null)
+        if (user.getRole().equals(RoleEnum.STUDENT.name())) {
+            if (studentInfo.getEmail() != null)
                 user.setEmail(studentInfo.getEmail());
-            if(studentInfo.getPhoneNumber() != null)
+            if (studentInfo.getPhoneNumber() != null)
                 user.setPhoneNumber(studentInfo.getPhoneNumber());
             Student student = studentRepository.getStudentByAccount_UserId(user.getUserId());
-            if(studentInfo.getAddress() != null)
+            if (studentInfo.getAddress() != null)
                 student.setAddress(studentInfo.getAddress());
             if (studentInfo.getGender() != null)
                 student.setGender(studentInfo.getGender());
-            if(studentInfo.getDateOfBirth() != null)
+            if (studentInfo.getDateOfBirth() != null)
                 student.setNgaySinh(studentInfo.getDateOfBirth());
-            if(studentInfo.getJobs() != null)
+            if (studentInfo.getJobs() != null)
                 student.setJob(studentInfo.getJobs());
-            if(studentInfo.getName() != null)
+            if (studentInfo.getName() != null)
                 student.setName(studentInfo.getName());
-            if(studentInfo.getImage() != null)
+            if (studentInfo.getImage() != null)
                 student.setAvatar(studentInfo.getImage());
 
             userRepository.save(user);
@@ -316,14 +327,16 @@ public class UserService {
         // Tìm user theo email
         User user = userRepository.findByPhoneNumberOrEmail(email, email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        
+
         // Tạo mã xác minh reset password
-        Optional<VerificationCode> verificationCode = generateNewVerificationCode(user, VerificationCodeEnum.PASSWORD_RESET);
-        
-        // Xác định URL dựa trên role: STUDENT dùng frontendUrl, các role còn lại (ADMIN, TEACHER, ACADEMIC_MANAGER) dùng adminUrl
+        Optional<VerificationCode> verificationCode = generateNewVerificationCode(user,
+                VerificationCodeEnum.PASSWORD_RESET);
+
+        // Xác định URL dựa trên role: STUDENT dùng frontendUrl, các role còn lại
+        // (ADMIN, TEACHER, ACADEMIC_MANAGER) dùng adminUrl
         RoleEnum role = RoleEnum.valueOf(user.getRole());
         String targetUrl = (role == RoleEnum.STUDENT) ? frontendUrl : adminUrl;
-        
+
         // Gửi email với URL phù hợp
         verificationCode.ifPresent(code -> sendVerificationEmail(user, targetUrl, code));
     }
@@ -334,31 +347,31 @@ public class UserService {
         if (!newPassword.equals(confirmPassword)) {
             throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
         }
-        
+
         // Tìm mã xác minh
         VerificationCode verificationCode = verificationCodeRepository.findByVerificationCode(code)
                 .orElseThrow(() -> new AppException(ErrorCode.INVALID_CODE));
-        
+
         // Kiểm tra mã hết hạn
-        if (verificationCode.getExpiresAt() != null && 
-            verificationCode.getExpiresAt().isBefore(LocalDateTime.now())) {
+        if (verificationCode.getExpiresAt() != null &&
+                verificationCode.getExpiresAt().isBefore(LocalDateTime.now())) {
             verificationCodeRepository.delete(verificationCode);
             throw new AppException(ErrorCode.EXPIRED_VERIFICATION_CODE);
         }
-        
+
         // Kiểm tra đúng loại mã
         if (!verificationCode.getType().equals(VerificationCodeEnum.PASSWORD_RESET)) {
             throw new AppException(ErrorCode.INVALID_CODE);
         }
-        
+
         // Cập nhật mật khẩu mới
         User user = verificationCode.getUser();
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
-        
+
         // Xóa mã xác minh
         verificationCodeRepository.delete(verificationCode);
-        
+
         return ApiResponse.builder()
                 .code(1000)
                 .message("Password has been reset successfully. Please login with your new password.")
@@ -372,10 +385,10 @@ public class UserService {
         if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
             throw new AppException(ErrorCode.USER_PHONE_OR_EMAIL_EXIST);
         }
-        
+
         // Kiểm tra email nếu có
-        if (request.getEmail() != null && !request.getEmail().isEmpty() 
-            && userRepository.existsByEmail(request.getEmail())) {
+        if (request.getEmail() != null && !request.getEmail().isEmpty()
+                && userRepository.existsByEmail(request.getEmail())) {
             throw new AppException(ErrorCode.USER_PHONE_OR_EMAIL_EXIST);
         }
 
@@ -399,8 +412,82 @@ public class UserService {
         student.setJob(request.getJob());
         studentRepository.save(student);
 
+        // Gửi email thông tin tài khoản nếu học viên có email
+        if (user.getEmail() != null && !user.getEmail().isEmpty()) {
+            sendAccountCredentialsEmail(user, "123456");
+        }
+
         return studentMapper.toStudentInfo(student);
     }
 
+    // ====================== GỬI EMAIL THÔNG TIN TÀI KHOẢN ======================
+    /**
+     * Gửi email thông tin đăng nhập cho học viên mới được tạo bởi Admin
+     * 
+     * @param user     User đã được tạo
+     * @param password Mật khẩu mặc định
+     */
+    public void sendAccountCredentialsEmail(User user, String password) {
+        if (user.getEmail() == null || user.getEmail().isEmpty()) {
+            return;
+        }
+
+        String toAddress = user.getEmail();
+        String senderName = "Ipower IELTS";
+        String fromAddress = "nguyenbro9721@gmail.com";
+        String subject = "Thông tin tài khoản học viên - Ipower IELTS";
+
+        String content = String.format(
+                """
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                            <div style="background-color: #f97316; color: white; padding: 20px; text-align: center;">
+                                <h1 style="margin: 0;">Chào mừng đến với Ipower IELTS!</h1>
+                            </div>
+                            <div style="padding: 30px; background-color: #f9fafb;">
+                                <p>Xin chào,</p>
+                                <p>Tài khoản học viên của bạn đã được tạo thành công. Dưới đây là thông tin đăng nhập:</p>
+
+                                <div style="background-color: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                                    <table style="width: 100%%;">
+                                        <tr>
+                                            <td style="padding: 8px 0; color: #6b7280;">Tên đăng nhập:</td>
+                                            <td style="padding: 8px 0; font-weight: bold;">%s</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 0; color: #6b7280;">Mật khẩu:</td>
+                                            <td style="padding: 8px 0; font-weight: bold;">%s</td>
+                                        </tr>
+                                    </table>
+                                </div>
+
+                                <p style="color: #dc2626; font-weight: bold;">
+                                    Vui lòng đổi mật khẩu sau lần đăng nhập đầu tiên để bảo mật tài khoản.
+                                </p>
+
+                                <p>Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi.</p>
+                                <p>Trân trọng,<br>Ipower IELTS</p>
+                            </div>
+                            <div style="background-color: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; color: #6b7280;">
+                                Email này được gửi tự động, vui lòng không trả lời.
+                            </div>
+                        </div>
+                        """,
+                user.getPhoneNumber(), password);
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message);
+
+            helper.setFrom(fromAddress, senderName);
+            helper.setTo(toAddress);
+            helper.setSubject(subject);
+            helper.setText(content, true);
+            mailSender.send(message);
+
+        } catch (UnsupportedEncodingException | MessagingException e) {
+            // Log error but don't throw - email sending is non-critical
+            // Student is still created successfully
+        }
+    }
 
 }

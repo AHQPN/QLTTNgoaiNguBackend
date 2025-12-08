@@ -101,7 +101,6 @@ public enum ErrorCode {
         INVALID_DURATION(HttpStatus.BAD_REQUEST, 12008, "Duration cannot be negative"),
         IMAGE_MISSING(HttpStatus.BAD_REQUEST, 12009, "Image missing"),
 
-
         COURSE_STUDY_HOURS_INVALID(HttpStatus.BAD_REQUEST, 7002, "Study hours must be positive"),
         COURSE_NUMBER_OF_SESSIONS_INVALID(HttpStatus.BAD_REQUEST, 7004, "Number of sessions must be positive"),
         SKILL_MISMATCH(HttpStatus.BAD_REQUEST, 3001, "Skill IDs in request do not match skills in modules"),
@@ -110,7 +109,7 @@ public enum ErrorCode {
         DURATION_TOO_LONG(HttpStatus.BAD_REQUEST, 7008, "Duration of all modules must be less than number of sessions"),
         DURATION_MUST_POSITIVE(HttpStatus.BAD_REQUEST, 7009, "Duration must be positive"),
 
-        //JWT TOKEN
+        // JWT TOKEN
         INVALID_JWT_TOKEN(HttpStatus.UNAUTHORIZED, 8001, "Invalid JWT token"),
         EXPIRED_JWT_TOKEN(HttpStatus.UNAUTHORIZED, 8002, "JWT token is expired"),
         UNSUPPORT_TOKEN(HttpStatus.BAD_REQUEST, 8003, "JWT token is unsupported"),
@@ -118,17 +117,17 @@ public enum ErrorCode {
 
         // Enrollment errors
         ENROLLMENT_NOT_FOUND(HttpStatus.NOT_FOUND, 13000, "Enrollment not found"),
-        
+
         // Review errors
         REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, 14000, "Review already exists for this enrollment"),
         REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, 14001, "Review not found"),
-        
+
         // File errors
         FILE_NOT_FOUND(HttpStatus.NOT_FOUND, 15000, "File not found"),
         FILE_EMPTY(HttpStatus.BAD_REQUEST, 15001, "File is empty"),
         FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, 15002, "File size exceeds maximum limit"),
         INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, 15003, "Invalid file type"),
-        
+
         // Grade errors
         GRADE_NOT_FOUND(HttpStatus.NOT_FOUND, 16000, "Grade not found"),
         GRADE_TYPE_NOT_FOUND(HttpStatus.NOT_FOUND, 16001, "Grade type not found"),
@@ -136,20 +135,19 @@ public enum ErrorCode {
         CANNOT_GRADE_MIDTERM_YET(HttpStatus.BAD_REQUEST, 16003, "Cannot grade midterm yet - minimum sessions not met"),
         CANNOT_GRADE_FINAL_YET(HttpStatus.BAD_REQUEST, 16004, "Cannot grade final exam yet - class not completed"),
         INVALID_GRADE_TYPE(HttpStatus.BAD_REQUEST, 16005, "Invalid grade type"),
-        
+
         // Invoice errors
         INVOICE_NOT_FOUND(HttpStatus.NOT_FOUND, 17000, "Invoice not found"),
         INVOICE_ALREADY_PAID(HttpStatus.BAD_REQUEST, 17001, "Invoice has already been paid"),
         INVOICE_EXPIRED(HttpStatus.BAD_REQUEST, 17002, "Invoice has expired"),
-        
+
         // Promotion errors
         PROMOTION_NOT_FOUND(HttpStatus.NOT_FOUND, 18000, "Promotion not found"),
         PROMOTION_TYPE_NOT_FOUND(HttpStatus.NOT_FOUND, 18001, "Promotion type not found"),
         INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, 18002, "Invalid date range - end date must be after start date"),
-        COURSE_ALREADY_IN_ACTIVE_PROMOTION(HttpStatus.CONFLICT, 18003, "Course is already in an active promotion");
-
-        
-
+        COURSE_ALREADY_IN_ACTIVE_PROMOTION(HttpStatus.CONFLICT, 18003, "Course is already in an active promotion"),
+        EMAIL_EXISTED(HttpStatus.BAD_REQUEST, 18004, "Email already exists"),
+        PHONE_EXISTED(HttpStatus.BAD_REQUEST, 18005, "Phone number already exists");
 
         private final HttpStatus httpStatus;
         private final int code;

@@ -12,33 +12,77 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Request DTO để cập nhật thông tin giảng viên
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class LecturerUpdateRequest {
-    
+
+    /**
+     * Họ tên đầy đủ
+     */
     private String fullName;
-    
+
+    /**
+     * Ngày sinh
+     */
     @Past(message = "Ngày sinh phải là ngày trong quá khứ")
     private LocalDate dateOfBirth;
-    
-    private String imagePath;
-    
-    // Thông tin liên hệ
-    @Email(message = "Email không đúng định dạng")
+
+    /**
+     * Email (không bắt buộc)
+     */
+    @Email(message = "Email không hợp lệ")
     private String email;
-    
-    @Pattern(regexp = "^[0-9]{10,11}$", message = "Số điện thoại phải là 10-11 chữ số")
+
+    /**
+     * Số điện thoại
+     * - HEAD: (0|+84) + 9–10 số
+     * - master: 10–11 số
+     * → Hợp nhất theo chuẩn Việt Nam: 0xxxxxxxxx hoặc +84xxxxxxxxx
+     */
+    @Pattern(
+        regexp = "^(0|\\+84)[0-9]{9,10}$",
+        message = "Số điện thoại không hợp lệ"
+    )
     private String phoneNumber;
-    
-    // Mật khẩu mới (nếu cần đổi)
+
+    /**
+     * Địa chỉ
+     */
+    private String address;
+
+    /**
+     * Giới tính: true = Nam, false = Nữ, null = không đổi
+     */
+    private Boolean gender;
+
+    /**
+     * Chuyên môn giảng dạy
+     */
+    private String specialization;
+
+    /**
+     * Ảnh đại diện
+     */
+    private String imagePath;
+
+    /**
+     * Mật khẩu mới (nếu cần đổi)
+     */
     private String password;
-    
-    // Danh sách bằng cấp (nếu null thì không cập nhật, nếu có thì replace toàn bộ)
+
+    /**
+     * Danh sách bằng cấp
+     * - Nếu null → không cập nhật
+     * - Nếu có → replace toàn bộ
+     */
     @Valid
     private List<CertificateRequest> certificates;
-    
+
     @Data
     @Builder
     @NoArgsConstructor

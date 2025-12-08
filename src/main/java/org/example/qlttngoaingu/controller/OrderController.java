@@ -46,6 +46,7 @@ public class OrderController {
     private final CourseRegistrationService courseRegistrationService;
     private final VNPayService vnPayService;
     private final InvoiceRepository invoiceRepository;
+    private final org.example.qlttngoaingu.service.InvoiceEmailService invoiceEmailService;
     private final InvoiceMapper invoiceMapper;
 
     private static final int PAYMENT_TIMEOUT_MINUTES = 15; // Thời gian cho phép thanh toán: 15 phút
@@ -56,12 +57,12 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<ApiResponse<InvoiceResponse>> registerClass(
             @RequestBody CourseRegistrationRequest courseRegistrationRequest) {
-        
+
         InvoiceResponse invoice = courseRegistrationService.registerCourses(courseRegistrationRequest);
-        
-        log.info("Created invoice {} with amount {}, payment deadline: {} minutes", 
+
+        log.info("Created invoice {} with amount {}, payment deadline: {} minutes",
                 invoice.getInvoiceId(), invoice.getTotalAmount(), PAYMENT_TIMEOUT_MINUTES);
-        
+
         return ResponseEntity.ok().body(ApiResponse.<InvoiceResponse>builder()
                 .data(invoice)
                 .message("Đăng ký thành công. Vui lòng thanh toán trong vòng " + PAYMENT_TIMEOUT_MINUTES + " phút")
@@ -89,24 +90,23 @@ public class OrderController {
         // Kiểm tra hóa đơn đã hết hạn chưa (15 phút)
         LocalDateTime expiryTime = invoice.getDateCreated().plusMinutes(PAYMENT_TIMEOUT_MINUTES);
         if (LocalDateTime.now().isAfter(expiryTime)) {
-            log.warn("Invoice {} expired. Created at: {}, Expiry: {}", 
+            log.warn("Invoice {} expired. Created at: {}, Expiry: {}",
                     invoice.getInvoiceId(), invoice.getDateCreated(), expiryTime);
             throw new AppException(ErrorCode.INVOICE_EXPIRED);
         }
 
         // Lấy IP address của client
         String ipAddress = getClientIpAddress(httpRequest);
-        
+
         // Parse amount
         long amount = Long.parseLong(request.getAmount());
-        
+
         // Tạo payment URL với invoiceId
         VNPayCreatePaymentResponse paymentResponse = vnPayService.createPayment(
                 amount,
                 request.getOrderInfo(),
                 request.getInvoiceId(),
-                ipAddress
-        );
+                ipAddress);
 
         log.info("Created VNPay payment URL for invoice: {}, amount: {}", request.getInvoiceId(), amount);
 
@@ -162,21 +162,21 @@ public class OrderController {
     public void vnpayReturn(HttpServletRequest request, HttpServletResponse response) throws IOException {
         int paymentStatus = vnPayService.verifyPayment(request);
         Integer invoiceId = vnPayService.getInvoiceIdFromRequest(request);
-        
+
         String vnpResponseCode = request.getParameter("vnp_ResponseCode");
         String vnpTransactionNo = request.getParameter("vnp_TransactionNo");
         String vnpAmount = request.getParameter("vnp_Amount");
-        
-        log.info("VNPay return - invoiceId: {}, responseCode: {}, transactionNo: {}, status: {}", 
+
+        log.info("VNPay return - invoiceId: {}, responseCode: {}, transactionNo: {}, status: {}",
                 invoiceId, vnpResponseCode, vnpTransactionNo, paymentStatus);
 
         String baseUrl = vnPayService.getFrontendRedirectUrl();
         String redirectUrl;
-        
+
         if (paymentStatus == 1 && invoiceId != null) {
             // Thanh toán thành công - kiểm tra hóa đơn còn hợp lệ không
             Invoice invoice = invoiceRepository.findById(invoiceId).orElse(null);
-            
+
             if (invoice == null) {
                 redirectUrl = baseUrl
                         + "?status=failed"
@@ -186,7 +186,8 @@ public class OrderController {
                 redirectUrl = baseUrl
                         + "?status=success"
                         + "&invoiceId=" + invoiceId
-                        + "&message=" + URLEncoder.encode("Hóa đơn đã được thanh toán trước đó", StandardCharsets.UTF_8);
+                        + "&message="
+                        + URLEncoder.encode("Hóa đơn đã được thanh toán trước đó", StandardCharsets.UTF_8);
             } else {
                 // Kiểm tra hóa đơn có hết hạn không
                 LocalDateTime expiryTime = invoice.getDateCreated().plusMinutes(PAYMENT_TIMEOUT_MINUTES);
@@ -200,10 +201,13 @@ public class OrderController {
                     invoice.setStatus(true); // true = đã thanh toán
                     invoiceRepository.save(invoice);
                     log.info("Invoice {} updated to paid status", invoiceId);
-                    
+
+                    // Gửi email hóa đơn cho học viên
+                    invoiceEmailService.sendInvoiceEmail(invoice);
+
                     redirectUrl = baseUrl
                             + "?status=success"
-                            + "&invoiceId=" + invoiceId 
+                            + "&invoiceId=" + invoiceId
                             + "&transactionNo=" + (vnpTransactionNo != null ? vnpTransactionNo : "")
                             + "&amount=" + (vnpAmount != null ? Long.parseLong(vnpAmount) / 100 : 0)
                             + "&responseCode=" + vnpResponseCode;
@@ -220,6 +224,44 @@ public class OrderController {
         }
 
         response.sendRedirect(redirectUrl);
+    }
+
+    /**
+     * Xác nhận thanh toán tiền mặt - Cập nhật trạng thái và gửi hóa đơn
+     * Dùng cho phương thức thanh toán tiền mặt (paymentMethodId = 1)
+     */
+    @PostMapping("/payment/confirm-cash")
+    public ResponseEntity<ApiResponse> confirmCashPayment(@RequestParam Integer invoiceId) {
+        // Kiểm tra hóa đơn tồn tại
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new AppException(ErrorCode.INVOICE_NOT_FOUND));
+
+        // Kiểm tra hóa đơn đã thanh toán chưa
+        if (Boolean.TRUE.equals(invoice.getStatus())) {
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .message("Hóa đơn đã được thanh toán trước đó")
+                    .data(invoiceId)
+                    .build());
+        }
+
+        // Cập nhật trạng thái hóa đơn thành đã thanh toán
+        invoice.setStatus(true);
+        invoiceRepository.save(invoice);
+        log.info("Cash payment confirmed for invoice {}", invoiceId);
+
+        // Gửi hóa đơn qua email
+        try {
+            invoiceEmailService.sendInvoiceEmail(invoice);
+            log.info("Invoice email sent for invoice {}", invoiceId);
+        } catch (Exception e) {
+            log.warn("Failed to send invoice email for invoice {}: {}", invoiceId, e.getMessage());
+            // Không throw exception - thanh toán đã thành công, email chỉ là optional
+        }
+
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("Thanh toán tiền mặt thành công")
+                .data(invoiceId)
+                .build());
     }
 
     @GetMapping
@@ -319,11 +361,11 @@ public class OrderController {
         if (paymentStatus == -1) {
             return "Chữ ký không hợp lệ";
         }
-        
+
         if (responseCode == null) {
             return "Lỗi không xác định";
         }
-        
+
         return switch (responseCode) {
             case "07" -> "Giao dịch bị nghi ngờ gian lận";
             case "09" -> "Thẻ/Tài khoản chưa đăng ký dịch vụ InternetBanking";
