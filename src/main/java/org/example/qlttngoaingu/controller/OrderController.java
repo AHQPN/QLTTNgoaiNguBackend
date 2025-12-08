@@ -173,6 +173,44 @@ public class OrderController {
         response.sendRedirect(redirectUrl);
     }
 
+    /**
+     * Xác nhận thanh toán tiền mặt - Cập nhật trạng thái và gửi hóa đơn
+     * Dùng cho phương thức thanh toán tiền mặt (paymentMethodId = 1)
+     */
+    @PostMapping("/payment/confirm-cash")
+    public ResponseEntity<ApiResponse> confirmCashPayment(@RequestParam Integer invoiceId) {
+        // Kiểm tra hóa đơn tồn tại
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new AppException(ErrorCode.INVOICE_NOT_FOUND));
+
+        // Kiểm tra hóa đơn đã thanh toán chưa
+        if (Boolean.TRUE.equals(invoice.getStatus())) {
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .message("Hóa đơn đã được thanh toán trước đó")
+                    .data(invoiceId)
+                    .build());
+        }
+
+        // Cập nhật trạng thái hóa đơn thành đã thanh toán
+        invoice.setStatus(true);
+        invoiceRepository.save(invoice);
+        log.info("Cash payment confirmed for invoice {}", invoiceId);
+
+        // Gửi hóa đơn qua email
+        try {
+            invoiceEmailService.sendInvoiceEmail(invoice);
+            log.info("Invoice email sent for invoice {}", invoiceId);
+        } catch (Exception e) {
+            log.warn("Failed to send invoice email for invoice {}: {}", invoiceId, e.getMessage());
+            // Không throw exception - thanh toán đã thành công, email chỉ là optional
+        }
+
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("Thanh toán tiền mặt thành công")
+                .data(invoiceId)
+                .build());
+    }
+
     @GetMapping
     public ResponseEntity<ApiResponse> getOrders(@RequestParam Integer page, @RequestParam Integer size) {
         return ResponseEntity.ok().body(ApiResponse.builder().data(null).build());
