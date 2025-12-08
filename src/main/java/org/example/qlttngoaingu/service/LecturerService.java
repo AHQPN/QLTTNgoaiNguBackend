@@ -38,7 +38,6 @@ public class LecturerService {
     private final DegreeRepository degreeRepository;
     private final PasswordEncoder passwordEncoder;
 
-
     // ADD LECTURER BASIC INFO (User đã tồn tại)
 
     @Transactional
@@ -51,6 +50,16 @@ public class LecturerService {
         lecturerRepository.save(lecturer);
     }
 
+    /**
+     * Lấy Lecturer theo userId (từ User đang đăng nhập)
+     */
+    public Lecturer getLecturerByUserId(Integer userId) {
+        Lecturer lecturer = lecturerRepository.getByUser_UserId(userId);
+        if (lecturer == null) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+        return lecturer;
+    }
 
     // CHECK AVAILABLE LECTURERS
 
@@ -58,8 +67,7 @@ public class LecturerService {
             String schedulePattern,
             LocalTime startTime,
             Integer durationMinutes,
-            LocalDate startDate
-    ) {
+            LocalDate startDate) {
         List<Lecturer> lecturers = lecturerRepository.findAll();
         SchedulePattern pattern;
 
@@ -78,8 +86,7 @@ public class LecturerService {
                     pattern,
                     startTime,
                     endTime,
-                    startDate
-            );
+                    startDate);
 
             if (available) {
                 AvailableLecturerResponse dto = new AvailableLecturerResponse();
@@ -96,33 +103,32 @@ public class LecturerService {
             SchedulePattern pattern,
             LocalTime startTime,
             LocalTime endTime,
-            LocalDate startDate
-    ) {
-        List<CourseClass> classes =
-                classRepository.findByLecturer_LecturerIdAndStatus(
-                        lecturerId, ClassStatusEnum.InProgress.name());
+            LocalDate startDate) {
+        List<CourseClass> classes = classRepository.findByLecturer_LecturerIdAndStatus(
+                lecturerId, ClassStatusEnum.InProgress.name());
 
         for (CourseClass cls : classes) {
 
             LocalDate classEndDate = calculateClassEndDate(cls);
-            if (classEndDate.isBefore(startDate)) continue;
+            if (classEndDate.isBefore(startDate))
+                continue;
 
-            SchedulePattern classPattern =
-                    SchedulePattern.fromPattern(cls.getSchedule());
+            SchedulePattern classPattern = SchedulePattern.fromPattern(cls.getSchedule());
 
             Set<DayOfWeek> commonDays = new HashSet<>(pattern.getDaysOfWeek());
             commonDays.retainAll(classPattern.getDaysOfWeek());
 
-            if (commonDays.isEmpty()) continue;
+            if (commonDays.isEmpty())
+                continue;
 
             if (cls.getStartTime() != null) {
-                LocalTime classEndTime =
-                        cls.getStartTime().plusMinutes(cls.getMinutesPerSession());
+                LocalTime classEndTime = cls.getStartTime().plusMinutes(cls.getMinutesPerSession());
 
                 boolean overlap = !(endTime.isBefore(cls.getStartTime())
                         || startTime.isAfter(classEndTime));
 
-                if (overlap) return false;
+                if (overlap)
+                    return false;
             }
         }
         return true;
@@ -132,8 +138,7 @@ public class LecturerService {
         Course course = cls.getCourse();
         SchedulePattern pattern = SchedulePattern.fromPattern(cls.getSchedule());
 
-        BigDecimal totalMinutes =
-                BigDecimal.valueOf(course.getStudyHours()).multiply(BigDecimal.valueOf(60));
+        BigDecimal totalMinutes = BigDecimal.valueOf(course.getStudyHours()).multiply(BigDecimal.valueOf(60));
 
         int totalSessions = totalMinutes
                 .divide(BigDecimal.valueOf(cls.getMinutesPerSession()), 0, RoundingMode.CEILING)
@@ -163,7 +168,6 @@ public class LecturerService {
                 })
                 .toList();
     }
-
 
     // GET LECTURER DETAIL (Role-based)
 
@@ -215,13 +219,13 @@ public class LecturerService {
             acc.setRole(u.getRole());
             acc.setCreatedAt(u.getCreatedAt());
             acc.setIsVerified(u.getIsVerified());
-            if (isAdmin) acc.setPassword(u.getPasswordHash());
+            if (isAdmin)
+                acc.setPassword(u.getPasswordHash());
             dto.setAccountInfo(acc);
         }
 
-        List<CourseClass> teacherClasses =
-                classRepository.findByLecturer_LecturerIdAndStatusNot(
-                        lecturer.getLecturerId(), ClassStatusEnum.Closed.name());
+        List<CourseClass> teacherClasses = classRepository.findByLecturer_LecturerIdAndStatusNot(
+                lecturer.getLecturerId(), ClassStatusEnum.Closed.name());
         dto.setTotalClasses(teacherClasses.size());
 
         int totalStudents = teacherClasses.stream()
@@ -231,9 +235,8 @@ public class LecturerService {
                 .sum();
         dto.setTotalStudents(totalStudents);
 
-        Double avgRating =
-                courseReviewRepository.getAverageTeacherRatingByLecturerId(
-                        lecturer.getLecturerId());
+        Double avgRating = courseReviewRepository.getAverageTeacherRatingByLecturerId(
+                lecturer.getLecturerId());
         dto.setRating(avgRating != null ? avgRating : 0.0);
 
         int reviewCount = classRepository
@@ -242,8 +245,7 @@ public class LecturerService {
                 .sum();
         dto.setTotalReviews(reviewCount);
 
-        List<LecturerDegree> degrees =
-                lecturerDegreeRepository.findByLecturer_LecturerId(lecturer.getLecturerId());
+        List<LecturerDegree> degrees = lecturerDegreeRepository.findByLecturer_LecturerId(lecturer.getLecturerId());
 
         dto.setQualifications(
                 degrees.stream().map(ld -> {
@@ -254,12 +256,10 @@ public class LecturerService {
                     }
                     q.setLevel(ld.getLevel());
                     return q;
-                }).toList()
-        );
+                }).toList());
 
         return dto;
     }
-
 
     // PAGINATION CRUD
 
@@ -279,7 +279,6 @@ public class LecturerService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         return convertToResponse(lecturer);
     }
-
 
     // CREATE LECTURER (Tạo User + Lecturer + Bằng cấp)
 
@@ -321,7 +320,6 @@ public class LecturerService {
         return convertToResponse(savedLecturer);
     }
 
-
     // UPDATE LECTURER (CRUD version)
 
     @Transactional
@@ -358,8 +356,7 @@ public class LecturerService {
 
         // update certificates
         if (request.getCertificates() != null) {
-            List<LecturerDegree> olds =
-                    lecturerDegreeRepository.findByLecturer_LecturerId(lecturerId);
+            List<LecturerDegree> olds = lecturerDegreeRepository.findByLecturer_LecturerId(lecturerId);
 
             lecturerDegreeRepository.deleteAll(olds);
 
@@ -381,7 +378,6 @@ public class LecturerService {
         return convertToResponse(updated);
     }
 
-
     // DELETE LECTURER
     @Transactional
     public void deleteLecturer(Integer lecturerId) {
@@ -389,9 +385,8 @@ public class LecturerService {
         Lecturer lecturer = lecturerRepository.findById(lecturerId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        List<CourseClass> activeClasses =
-                classRepository.findByLecturer_LecturerIdAndStatusNot(
-                        lecturerId, ClassStatusEnum.Closed.name());
+        List<CourseClass> activeClasses = classRepository.findByLecturer_LecturerIdAndStatusNot(
+                lecturerId, ClassStatusEnum.Closed.name());
 
         if (!activeClasses.isEmpty())
             throw new AppException(ErrorCode.UNCATEGORIZED);
@@ -399,20 +394,16 @@ public class LecturerService {
         lecturerRepository.delete(lecturer);
     }
 
-
     // Convert Entity -> DTO
 
     private LecturerResponse convertToResponse(Lecturer lecturer) {
 
-        List<CourseClass> allClasses =
-                classRepository.findByLecturer_LecturerId(lecturer.getLecturerId());
+        List<CourseClass> allClasses = classRepository.findByLecturer_LecturerId(lecturer.getLecturerId());
 
-        List<CourseClass> activeClasses =
-                classRepository.findByLecturer_LecturerIdAndStatusNot(
-                        lecturer.getLecturerId(), ClassStatusEnum.Closed.name());
+        List<CourseClass> activeClasses = classRepository.findByLecturer_LecturerIdAndStatusNot(
+                lecturer.getLecturerId(), ClassStatusEnum.Closed.name());
 
-        List<LecturerDegree> degrees =
-                lecturerDegreeRepository.findByLecturer_LecturerId(lecturer.getLecturerId());
+        List<LecturerDegree> degrees = lecturerDegreeRepository.findByLecturer_LecturerId(lecturer.getLecturerId());
 
         List<LecturerResponse.CertificateInfo> certs = degrees.stream()
                 .filter(ld -> ld.getDegree() != null)
