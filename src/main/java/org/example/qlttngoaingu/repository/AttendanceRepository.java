@@ -29,4 +29,10 @@ public interface AttendanceRepository extends JpaRepository<Attendance,Integer> 
 	       "WHERE a.session.courseClass.lecturer.lecturerId = :lecturerId " +
 	       "AND a.absent = false")
 	long countPresentAttendancesByLecturer(@Param("lecturerId") Integer lecturerId);
+
+	/**
+	 * Lấy điểm danh theo danh sách session IDs
+	 */
+	@Query("SELECT a FROM Attendance a WHERE a.session.sessionId IN :sessionIds")
+	List<Attendance> findBySessionSessionIdIn(@Param("sessionIds") List<Integer> sessionIds);
 }
