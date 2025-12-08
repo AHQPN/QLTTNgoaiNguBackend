@@ -1,6 +1,16 @@
 package org.example.qlttngoaingu.service;
 
-import lombok.RequiredArgsConstructor;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.example.qlttngoaingu.dto.request.RoomRequest;
 import org.example.qlttngoaingu.dto.response.AvailableRoomResponse;
 import org.example.qlttngoaingu.entity.Course;
@@ -12,17 +22,11 @@ import org.example.qlttngoaingu.service.enums.ClassStatusEnum;
 import org.example.qlttngoaingu.service.enums.SchedulePattern;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.*;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class RoomService {
-    private final CourseService courseService;
     private final RoomRepository roomRepository;
     private final CourseClassRepository classRepository;
 
@@ -31,8 +35,10 @@ public class RoomService {
             LocalTime startTime,
             Integer durationMinutes,
             LocalDate startDate) {
-        // Get all rooms
-        List<Room> allRooms = roomRepository.findAll();
+        // Get all rooms that are available (status = "Sẵn sàng")
+        List<Room> allRooms = roomRepository.findAll().stream()
+                .filter(room -> "Sẵn sàng".equals(room.getStatus()))
+                .toList();
 
         // Parse pattern
         SchedulePattern pattern;
@@ -147,26 +153,48 @@ public class RoomService {
     }
 
 
-    public Room getRoomById(Integer id) {
-        return roomRepository.findById(id)
+    public AvailableRoomResponse getRoomById(Integer id) {
+        Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Room Not Found"));
+        
+        AvailableRoomResponse response = new AvailableRoomResponse();
+        response.setRoomId(room.getRoomId());
+        response.setRoomName(room.getRoomName());
+        response.setCapacity(room.getCapacity());
+        response.setStatus(room.getStatus());
+        return response;
     }
 
-    public Room createRoom(RoomRequest request) {
+    public AvailableRoomResponse createRoom(RoomRequest request) {
         Room room = new Room();
         room.setRoomName(request.getRoomName());
         room.setCapacity(request.getCapacity());
-        return roomRepository.save(room);
+        room.setStatus("Sẵn sàng"); // Mặc định phòng mới là "Sẵn sàng"
+        Room saved = roomRepository.save(room);
+        
+        AvailableRoomResponse response = new AvailableRoomResponse();
+        response.setRoomId(saved.getRoomId());
+        response.setRoomName(saved.getRoomName());
+        response.setCapacity(saved.getCapacity());
+        response.setStatus(saved.getStatus());
+        return response;
     }
 
-    public Room updateRoom(Integer id, RoomRequest request) {
+    public AvailableRoomResponse updateRoom(Integer id, RoomRequest request) {
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Room Not Found"));
 
         room.setRoomName(request.getRoomName());
         room.setCapacity(request.getCapacity());
 
-        return roomRepository.save(room);
+        Room updated = roomRepository.save(room);
+        
+        AvailableRoomResponse response = new AvailableRoomResponse();
+        response.setRoomId(updated.getRoomId());
+        response.setRoomName(updated.getRoomName());
+        response.setCapacity(updated.getCapacity());
+        response.setStatus(updated.getStatus());
+        return response;
     }
 
     public void deleteRoom(Integer id) {

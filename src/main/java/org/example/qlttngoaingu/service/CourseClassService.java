@@ -903,7 +903,7 @@ public class CourseClassService {
         
         // Đếm số buổi đã hủy
         long canceledCount = allSessions.stream()
-                .filter(s -> "Đã hủy".equals(s.getStatus()))
+                .filter(s -> SessionStatus.Canceled.name().equals(s.getStatus()))
                 .count();
         
         // Nếu không có buổi nào bị hủy, không cho phép thêm
@@ -926,11 +926,58 @@ public class CourseClassService {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
         
+        // Kiểm tra trùng ngày học (không cho phép thêm buổi học cùng ngày)
+        boolean isDuplicateDate = allSessions.stream()
+                .anyMatch(s -> s.getSessionDate().equals(request.getSessionDate()));
+        
+        if (isDuplicateDate) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+        
+        // Kiểm tra xung đột với lớp khác (cùng phòng hoặc cùng giảng viên)
+        LocalDate sessionDate = request.getSessionDate();
+        DayOfWeek dayOfWeek = sessionDate.getDayOfWeek();
+        
+        // Tạo schedule pattern cho ngày này (ví dụ: "2" cho Thứ 2)
+        String singleDaySchedule = String.valueOf(dayOfWeek.getValue());
+        
+        // Kiểm tra xung đột phòng
+        if (courseClass.getRoom() != null) {
+            List<ConflictInfo> roomConflicts = conflictCheckService.checkRoomConflicts(
+                    courseClass.getRoom().getRoomId(),
+                    singleDaySchedule,
+                    courseClass.getStartTime(),
+                    courseClass.getMinutesPerSession(),
+                    sessionDate,
+                    courseClass.getClassId()
+            );
+            
+            if (!roomConflicts.isEmpty()) {
+                throw new AppException(ErrorCode.INVALID_REQUEST);
+            }
+        }
+        
+        // Kiểm tra xung đột giảng viên
+        if (courseClass.getLecturer() != null) {
+            List<ConflictInfo> lecturerConflicts = conflictCheckService.checkTeacherConflicts(
+                    courseClass.getLecturer().getLecturerId(),
+                    singleDaySchedule,
+                    courseClass.getStartTime(),
+                    courseClass.getMinutesPerSession(),
+                    sessionDate,
+                    courseClass.getClassId()
+            );
+            
+            if (!lecturerConflicts.isEmpty()) {
+                throw new AppException(ErrorCode.INVALID_REQUEST);
+            }
+        }
+        
         // Tạo buổi học mới
         Session newSession = new Session();
         newSession.setCourseClass(courseClass);
         newSession.setSessionDate(request.getSessionDate());
-        newSession.setStatus("Chưa học");
+        newSession.setStatus(SessionStatus.NotCompleted.name());
         newSession.setNote(request.getNote());
         
         sessionRepository.save(newSession);
@@ -943,5 +990,104 @@ public class CourseClassService {
         info.setStatus(newSession.getStatus());
         
         return info;
+    }
+
+    /**
+     * Gợi ý các ngày phù hợp để thêm buổi học bù
+     * Kiểm tra không trùng lịch phòng và giảng viên
+     */
+    public List<LocalDate> suggestMakeupDates(Integer classId, Integer daysAhead) {
+        // Lấy thông tin lớp học
+        CourseClass courseClass = classRepository.findById(classId)
+                .orElseThrow(() -> new AppException(ErrorCode.CLASS_NOT_FOUND));
+        
+        // Lấy tất cả buổi học hiện tại
+        List<Session> allSessions = sessionRepository.findByCourseClass_ClassIdOrderBySessionDate(classId);
+        
+        // Kiểm tra có thể thêm buổi học không
+        long canceledCount = allSessions.stream()
+                .filter(s -> "Đã hủy".equals(s.getStatus()))
+                .count();
+        
+        if (canceledCount == 0) {
+            return Collections.emptyList(); // Không có buổi nào bị hủy
+        }
+        
+        Integer courseStudyHours = courseClass.getCourse().getStudyHours();
+        Integer minutesPerSession = courseClass.getMinutesPerSession();
+        int originalSessionCount = (courseStudyHours * 60) / minutesPerSession;
+        long addedSessions = allSessions.size() - originalSessionCount;
+        
+        if (addedSessions >= canceledCount) {
+            return Collections.emptyList(); // Đã thêm đủ số buổi
+        }
+        
+        // Tạo set các ngày đã có buổi học
+        Set<LocalDate> existingDates = allSessions.stream()
+                .map(Session::getSessionDate)
+                .collect(Collectors.toSet());
+        
+        // Gợi ý các ngày trong khoảng thời gian
+        List<LocalDate> suggestions = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        LocalDate endDate = today.plusDays(daysAhead);
+        
+        for (LocalDate date = today; !date.isAfter(endDate); date = date.plusDays(1)) {
+            // Bỏ qua ngày đã có buổi học
+            if (existingDates.contains(date)) {
+                continue;
+            }
+            
+            // Bỏ qua Chủ nhật (hoặc theo quy định của trung tâm)
+            if (date.getDayOfWeek() == DayOfWeek.SUNDAY) {
+                continue;
+            }
+            
+            // Kiểm tra xung đột
+            boolean hasConflict = false;
+            String singleDaySchedule = String.valueOf(date.getDayOfWeek().getValue());
+            
+            // Check phòng
+            if (courseClass.getRoom() != null) {
+                List<ConflictInfo> roomConflicts = conflictCheckService.checkRoomConflicts(
+                        courseClass.getRoom().getRoomId(),
+                        singleDaySchedule,
+                        courseClass.getStartTime(),
+                        courseClass.getMinutesPerSession(),
+                        date,
+                        courseClass.getClassId()
+                );
+                if (!roomConflicts.isEmpty()) {
+                    hasConflict = true;
+                }
+            }
+            
+            // Check giảng viên
+            if (!hasConflict && courseClass.getLecturer() != null) {
+                List<ConflictInfo> lecturerConflicts = conflictCheckService.checkTeacherConflicts(
+                        courseClass.getLecturer().getLecturerId(),
+                        singleDaySchedule,
+                        courseClass.getStartTime(),
+                        courseClass.getMinutesPerSession(),
+                        date,
+                        courseClass.getClassId()
+                );
+                if (!lecturerConflicts.isEmpty()) {
+                    hasConflict = true;
+                }
+            }
+            
+            // Thêm vào danh sách nếu không có xung đột
+            if (!hasConflict) {
+                suggestions.add(date);
+            }
+            
+            // Giới hạn số lượng gợi ý
+            if (suggestions.size() >= 10) {
+                break;
+            }
+        }
+        
+        return suggestions;
     }
 }

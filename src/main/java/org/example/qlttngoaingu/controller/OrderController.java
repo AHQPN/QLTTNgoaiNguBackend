@@ -13,11 +13,24 @@ import org.example.qlttngoaingu.dto.response.VNPayCreatePaymentResponse;
 import org.example.qlttngoaingu.entity.Invoice;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
+import org.example.qlttngoaingu.mapper.InvoiceMapper;
 import org.example.qlttngoaingu.repository.InvoiceRepository;
+import org.example.qlttngoaingu.security.model.UserDetailsImpl;
 import org.example.qlttngoaingu.service.CourseRegistrationService;
 import org.example.qlttngoaingu.service.VNPayService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,6 +47,7 @@ public class OrderController {
     private final VNPayService vnPayService;
     private final InvoiceRepository invoiceRepository;
     private final org.example.qlttngoaingu.service.InvoiceEmailService invoiceEmailService;
+    private final InvoiceMapper invoiceMapper;
 
     private static final int PAYMENT_TIMEOUT_MINUTES = 15; // Thời gian cho phép thanh toán: 15 phút
 
@@ -98,6 +112,45 @@ public class OrderController {
 
         return ResponseEntity.ok(ApiResponse.<VNPayCreatePaymentResponse>builder()
                 .data(paymentResponse)
+                .build());
+    }
+
+    /**
+     * Thanh toán tiền mặt - Xác nhận thanh toán trực tiếp tại quầy
+     * Chỉ nhân viên/admin mới có quyền gọi endpoint này
+     */
+    @PostMapping("/payment/cash")
+    public ResponseEntity<ApiResponse<InvoiceResponse>> payByCash(
+            @RequestParam Integer invoiceId,
+            @RequestParam(required = false) String note) {
+        
+        // Kiểm tra hóa đơn tồn tại
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new AppException(ErrorCode.INVOICE_NOT_FOUND));
+
+        // Kiểm tra hóa đơn đã thanh toán chưa
+        if (Boolean.TRUE.equals(invoice.getStatus())) {
+            throw new AppException(ErrorCode.INVOICE_ALREADY_PAID);
+        }
+
+        // Cập nhật trạng thái hóa đơn
+        invoice.setStatus(true); // true = đã thanh toán
+        invoiceRepository.save(invoice);
+        
+        log.info("Invoice {} paid by cash. Amount: {}, Note: {}", 
+                invoiceId, invoice.getTotalAmount(), note);
+
+        // Map to response
+        InvoiceResponse response = new InvoiceResponse();
+        response.setInvoiceId(invoice.getInvoiceId());
+        response.setTotalAmount(invoice.getTotalAmount());
+        response.setPaymentMethod(invoice.getPaymentMethod().getName());
+        response.setDateCreated(invoice.getDateCreated());
+        response.setStatus(true); // Boolean: true = đã thanh toán
+
+        return ResponseEntity.ok(ApiResponse.<InvoiceResponse>builder()
+                .message("Xác nhận thanh toán tiền mặt thành công")
+                .data(response)
                 .build());
     }
 
@@ -212,8 +265,73 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse> getOrders(@RequestParam Integer page, @RequestParam Integer size) {
-        return ResponseEntity.ok().body(ApiResponse.builder().data(null).build());
+    public ResponseEntity<ApiResponse<Page<InvoiceResponse>>> getAllInvoices(
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) Boolean status,
+            @RequestParam(required = false) String keyword) {
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Invoice> invoices;
+        
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            // Tìm kiếm theo keyword
+            invoices = invoiceRepository.searchInvoices(keyword.trim(), pageable);
+        } else if (status != null) {
+            // Lọc theo trạng thái
+            invoices = invoiceRepository.findByStatusOrderByDateCreatedDesc(status, pageable);
+        } else {
+            // Lấy tất cả
+            invoices = invoiceRepository.findAllOrderByDateCreatedDesc(pageable);
+        }
+        
+        Page<InvoiceResponse> response = invoices.map(invoiceMapper::toInvoiceResponse);
+        
+        return ResponseEntity.ok(ApiResponse.<Page<InvoiceResponse>>builder()
+                .data(response)
+                .message("Lấy danh sách hóa đơn thành công")
+                .build());
+    }
+    
+    /**
+     * GET /orders/{id}
+     * Xem chi tiết hóa đơn
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<InvoiceResponse>> getInvoiceById(@PathVariable Integer id) {
+        Invoice invoice = invoiceRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.INVOICE_NOT_FOUND));
+        
+        InvoiceResponse response = invoiceMapper.toInvoiceResponse(invoice);
+        
+        return ResponseEntity.ok(ApiResponse.<InvoiceResponse>builder()
+                .data(response)
+                .message("Lấy chi tiết hóa đơn thành công")
+                .build());
+    }
+    
+    /**
+     * GET /orders/student/my-invoices
+     * Học viên xem danh sách hóa đơn của mình
+     */
+    @GetMapping("/student/my-invoices")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ApiResponse<Page<InvoiceResponse>>> getMyInvoices(
+            @AuthenticationPrincipal UserDetailsImpl principal,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        
+        // Lấy studentId từ userId
+        Integer studentId = principal.getId(); // Assuming this maps to student ID
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Invoice> invoices = invoiceRepository.findByStudent_IdOrderByDateCreatedDesc(studentId, pageable);
+        Page<InvoiceResponse> response = invoices.map(invoiceMapper::toInvoiceResponse);
+        
+        return ResponseEntity.ok(ApiResponse.<Page<InvoiceResponse>>builder()
+                .data(response)
+                .message("Lấy danh sách hóa đơn thành công")
+                .build());
     }
 
     /**
