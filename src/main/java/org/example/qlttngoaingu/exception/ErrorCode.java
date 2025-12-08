@@ -98,8 +98,9 @@ public enum ErrorCode {
         INVALID_PRICE(HttpStatus.BAD_REQUEST, 12005, "Price cannot be negative"),
         INVALID_CODE(HttpStatus.BAD_REQUEST, 12006, "Invalid verification code"),
         PASSWORD_NOT_MATCH(HttpStatus.BAD_REQUEST, 12007, "Password and confirm password do not match"),
-        INVALID_DURATION(HttpStatus.BAD_REQUEST, 12008, "Duration cannot be negative"),
-        IMAGE_MISSING(HttpStatus.BAD_REQUEST, 12009, "Image missing"),
+        INVALID_CURRENT_PASSWORD(HttpStatus.BAD_REQUEST, 12008, "Current password is incorrect"),
+        INVALID_DURATION(HttpStatus.BAD_REQUEST, 12009, "Duration cannot be negative"),
+        IMAGE_MISSING(HttpStatus.BAD_REQUEST, 12010, "Image missing"),
 
         COURSE_STUDY_HOURS_INVALID(HttpStatus.BAD_REQUEST, 7002, "Study hours must be positive"),
         COURSE_NUMBER_OF_SESSIONS_INVALID(HttpStatus.BAD_REQUEST, 7004, "Number of sessions must be positive"),

@@ -1,6 +1,5 @@
 package org.example.qlttngoaingu.security.jwt;
 
-
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
 
-
 @Component
 public class JwtUtils {
     private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
@@ -26,8 +24,6 @@ public class JwtUtils {
 
     @Value("${app.jwtExpirationMs}")
     private int jwtExpirationMs;
-
-
 
     public String generateJwtToken(Authentication authentication) {
 
@@ -44,16 +40,19 @@ public class JwtUtils {
     }
 
     private Key key() {
-        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+        // Use getBytes() for plain text secrets instead of Base64 decoding
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     public String getIdentifierFromJwtToken(String token) {
         return Jwts.parserBuilder().setSigningKey(key()).build()
                 .parseClaimsJws(token).getBody().getSubject();
     }
+
     public String generateTokenFromIdentifier(String identifier) {
         return Jwts.builder().setSubject(identifier).setIssuedAt(new Date())
-                .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs)).signWith(SignatureAlgorithm.HS512, jwtSecret)
+                .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+                .signWith(SignatureAlgorithm.HS512, jwtSecret)
                 .compact();
     }
 
@@ -62,7 +61,7 @@ public class JwtUtils {
             Jwts.parserBuilder().setSigningKey(key()).build().parse(authToken);
             return true;
         } catch (MalformedJwtException e) {
-            throw  new AppException(ErrorCode.INVALID_JWT_TOKEN);
+            throw new AppException(ErrorCode.INVALID_JWT_TOKEN);
 
         } catch (ExpiredJwtException e) {
             throw new AppException(ErrorCode.EXPIRED_JWT_TOKEN);

@@ -490,4 +490,36 @@ public class UserService {
         }
     }
 
+    // ====================== CHANGE PASSWORD ======================
+    /**
+     * Đổi mật khẩu cho người dùng đã đăng nhập
+     * 
+     * @param userId          ID người dùng
+     * @param currentPassword Mật khẩu hiện tại
+     * @param newPassword     Mật khẩu mới
+     * @throws AppException nếu mật khẩu hiện tại không đúng hoặc user không tồn tại
+     */
+    @Transactional
+    public void changePassword(Integer userId, String currentPassword, String newPassword) {
+        // Lấy user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        // Xác thực mật khẩu hiện tại
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new AppException(ErrorCode.INVALID_CURRENT_PASSWORD);
+        }
+
+        // Validate mật khẩu mới (độ dài, độ phức tạp, v.v.)
+        if (newPassword.length() < 6 || newPassword.length() > 32) {
+            throw new AppException(ErrorCode.INVALID_PASSWORD);
+        }
+
+        // Cập nhật mật khẩu mới
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        log.info("Password changed successfully for user ID: {}", userId);
+    }
+
 }
