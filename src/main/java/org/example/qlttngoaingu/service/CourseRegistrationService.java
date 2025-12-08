@@ -3,6 +3,7 @@ package org.example.qlttngoaingu.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.Map;
 
 import org.example.qlttngoaingu.dto.request.CourseRegistrationRequest;
 import org.example.qlttngoaingu.dto.response.InvoiceResponse;
+import org.example.qlttngoaingu.entity.Attendance;
 import org.example.qlttngoaingu.entity.Course;
 import org.example.qlttngoaingu.entity.CourseClass;
 import org.example.qlttngoaingu.entity.Invoice;
@@ -17,8 +19,10 @@ import org.example.qlttngoaingu.entity.InvoiceDetail;
 import org.example.qlttngoaingu.entity.InvoiceDetailPromotion;
 import org.example.qlttngoaingu.entity.PaymentMethod;
 import org.example.qlttngoaingu.entity.Promotion;
+import org.example.qlttngoaingu.entity.Session;
 import org.example.qlttngoaingu.entity.Student;
 import org.example.qlttngoaingu.mapper.InvoiceMapper;
+import org.example.qlttngoaingu.repository.AttendanceRepository;
 import org.example.qlttngoaingu.repository.CourseClassRepository;
 import org.example.qlttngoaingu.repository.InvoiceDetailPromotionRepository;
 import org.example.qlttngoaingu.repository.InvoiceDetailRepository;
@@ -26,6 +30,7 @@ import org.example.qlttngoaingu.repository.InvoiceRepository;
 import org.example.qlttngoaingu.repository.PaymentMethodRepository;
 import org.example.qlttngoaingu.repository.PromotionDetailRepository;
 import org.example.qlttngoaingu.repository.PromotionRepository;
+import org.example.qlttngoaingu.repository.SessionRepository;
 import org.example.qlttngoaingu.repository.StudentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +53,8 @@ public class CourseRegistrationService {
     private final PromotionDetailRepository promotionDetailRepository;
     private final InvoiceDetailPromotionRepository invoiceDetailPromotionRepository;
     private final InvoiceMapper invoiceMapper;
+    private final SessionRepository sessionRepository;
+    private final AttendanceRepository attendanceRepository;
 
     /**
      * Helper class để lưu thông tin combo promotion
@@ -55,12 +62,10 @@ public class CourseRegistrationService {
     private static class ComboInfo {
         Promotion promotion;
         List<Integer> courseIds;
-        BigDecimal totalDiscount; // Không dùng nữa nhưng giữ lại cho tương thích
 
-        ComboInfo(Promotion promotion, List<Integer> courseIds, BigDecimal totalDiscount) {
+        ComboInfo(Promotion promotion, List<Integer> courseIds) {
             this.promotion = promotion;
             this.courseIds = courseIds;
-            this.totalDiscount = totalDiscount;
         }
     }
 
@@ -200,7 +205,7 @@ public class CourseRegistrationService {
 
                 // Check combo: tất cả khóa trong promo phải có trong selectedCourseIds
                 if (selectedCourseIds.containsAll(promoCourseIds) && !promoCourseIds.isEmpty()) {
-                    eligibleCombos.add(new ComboInfo(promo, promoCourseIds, BigDecimal.ZERO));
+                    eligibleCombos.add(new ComboInfo(promo, promoCourseIds));
                     
                     log.info("Combo available: {} ({}%) for courses {}", 
                             promo.getName(), 
@@ -447,6 +452,205 @@ public class CourseRegistrationService {
         response.setTotalDiscountAmount(grandTotalDiscountAmount);
 
         return response;
+    }
+
+    /**
+     * Đăng ký lớp đã bắt đầu (Late Registration)
+     * - Tính giá theo số buổi còn lại
+     * - Tự động đánh dấu điểm danh các buổi trước
+     * - Kiểm tra giới hạn tiến độ lớp
+     */
+    @Transactional
+    public InvoiceResponse registerStartedClass(CourseRegistrationRequest request) {
+        
+        // 1. Kiểm tra thông tin cơ bản
+        Student student = studentRepository.findById(request.getStudentId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy học viên: " + request.getStudentId()));
+
+        PaymentMethod paymentMethod = paymentMethodRepository.findById(request.getPaymentMethodId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy PT thanh toán: " + request.getPaymentMethodId()));
+
+        // 2. Chỉ cho phép đăng ký 1 lớp tại 1 thời điểm cho late registration
+        if (request.getClassIds().size() != 1) {
+            throw new RuntimeException("Đăng ký muộn chỉ được phép đăng ký 1 lớp tại 1 thời điểm");
+        }
+
+        CourseClass courseClass = courseClassRepository.findById(request.getClassIds().get(0))
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lớp học"));
+
+        // 3. Kiểm tra lớp đã bắt đầu chưa
+        LocalDate today = LocalDate.now();
+        if (!courseClass.getStartDate().isBefore(today)) {
+            throw new RuntimeException("Lớp chưa bắt đầu. Vui lòng sử dụng đăng ký thông thường");
+        }
+
+        // 4. Lấy thông tin buổi học
+        List<Session> allSessions = sessionRepository.findByCourseClass_ClassIdOrderBySessionDate(courseClass.getClassId());
+        long totalSessions = allSessions.size();
+        long completedSessions = allSessions.stream()
+                .filter(s -> s.getSessionDate().isBefore(today))
+                .count();
+        long remainingSessions = totalSessions - completedSessions;
+
+        // 5. Kiểm tra giới hạn tiến độ (không cho đăng ký nếu > 50% tiến độ)
+        double progressPercent = (double) completedSessions / totalSessions * 100;
+        if (progressPercent > 50) {
+            throw new RuntimeException(String.format(
+                    "Lớp đã qua %.1f%% tiến độ (%d/%d buổi). Không thể đăng ký muộn (giới hạn 50%%)",
+                    progressPercent, completedSessions, totalSessions
+            ));
+        }
+
+        // 6. Kiểm tra sức chứa phòng
+        if (courseClass.getRoom() != null && courseClass.getRoom().getCapacity() != null) {
+            Integer currentEnrollment = invoiceDetailRepository.countByClassIdAndActiveInvoice(courseClass.getClassId());
+            Integer roomCapacity = courseClass.getRoom().getCapacity();
+            
+            if (currentEnrollment >= roomCapacity) {
+                throw new RuntimeException(String.format(
+                        "Lớp '%s' đã đủ sĩ số (%d/%d học viên)",
+                        courseClass.getClassName(), currentEnrollment, roomCapacity
+                ));
+            }
+        }
+
+        // 7. Kiểm tra trùng lịch với các lớp khác của học viên
+        List<CourseClass> studentClasses = invoiceDetailRepository.findAllByHocVienId(student.getId());
+        if (hasScheduleConflict(studentClasses, courseClass)) {
+            throw new RuntimeException("Lớp này trùng lịch với lớp khác bạn đã đăng ký");
+        }
+
+        // 8. Tính học phí theo tỷ lệ buổi còn lại
+        Course course = courseClass.getCourse();
+        BigDecimal originalPrice = BigDecimal.valueOf(course.getTuitionFee());
+        BigDecimal adjustedPrice = originalPrice
+                .multiply(BigDecimal.valueOf(remainingSessions))
+                .divide(BigDecimal.valueOf(totalSessions), 2, BigDecimal.ROUND_HALF_UP);
+
+        log.info("Late registration: Original={}, Adjusted={} ({}/{} sessions remaining)", 
+                originalPrice, adjustedPrice, remainingSessions, totalSessions);
+
+        // 9. Áp dụng khuyến mãi (nếu có)
+        Boolean isReturningStudent = invoiceRepository.existsByStudentAndStatus(student, true);
+        List<Promotion> activePromotions = promotionRepository.findAllActivePromotions(LocalDate.now());
+        
+        BigDecimal totalDiscount = BigDecimal.ZERO;
+        List<Promotion> appliedPromotions = new ArrayList<>();
+
+        // Chỉ áp dụng Type 1 và Type 3 (không áp dụng combo cho đăng ký lẻ)
+        for (Promotion promo : activePromotions) {
+            if (promo.getPromotionType().getId() == 1) {
+                // Type 1: Khuyến mãi khóa học đơn
+                List<Integer> promoCourseIds = promotionDetailRepository.findByPromotion(promo)
+                        .stream()
+                        .map(pd -> pd.getCourse().getCourseId())
+                        .toList();
+                
+                if (promoCourseIds.contains(course.getCourseId())) {
+                    BigDecimal discount = adjustedPrice
+                            .multiply(BigDecimal.valueOf(promo.getDiscountPercent()))
+                            .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
+                    totalDiscount = totalDiscount.add(discount);
+                    appliedPromotions.add(promo);
+                }
+            } else if (promo.getPromotionType().getId() == 3 && isReturningStudent) {
+                // Type 3: Học viên cũ
+                BigDecimal discount = adjustedPrice
+                        .multiply(BigDecimal.valueOf(promo.getDiscountPercent()))
+                        .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
+                totalDiscount = totalDiscount.add(discount);
+                appliedPromotions.add(promo);
+            }
+        }
+
+        BigDecimal finalPrice = adjustedPrice.subtract(totalDiscount);
+
+        // 10. Tạo hóa đơn
+        Invoice invoice = new Invoice();
+        invoice.setStudent(student);
+        invoice.setPaymentMethod(paymentMethod);
+        invoice.setDateCreated(LocalDateTime.now());
+        invoice.setStatus(false);
+        invoice.setTotalAmount(finalPrice);
+
+        InvoiceDetail detail = new InvoiceDetail();
+        detail.setInvoice(invoice);
+        detail.setCourseClass(courseClass);
+        detail.setAmount(finalPrice);
+
+        invoice.setDetails(List.of(detail));
+        Invoice savedInvoice = invoiceRepository.save(invoice);
+
+        // 11. Lưu promotion
+        for (Promotion promo : appliedPromotions) {
+            BigDecimal discountAmount = adjustedPrice
+                    .multiply(BigDecimal.valueOf(promo.getDiscountPercent()))
+                    .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
+            
+            InvoiceDetailPromotion idp = new InvoiceDetailPromotion();
+            idp.setInvoiceDetail(detail);
+            idp.setPromotion(promo);
+            idp.setDiscountValue(discountAmount);
+            invoiceDetailPromotionRepository.save(idp);
+        }
+
+        // 12. Tự động tạo điểm danh cho các buổi đã qua
+        List<Session> pastSessions = allSessions.stream()
+                .filter(s -> s.getSessionDate().isBefore(today))
+                .toList();
+
+        for (Session session : pastSessions) {
+            Attendance attendance = new Attendance();
+            attendance.setSession(session);
+            attendance.setInvoiceDetail(detail);
+            attendance.setAbsent(false); // Mặc định có mặt
+            attendance.setNote("Đăng ký muộn - điểm danh tự động");
+            attendanceRepository.save(attendance);
+        }
+
+        log.info("Late registration completed: {} auto-attendances created for past sessions", pastSessions.size());
+
+        // 13. Tạo response
+        InvoiceResponse response = invoiceMapper.toInvoiceResponse(savedInvoice);
+        
+        // Bổ sung thông tin chi tiết
+        response.setTotalOriginalPrice(originalPrice);
+        response.setCourseDiscountAmount(originalPrice.subtract(adjustedPrice)); // Giảm do đăng ký muộn
+        response.setTotalDiscountAmount(totalDiscount);
+        response.setTotalAmount(finalPrice);
+
+        return response;
+    }
+
+    /**
+     * Kiểm tra trùng lịch giữa lớp mới và các lớp đã đăng ký
+     */
+    private boolean hasScheduleConflict(List<CourseClass> existingClasses, CourseClass newClass) {
+        for (CourseClass existing : existingClasses) {
+            // So sánh schedule pattern
+            String[] existingDays = existing.getSchedule().split("-");
+            String[] newDays = newClass.getSchedule().split("-");
+            
+            // Kiểm tra có ngày trùng không
+            for (String existingDay : existingDays) {
+                for (String newDay : newDays) {
+                    if (existingDay.equals(newDay)) {
+                        // Có ngày trùng, kiểm tra giờ học
+                        LocalTime existingEnd = existing.getStartTime().plusMinutes(existing.getMinutesPerSession());
+                        LocalTime newEnd = newClass.getStartTime().plusMinutes(newClass.getMinutesPerSession());
+                        
+                        // Kiểm tra trùng giờ
+                        boolean timeOverlap = !(newClass.getStartTime().isAfter(existingEnd) || 
+                                                newEnd.isBefore(existing.getStartTime()));
+                        
+                        if (timeOverlap) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
 }

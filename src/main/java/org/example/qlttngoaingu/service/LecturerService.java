@@ -12,13 +12,22 @@ import java.util.List;
 import java.util.Set;
 
 import org.example.qlttngoaingu.dto.request.LecturerCreationRequest;
+import org.example.qlttngoaingu.dto.request.LecturerRequest;
+import org.example.qlttngoaingu.dto.request.LecturerUpdateRequest;
 import org.example.qlttngoaingu.dto.response.AvailableLecturerResponse;
+import org.example.qlttngoaingu.dto.response.LecturerResponse;
 import org.example.qlttngoaingu.dto.response.TeacherInfo;
-import org.example.qlttngoaingu.entity.*;
+import org.example.qlttngoaingu.entity.Course;
+import org.example.qlttngoaingu.entity.CourseClass;
+import org.example.qlttngoaingu.entity.Degree;
+import org.example.qlttngoaingu.entity.Lecturer;
+import org.example.qlttngoaingu.entity.LecturerDegree;
+import org.example.qlttngoaingu.entity.User;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.repository.CourseClassRepository;
 import org.example.qlttngoaingu.repository.CourseReviewRepository;
+import org.example.qlttngoaingu.repository.DegreeRepository;
 import org.example.qlttngoaingu.repository.InvoiceDetailRepository;
 import org.example.qlttngoaingu.repository.LecturerDegreeRepository;
 import org.example.qlttngoaingu.repository.LecturerRepository;
@@ -26,6 +35,11 @@ import org.example.qlttngoaingu.repository.UserRepository;
 import org.example.qlttngoaingu.service.enums.ClassStatusEnum;
 import org.example.qlttngoaingu.service.enums.RoleEnum;
 import org.example.qlttngoaingu.service.enums.SchedulePattern;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +54,8 @@ public class LecturerService {
     private final CourseClassRepository classRepository;
     private final InvoiceDetailRepository invoiceDetailRepository;
     private final CourseReviewRepository courseReviewRepository;
+    private final DegreeRepository degreeRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public void addLecturerInfo(LecturerCreationRequest request,Integer userId) {
@@ -286,6 +302,193 @@ public class LecturerService {
         return dto;
     }
 
+    // ==================== CRUD với Phân trang ====================
 
+    /**
+     * Lấy danh sách giảng viên có phân trang
+     */
+    public Page<LecturerResponse> getAllLecturers(int page, int size, String sortBy, String sortDirection) {
+        Sort sort = sortDirection.equalsIgnoreCase("desc") 
+            ? Sort.by(sortBy).descending() 
+            : Sort.by(sortBy).ascending();
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Lecturer> lecturersPage = lecturerRepository.findAll(pageable);
+        
+        return lecturersPage.map(this::convertToResponse);
+    }
+
+    /**
+     * Lấy thông tin chi tiết giảng viên theo ID
+     */
+    public LecturerResponse getLecturerByIdForCRUD(Integer lecturerId) {
+        Lecturer lecturer = lecturerRepository.findById(lecturerId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        return convertToResponse(lecturer);
+    }
+
+    /**
+     * Tạo giảng viên mới (bao gồm user, thông tin cá nhân và bằng cấp)
+     */
+    @Transactional
+    public LecturerResponse createLecturer(LecturerRequest request) {
+        // 1. Kiểm tra email đã tồn tại chưa
+        if (userRepository.findByPhoneNumberOrEmail(null, request.getEmail()).isPresent()) {
+            throw new AppException(ErrorCode.USER_EXIST);
+        }
+        
+        // 2. Tạo User mới
+        User user = new User();
+        user.setEmail(request.getEmail());
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setRole(RoleEnum.TEACHER.name());
+        user.setIsVerified(true); // Auto verify cho giảng viên
+        User savedUser = userRepository.save(user);
+        
+        // 3. Tạo Lecturer
+        Lecturer lecturer = new Lecturer();
+        lecturer.setFullName(request.getFullName());
+        lecturer.setDateOfBirth(request.getDateOfBirth());
+        lecturer.setImagePath(request.getImagePath());
+        lecturer.setUser(savedUser);
+        Lecturer savedLecturer = lecturerRepository.save(lecturer);
+        
+        // 4. Thêm bằng cấp
+        if (request.getCertificates() != null && !request.getCertificates().isEmpty()) {
+            for (LecturerRequest.CertificateRequest certReq : request.getCertificates()) {
+                Degree degree = degreeRepository.findById(certReq.getDegreeId())
+                        .orElseThrow(() -> new AppException(ErrorCode.UNCATEGORIZED));
+                
+                LecturerDegree lecturerDegree = new LecturerDegree();
+                lecturerDegree.setLecturer(savedLecturer);
+                lecturerDegree.setDegree(degree);
+                lecturerDegree.setLevel(certReq.getLevel());
+                lecturerDegreeRepository.save(lecturerDegree);
+            }
+        }
+        
+        return convertToResponse(savedLecturer);
+    }
+
+    /**
+     * Cập nhật thông tin giảng viên (bao gồm user info và bằng cấp)
+     */
+    @Transactional
+    public LecturerResponse updateLecturer(Integer lecturerId, LecturerUpdateRequest request) {
+        Lecturer lecturer = lecturerRepository.findById(lecturerId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        // 1. Cập nhật thông tin giảng viên
+        if (request.getFullName() != null) {
+            lecturer.setFullName(request.getFullName());
+        }
+        if (request.getDateOfBirth() != null) {
+            lecturer.setDateOfBirth(request.getDateOfBirth());
+        }
+        if (request.getImagePath() != null) {
+            lecturer.setImagePath(request.getImagePath());
+        }
+        
+        // 2. Cập nhật thông tin User
+        User user = lecturer.getUser();
+        if (user != null) {
+            if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
+                // Kiểm tra email mới đã tồn tại chưa
+                if (userRepository.findByPhoneNumberOrEmail(null, request.getEmail()).isPresent()) {
+                    throw new AppException(ErrorCode.USER_EXIST);
+                }
+                user.setEmail(request.getEmail());
+            }
+            if (request.getPhoneNumber() != null) {
+                user.setPhoneNumber(request.getPhoneNumber());
+            }
+            if (request.getPassword() != null && !request.getPassword().isBlank()) {
+                user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+            }
+            userRepository.save(user);
+        }
+        
+        // 3. Cập nhật bằng cấp (nếu có)
+        if (request.getCertificates() != null) {
+            // Xóa tất cả bằng cấp cũ
+            List<LecturerDegree> oldDegrees = lecturerDegreeRepository.findByLecturer_LecturerId(lecturerId);
+            lecturerDegreeRepository.deleteAll(oldDegrees);
+            
+            // Thêm bằng cấp mới
+            for (LecturerUpdateRequest.CertificateRequest certReq : request.getCertificates()) {
+                if (certReq.getDegreeId() != null) {
+                    Degree degree = degreeRepository.findById(certReq.getDegreeId())
+                            .orElseThrow(() -> new AppException(ErrorCode.UNCATEGORIZED));
+                    
+                    LecturerDegree lecturerDegree = new LecturerDegree();
+                    lecturerDegree.setLecturer(lecturer);
+                    lecturerDegree.setDegree(degree);
+                    lecturerDegree.setLevel(certReq.getLevel());
+                    lecturerDegreeRepository.save(lecturerDegree);
+                }
+            }
+        }
+        
+        Lecturer updatedLecturer = lecturerRepository.save(lecturer);
+        return convertToResponse(updatedLecturer);
+    }
+
+    /**
+     * Xóa giảng viên (soft delete hoặc hard delete tùy yêu cầu)
+     */
+    @Transactional
+    public void deleteLecturer(Integer lecturerId) {
+        Lecturer lecturer = lecturerRepository.findById(lecturerId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        // Kiểm tra giảng viên có lớp đang hoạt động không
+        List<CourseClass> activeClasses = classRepository.findByLecturer_LecturerIdAndStatusNot(
+                lecturerId, ClassStatusEnum.Closed.name());
+        
+        if (!activeClasses.isEmpty()) {
+            throw new AppException(ErrorCode.UNCATEGORIZED); // Không thể xóa giảng viên đang có lớp
+        }
+        
+        lecturerRepository.delete(lecturer);
+    }
+
+    /**
+     * Chuyển đổi Entity sang Response DTO
+     */
+    private LecturerResponse convertToResponse(Lecturer lecturer) {
+        // Đếm số lớp
+        List<CourseClass> allClasses = classRepository.findByLecturer_LecturerId(lecturer.getLecturerId());
+        List<CourseClass> activeClasses = classRepository.findByLecturer_LecturerIdAndStatusNot(
+                lecturer.getLecturerId(), ClassStatusEnum.Closed.name());
+        
+        // Lấy chứng chỉ
+        List<LecturerDegree> degrees = lecturerDegreeRepository.findByLecturer_LecturerId(lecturer.getLecturerId());
+        List<LecturerResponse.CertificateInfo> certificates = degrees.stream()
+                .filter(ld -> ld.getDegree() != null)
+                .map(ld -> LecturerResponse.CertificateInfo.builder()
+                        .certificateId(ld.getDegree().getId())
+                        .certificateName(ld.getDegree().getName())
+                        .level(ld.getLevel())
+                        .build())
+                .toList();
+        
+        User user = lecturer.getUser();
+        
+        return LecturerResponse.builder()
+                .lecturerId(lecturer.getLecturerId())
+                .fullName(lecturer.getFullName())
+                .dateOfBirth(lecturer.getDateOfBirth())
+                .imagePath(lecturer.getImagePath())
+                .userId(user != null ? user.getUserId() : null)
+                .username(user != null ? user.getEmail() : null)
+                .email(user != null ? user.getEmail() : null)
+                .phoneNumber(user != null ? user.getPhoneNumber() : null)
+                .totalClasses(allClasses.size())
+                .activeClasses(activeClasses.size())
+                .certificates(certificates)
+                .build();
+    }
 
 }

@@ -1,15 +1,19 @@
 package org.example.qlttngoaingu.controller;
 
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.example.qlttngoaingu.dto.response.ActivityResponse;
 import org.example.qlttngoaingu.dto.response.ApiResponse;
 import org.example.qlttngoaingu.dto.response.DashboardStatsResponse;
 import org.example.qlttngoaingu.service.AdminDashboardService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Controller để xử lý các API Dashboard cho Admin
