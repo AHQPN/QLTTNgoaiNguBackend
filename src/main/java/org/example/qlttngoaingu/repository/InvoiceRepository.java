@@ -56,7 +56,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
            "   OR a.phoneNumber LIKE CONCAT('%', :keyword, '%')) " +
            "AND (:status IS NULL OR i.status = :status) " +
            "AND (:fromDate IS NULL OR i.dateCreated >= :fromDate) " +
-           "AND (:toDate IS NULL OR i.dateCreated <= :toDate) " +
+           "AND (:toDate IS NULL OR i.dateCreated < :toDate) " +
            "ORDER BY i.dateCreated DESC")
     Page<Invoice> searchInvoicesWithFilters(
             @Param("keyword") String keyword,

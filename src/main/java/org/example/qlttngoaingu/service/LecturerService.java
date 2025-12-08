@@ -5,24 +5,48 @@ import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
 import org.example.qlttngoaingu.dto.request.LecturerCreationRequest;
 import org.example.qlttngoaingu.dto.request.LecturerRequest;
 import org.example.qlttngoaingu.dto.request.LecturerUpdateRequest;
 import org.example.qlttngoaingu.dto.response.AvailableLecturerResponse;
+import org.example.qlttngoaingu.dto.response.LecturerDashboardStatsResponse;
 import org.example.qlttngoaingu.dto.response.LecturerResponse;
 import org.example.qlttngoaingu.dto.response.TeacherInfo;
-import org.example.qlttngoaingu.entity.*;
+import org.example.qlttngoaingu.entity.Course;
+import org.example.qlttngoaingu.entity.CourseClass;
+import org.example.qlttngoaingu.entity.Degree;
+import org.example.qlttngoaingu.entity.Lecturer;
+import org.example.qlttngoaingu.entity.LecturerDegree;
+import org.example.qlttngoaingu.entity.User;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
-import org.example.qlttngoaingu.repository.*;
+import org.example.qlttngoaingu.repository.AttendanceRepository;
+import org.example.qlttngoaingu.repository.CourseClassRepository;
+import org.example.qlttngoaingu.repository.CourseReviewRepository;
+import org.example.qlttngoaingu.repository.DegreeRepository;
+import org.example.qlttngoaingu.repository.InvoiceDetailRepository;
+import org.example.qlttngoaingu.repository.LecturerDegreeRepository;
+import org.example.qlttngoaingu.repository.LecturerRepository;
+import org.example.qlttngoaingu.repository.SessionRepository;
+import org.example.qlttngoaingu.repository.UserRepository;
 import org.example.qlttngoaingu.service.enums.ClassStatusEnum;
 import org.example.qlttngoaingu.service.enums.RoleEnum;
 import org.example.qlttngoaingu.service.enums.SchedulePattern;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -37,6 +61,8 @@ public class LecturerService {
     private final CourseReviewRepository courseReviewRepository;
     private final DegreeRepository degreeRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SessionRepository sessionRepository;
+    private final AttendanceRepository attendanceRepository;
 
     // ADD LECTURER BASIC INFO (User đã tồn tại)
 
@@ -434,5 +460,46 @@ public class LecturerService {
                 .activeClasses(activeClasses.size())
                 .certificates(certs)
                 .build();
+    }
+
+    /**
+     * Lấy thống kê dashboard cho giảng viên
+     */
+    public LecturerDashboardStatsResponse getDashboardStats(Integer lecturerId) {
+        // 1. Đếm số lớp đang hoạt động (InProgress)
+        long totalClasses = classRepository.countByLecturer_LecturerIdAndStatus(
+            lecturerId, 
+            ClassStatusEnum.InProgress.name()
+        );
+
+        // 2. Đếm tổng số học viên trong các lớp đang hoạt động
+        long totalStudents = invoiceDetailRepository.countDistinctStudentsByLecturerAndClassStatus(
+            lecturerId, 
+            ClassStatusEnum.InProgress.name()
+        );
+
+        // 3. Đếm số buổi học sắp tới (từ hôm nay)
+        long upcomingSessions = sessionRepository.countUpcomingSessionsByLecturer(
+            lecturerId, 
+            LocalDate.now()
+        );
+
+        // 4. Tính tỷ lệ điểm danh (attendance rate)
+        long totalAttendances = attendanceRepository.countTotalAttendancesByLecturer(lecturerId);
+        long presentAttendances = attendanceRepository.countPresentAttendancesByLecturer(lecturerId);
+        
+        double attendanceRate = 0.0;
+        if (totalAttendances > 0) {
+            attendanceRate = (double) presentAttendances / totalAttendances * 100;
+            // Làm tròn đến 1 chữ số thập phân
+            attendanceRate = Math.round(attendanceRate * 10.0) / 10.0;
+        }
+
+        return new LecturerDashboardStatsResponse(
+            totalClasses,
+            totalStudents,
+            upcomingSessions,
+            attendanceRate
+        );
     }
 }

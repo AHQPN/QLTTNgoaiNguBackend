@@ -5,7 +5,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 import org.example.qlttngoaingu.dto.request.CourseRegistrationRequest;
@@ -280,9 +279,11 @@ public class OrderController {
         
         Pageable pageable = PageRequest.of(page, size);
         
-        // Convert LocalDate to LocalDateTime (start of day and end of day)
+        // Convert LocalDate to LocalDateTime for precise date range filtering
+        // fromDate: start of day (00:00:00)
+        // toDate: use next day start (exclusive) to include all records on toDate
         LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
-        LocalDateTime toDateTime = toDate != null ? toDate.atTime(LocalTime.MAX) : null;
+        LocalDateTime toDateTime = toDate != null ? toDate.plusDays(1).atStartOfDay() : null;
         
         // Use advanced filter query
         Page<Invoice> invoices = invoiceRepository.searchInvoicesWithFilters(

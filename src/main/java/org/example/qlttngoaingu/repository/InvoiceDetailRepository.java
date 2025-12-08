@@ -39,4 +39,14 @@ public interface InvoiceDetailRepository extends JpaRepository<InvoiceDetail, In
         WHERE hd.student.id = :hocVienId
     """)
     List<CourseClass> findAllByHocVienId(@Param("hocVienId") Integer hocVienId);
+
+    /**
+     * Đếm số học viên khác nhau trong các lớp của giảng viên (chỉ lớp đang hoạt động)
+     */
+    @Query("SELECT COUNT(DISTINCT d.invoice.student.id) FROM InvoiceDetail d " +
+           "WHERE d.courseClass.lecturer.lecturerId = :lecturerId " +
+           "AND d.courseClass.status = :status " +
+           "AND d.invoice.status = true")
+    long countDistinctStudentsByLecturerAndClassStatus(@Param("lecturerId") Integer lecturerId, 
+                                                        @Param("status") String status);
 }

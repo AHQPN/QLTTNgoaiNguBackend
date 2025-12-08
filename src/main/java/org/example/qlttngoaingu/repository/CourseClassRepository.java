@@ -66,8 +66,18 @@ public interface CourseClassRepository extends JpaRepository<CourseClass, Intege
 
     List<CourseClass> findByLecturer_LecturerIdAndStatusNot(Integer lecturerId, String status);
 
-    List<Integer> findIdsByLecturer_LecturerIdAndStatusNot(Integer lecturerId, String status);
+    @Query("SELECT c.classId FROM CourseClass c WHERE c.lecturer.lecturerId = :lecturerId AND c.status <> :status")
+    List<Integer> findIdsByLecturer_LecturerIdAndStatusNot(@Param("lecturerId") Integer lecturerId, @Param("status") String status);
 
     List<CourseClass> findByLecturer_LecturerId(Integer lecturerId);
+
+    /**
+     * Đếm số lớp của giảng viên theo trạng thái
+     */
+    @Query("SELECT COUNT(c) FROM CourseClass c " +
+           "WHERE c.lecturer.lecturerId = :lecturerId " +
+           "AND c.status = :status")
+    long countByLecturer_LecturerIdAndStatus(@Param("lecturerId") Integer lecturerId, 
+                                              @Param("status") String status);
 
 }
