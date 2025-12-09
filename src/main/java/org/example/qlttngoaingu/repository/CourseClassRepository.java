@@ -12,74 +12,76 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface CourseClassRepository extends JpaRepository<CourseClass, Integer>, JpaSpecificationExecutor<CourseClass> {
+public interface CourseClassRepository
+                extends JpaRepository<CourseClass, Integer>, JpaSpecificationExecutor<CourseClass> {
 
-    @Query("""
-        SELECT c 
-        FROM CourseClass c 
-        WHERE c.course.courseId = :courseId
-          AND c.startDate >= :startDate
-          AND (
-                SELECT COUNT(i) FROM InvoiceDetail i 
-                WHERE i.courseClass.classId = c.classId
-              ) < c.room.capacity
-    """)
-    List<CourseClass> findAvailableClasses(
-            @Param("courseId") Integer courseId,
-            @Param("startDate") LocalDate startDate
-    );
+        /**
+         * Find available classes for enrollment (Option D).
+         * Shows only classes that:
+         * - Haven't started yet (startDate >= today)
+         * - Status is 'Pending' or 'InProgress'
+         * - Have available capacity
+         */
+        @Query("""
+                            SELECT c
+                            FROM CourseClass c
+                            WHERE c.course.courseId = :courseId
+                              AND c.startDate >= :today
+                              AND c.status IN ('Pending', 'InProgress')
+                              AND (
+                                    SELECT COUNT(i) FROM InvoiceDetail i
+                                    WHERE i.courseClass.classId = c.classId
+                                  ) < c.room.capacity
+                            ORDER BY c.startDate ASC
+                        """)
+        List<CourseClass> findAvailableClasses(
+                        @Param("courseId") Integer courseId,
+                        @Param("today") LocalDate today);
 
-    List<CourseClass> findByRoom_RoomIdAndStartDateGreaterThanEqual(Integer roomId, LocalDate startDate);
+        List<CourseClass> findByRoom_RoomIdAndStartDateGreaterThanEqual(Integer roomId, LocalDate startDate);
 
-    List<CourseClass> findByLecturer_LecturerIdAndStartDateGreaterThanEqual(Integer lecturerId, LocalDate startDate);
+        List<CourseClass> findByLecturer_LecturerIdAndStartDateGreaterThanEqual(Integer lecturerId,
+                        LocalDate startDate);
 
-    List<CourseClass> findByRoom_RoomIdAndStatus(Integer roomId,String status);
+        List<CourseClass> findByRoom_RoomIdAndStatus(Integer roomId, String status);
 
-    // Lấy các lớp theo giảng viên mà đang active (status = true)
-    List<CourseClass> findByLecturer_LecturerIdAndStatus(Integer lecturerId, String status);
+        List<CourseClass> findByLecturer_LecturerIdAndStatus(Integer lecturerId, String status);
 
+        Page<CourseClass> findAll(Pageable pageable);
 
-    // Lấy tất cả lớp có thể phân trang
-    Page<CourseClass> findAll(Pageable pageable);
+        Set<CourseClass> findByCourse_CourseIdAndStatus(int courseId, String status);
 
+        CourseClass getCourseClassByClassId(Integer classId);
 
-    Set<CourseClass> findByCourse_CourseIdAndStatus(int courseId, String status);
-    CourseClass getCourseClassByClassId(Integer classId);
+        List<CourseClass> findByCourse_CourseId(Integer courseId);
 
+        @Query("""
+                            SELECT detail.courseClass.classId
+                            FROM InvoiceDetail detail
+                            WHERE detail.invoice.student.id = :studentId
+                              AND detail.invoice.status = true
+                        """)
+        List<Integer> findRegisteredClassIds(@Param("studentId") Integer studentId);
 
-    List<CourseClass> findByCourse_CourseId(Integer courseId);
+        @Query("""
+                            SELECT detail.courseClass
+                            FROM InvoiceDetail detail
+                            WHERE detail.invoice.student.id = :studentId
+                              AND detail.invoice.status = true
+                        """)
+        List<CourseClass> findRegisteredClasses(@Param("studentId") Integer studentId);
 
-    @Query("""
-    SELECT detail.courseClass.classId
-    FROM InvoiceDetail detail
-    WHERE detail.invoice.student.id = :studentId
-      AND detail.invoice.status = true
-    """)
-    List<Integer> findRegisteredClassIds(@Param("studentId") Integer studentId);
+        List<CourseClass> findByLecturer_LecturerIdAndStatusNot(Integer lecturerId, String status);
 
-    @Query("""
-    SELECT detail.courseClass
-    FROM InvoiceDetail detail
-    WHERE detail.invoice.student.id = :studentId
-      AND detail.invoice.status = true
-    """)
-    List<CourseClass> findRegisteredClasses(@Param("studentId") Integer studentId);
+        @Query("SELECT c.classId FROM CourseClass c WHERE c.lecturer.lecturerId = :lecturerId AND c.status <> :status")
+        List<Integer> findIdsByLecturer_LecturerIdAndStatusNot(@Param("lecturerId") Integer lecturerId,
+                        @Param("status") String status);
 
+        List<CourseClass> findByLecturer_LecturerId(Integer lecturerId);
 
-    List<CourseClass> findByLecturer_LecturerIdAndStatusNot(Integer lecturerId, String status);
-
-    @Query("SELECT c.classId FROM CourseClass c WHERE c.lecturer.lecturerId = :lecturerId AND c.status <> :status")
-    List<Integer> findIdsByLecturer_LecturerIdAndStatusNot(@Param("lecturerId") Integer lecturerId, @Param("status") String status);
-
-    List<CourseClass> findByLecturer_LecturerId(Integer lecturerId);
-
-    /**
-     * Đếm số lớp của giảng viên theo trạng thái
-     */
-    @Query("SELECT COUNT(c) FROM CourseClass c " +
-           "WHERE c.lecturer.lecturerId = :lecturerId " +
-           "AND c.status = :status")
-    long countByLecturer_LecturerIdAndStatus(@Param("lecturerId") Integer lecturerId, 
-                                              @Param("status") String status);
-
+        @Query("SELECT COUNT(c) FROM CourseClass c " +
+                        "WHERE c.lecturer.lecturerId = :lecturerId " +
+                        "AND c.status = :status")
+        long countByLecturer_LecturerIdAndStatus(@Param("lecturerId") Integer lecturerId,
+                        @Param("status") String status);
 }

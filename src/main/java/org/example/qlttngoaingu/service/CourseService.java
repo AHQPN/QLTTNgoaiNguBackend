@@ -50,7 +50,6 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class CourseService {
 
-
     private final CourseRepository courseRepository;
 
     private final ModuleService moduleService;
@@ -61,7 +60,7 @@ public class CourseService {
     private final CourseClassService courseClassService;
     private final CourseClassRepository courseClassRepository;
     private final SessionRepository sessionRepository;
-    private final PromotionDetailRepository  promotionDetailRepository;
+    private final PromotionDetailRepository promotionDetailRepository;
     private final PromotionRepository promotionRepository;
     private final InvoiceDetailRepository invoiceDetailRepository;
 
@@ -79,39 +78,34 @@ public class CourseService {
                     List<ActiveCourseResponse> courseResponses = courses
                             .stream()
                             .map(course -> {
-                                List<Promotion> validPromotions = promotionRepository.findValidPromotionsByCourseAndType1(
-                                        course.getCourseId(),
-                                        LocalDate.now()
-                                );
-
-
+                                List<Promotion> validPromotions = promotionRepository
+                                        .findValidPromotionsByCourseAndType1(
+                                                course.getCourseId(),
+                                                LocalDate.now());
 
                                 ActiveCourseResponse response = courseMapper.toActiveResponse(course);
                                 response.setObjectives(course.getObjectives());
                                 if (!validPromotions.isEmpty()) {
                                     Promotion bestPromotion = validPromotions.get(0);
-                                    Double promotionPrice =  course.getTuitionFee() / bestPromotion.getDiscountPercent();
+                                    Double promotionPrice = course.getTuitionFee() / bestPromotion.getDiscountPercent();
                                     response.setPromotionPrice(promotionPrice);
                                 }
-                                ClassScheduleResponse classScheduleResponse = courseClassService.getScheduleOfAllClassByCourseId(course.getCourseId());
+                                ClassScheduleResponse classScheduleResponse = courseClassService
+                                        .getScheduleOfAllClassByCourseId(course.getCourseId());
                                 response.setClassScheduleResponse(classScheduleResponse);
                                 return response;
                             })
                             .collect(Collectors.toList());
-
 
                     return new CourseGroupResponse(
                             category.getId(),
                             category.getName(),
                             category.getLevel(),
                             category.getDescription(),
-                            courseResponses
-                    );
+                            courseResponses);
                 })
                 .collect(Collectors.toList());
     }
-
-
 
     public List<ActiveCourseNameResponse> getAllActiveCourseNames() {
         return courseRepository.findByStatusTrue()
@@ -120,8 +114,7 @@ public class CourseService {
                 .collect(Collectors.toList());
     }
 
-    public CoursePageResponse getAllCourses(int page, int size)
-    {
+    public CoursePageResponse getAllCourses(int page, int size) {
         Pageable paging = PageRequest.of(page, size);
         Page<Course> pageTuts;
 
@@ -138,10 +131,11 @@ public class CourseService {
             dto.setCourseCategoryId(course.getCourseCategory().getId());
 
             return dto;
-        }).toList();;
+        }).toList();
+        ;
 
-
-        return new CoursePageResponse(courseResponses,pageTuts.getNumber(),pageTuts.getTotalElements(),pageTuts.getTotalPages());
+        return new CoursePageResponse(courseResponses, pageTuts.getNumber(), pageTuts.getTotalElements(),
+                pageTuts.getTotalPages());
     }
 
     private ActiveCourseResponse mapToResponse(Course course) {
@@ -155,7 +149,6 @@ public class CourseService {
         response.setImage(course.getImage());
         return response;
     }
-
 
     @Transactional
     public Course createCourse(CourseCreateRequest request) {
@@ -289,23 +282,19 @@ public class CourseService {
         return course;
     }
 
-
     // Get course by ID (details)
     public CourseDetailResponse getCourseDetailById(Integer id) {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
-
         List<Promotion> validPromotions = promotionRepository.findValidPromotionsByCourseAndType1(
                 course.getCourseId(),
-                LocalDate.now()
-        );
-
+                LocalDate.now());
 
         CourseDetailResponse response = courseMapper.toResponse(course);
         if (!validPromotions.isEmpty()) {
             Promotion bestPromotion = validPromotions.get(0);
-            Double promotionPrice =  course.getTuitionFee() / bestPromotion.getDiscountPercent();
+            Double promotionPrice = course.getTuitionFee() / bestPromotion.getDiscountPercent();
             response.setPromotionPrice(promotionPrice);
         }
 
@@ -313,7 +302,7 @@ public class CourseService {
         response.setStatus(course.getStatus());
         response.setCategory(course.getCourseCategory().getName());
         response.setLevel(course.getCourseCategory().getLevel());
-        
+
         // Nhóm modules theo skill
         List<CourseSkill> courseSkills = courseSkillRepository.findByCourse_CourseId(course.getCourseId());
         List<CourseDetailResponse.SkillModuleGroup> skillModules = courseSkills.stream()
@@ -326,68 +315,77 @@ public class CourseService {
                 })
                 .collect(Collectors.toList());
         response.setSkillModules(skillModules);
-        
+
         List<ClassResponse.ClassInfo> classInfos = getClassesForCourse(course.getCourseId());
         response.setClassInfos(classInfos);
-        
+
         // Thêm thông tin combo promotions
-        List<CourseDetailResponse.ComboPromotionInfo> comboPromotions = getComboPromotionsForCourse(course.getCourseId());
+        List<CourseDetailResponse.ComboPromotionInfo> comboPromotions = getComboPromotionsForCourse(
+                course.getCourseId());
         response.setComboPromotions(comboPromotions);
-        
+
         return response;
     }
-    
+
     /**
      * Lấy danh sách combo promotions có chứa khóa học này
      */
     private List<CourseDetailResponse.ComboPromotionInfo> getComboPromotionsForCourse(Integer courseId) {
         LocalDate today = LocalDate.now();
         List<CourseDetailResponse.ComboPromotionInfo> comboInfos = new ArrayList<>();
-        
+
         // Tìm tất cả promotion Type 2 (combo) đang active
         List<Promotion> activeComboPromotions = promotionRepository.findAll().stream()
                 .filter(p -> p.getPromotionType().getId() == 2) // Type 2 = Combo
                 .filter(p -> Boolean.TRUE.equals(p.getActive()))
                 .filter(p -> !today.isBefore(p.getStartDate()) && !today.isAfter(p.getEndDate()))
                 .collect(Collectors.toList());
-        
+
         for (Promotion promo : activeComboPromotions) {
             // Lấy danh sách khóa trong combo
             List<PromotionDetail> details = promotionDetailRepository.findByPromotion(promo);
             List<Integer> comboCourseIds = details.stream()
                     .map(pd -> pd.getCourse().getCourseId())
                     .collect(Collectors.toList());
-            
+
             // Nếu combo chứa khóa học hiện tại
             if (comboCourseIds.contains(courseId)) {
                 CourseDetailResponse.ComboPromotionInfo comboInfo = new CourseDetailResponse.ComboPromotionInfo();
                 comboInfo.setComboName(promo.getName());
                 comboInfo.setDiscountPercent(promo.getDiscountPercent());
-                
+
                 // Lấy tên các khóa học còn lại trong combo (không bao gồm khóa hiện tại)
                 List<String> requiredCourseNames = details.stream()
                         .filter(pd -> !pd.getCourse().getCourseId().equals(courseId))
                         .map(pd -> pd.getCourse().getCourseName())
                         .collect(Collectors.toList());
-                
+
                 comboInfo.setRequiredCourseNames(requiredCourseNames);
                 comboInfos.add(comboInfo);
             }
         }
-        
+
         return comboInfos;
     }
+
+    /**
+     * Lấy danh sách lớp có thể đăng ký cho khóa học
+     * Option D: Chỉ hiển thị lớp chưa bắt đầu (startDate >= today)
+     */
     private List<ClassResponse.ClassInfo> getClassesForCourse(Integer courseId) {
-        Set<CourseClass> classes = courseClassRepository
-                .findByCourse_CourseIdAndStatus(courseId, ClassStatusEnum.InProgress.name());
+        // Use findAvailableClasses which filters: startDate >= today, status <>
+        // 'Completed', has capacity
+        List<CourseClass> classes = courseClassRepository
+                .findAvailableClasses(courseId, LocalDate.now());
 
         return classes.stream()
                 .map(this::mapToClassInfo)
                 .sorted(Comparator
-                        .comparing(ClassResponse.ClassInfo::getStatus).reversed() // Active first
-                        .thenComparing(ClassResponse.ClassInfo::getStartDate).reversed()) // Then by start date
+                        .comparing(ClassResponse.ClassInfo::getStatus).reversed()
+                        .thenComparing(ClassResponse.ClassInfo::getStartDate))
                 .collect(Collectors.toList());
     }
+
     private ClassResponse.ClassInfo mapToClassInfo(CourseClass cls) {
         ClassResponse.ClassInfo info = new ClassResponse.ClassInfo();
 
@@ -429,13 +427,6 @@ public class CourseService {
         return info;
     }
 
-
-
-
-
-
-
-
     // Change status of course
     public void changeStatus(Integer id) {
         Optional<Course> cs = courseRepository.findById(id);
@@ -444,27 +435,26 @@ public class CourseService {
             courseRepository.save(course);
         });
     }
-    public List<ActiveCourseResponse>  getRecommendCourses(Integer id)
-    {
+
+    public List<ActiveCourseResponse> getRecommendCourses(Integer id) {
         List<Course> cs = courseRepository.findTop3ByCourseIdNotAndStatusTrue(id);
-        return  cs.stream()
-            .map(course -> {
-                ActiveCourseResponse dto = new ActiveCourseResponse();
-                // Ánh xạ các thuộc tính từ Course sang CourseResponse
-                dto.setCourseId(course.getCourseId());
-                dto.setCourseName(course.getCourseName());
-                dto.setImage(course.getImage());
-                dto.setTuitionFee(course.getTuitionFee());
-                dto.setEntryLevel(course.getEntryLevel());
-                dto.setTargetLevel(course.getTargetLevel());
-                dto.setDescription(course.getDescription());
-                return dto;
-            })
-            .toList();
-
-
+        return cs.stream()
+                .map(course -> {
+                    ActiveCourseResponse dto = new ActiveCourseResponse();
+                    // Ánh xạ các thuộc tính từ Course sang CourseResponse
+                    dto.setCourseId(course.getCourseId());
+                    dto.setCourseName(course.getCourseName());
+                    dto.setImage(course.getImage());
+                    dto.setTuitionFee(course.getTuitionFee());
+                    dto.setEntryLevel(course.getEntryLevel());
+                    dto.setTargetLevel(course.getTargetLevel());
+                    dto.setDescription(course.getDescription());
+                    return dto;
+                })
+                .toList();
 
     }
+
     public List<SkillResponse> getSkills() {
         List<Skill> skills = skillRepository.findAll();
         List<SkillResponse> skillResponseList = new ArrayList<>();
@@ -484,6 +474,6 @@ public class CourseService {
     }
 
     public CourseGroupResponse getCourseByStudent() {
-        return  null;
+        return null;
     }
 }

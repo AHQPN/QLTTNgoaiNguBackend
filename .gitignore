@@ -33,3 +33,6 @@ build/
 .vscode/
 .env
 GRADE_SYSTEM_API.md
+### Logs ###
+spring-log.txt
+*.log

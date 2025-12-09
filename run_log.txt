@@ -35,25 +35,25 @@
 
  :: Spring Boot ::                (v3.5.6)
 
-2025-12-08T22:28:47.431+07:00  INFO 22788 --- [QLTTNgoaiNgu] [  restartedMain] o.e.q.QlttNgoaiNguApplication            : Starting QlttNgoaiNguApplication using Java 21.0.8 with PID 22788 (D:\Documents\GitHub\QLTTNgoaiNguBackend\target\classes started by ASUS in D:\Documents\GitHub\QLTTNgoaiNguBackend)
-2025-12-08T22:28:47.432+07:00  INFO 22788 --- [QLTTNgoaiNgu] [  restartedMain] o.e.q.QlttNgoaiNguApplication            : No active profile set, falling back to 1 default profile: "default"
-2025-12-08T22:28:47.461+07:00  INFO 22788 --- [QLTTNgoaiNgu] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
-2025-12-08T22:28:47.462+07:00  INFO 22788 --- [QLTTNgoaiNgu] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
-2025-12-08T22:28:48.174+07:00  INFO 22788 --- [QLTTNgoaiNgu] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2025-12-08T22:28:48.276+07:00  INFO 22788 --- [QLTTNgoaiNgu] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 96 ms. Found 28 JPA repository interfaces.
-2025-12-08T22:28:48.752+07:00  INFO 22788 --- [QLTTNgoaiNgu] [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
-2025-12-08T22:28:48.761+07:00  INFO 22788 --- [QLTTNgoaiNgu] [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2025-12-08T22:28:48.762+07:00  INFO 22788 --- [QLTTNgoaiNgu] [  restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.46]
-2025-12-08T22:28:48.820+07:00  INFO 22788 --- [QLTTNgoaiNgu] [  restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2025-12-08T22:28:48.821+07:00  INFO 22788 --- [QLTTNgoaiNgu] [  restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1359 ms
-2025-12-08T22:28:48.922+07:00  INFO 22788 --- [QLTTNgoaiNgu] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2025-12-08T22:28:50.143+07:00 ERROR 22788 --- [QLTTNgoaiNgu] [  restartedMain] o.s.b.web.embedded.tomcat.TomcatStarter  : Error starting Tomcat context. Exception: org.springframework.beans.factory.UnsatisfiedDependencyException. Message: Error creating bean with name 'webSecurityConfig' defined in file [D:\Documents\GitHub\QLTTNgoaiNguBackend\target\classes\org\example\qlttngoaingu\config\WebSecurityConfig.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'userDetailsServiceImpl' defined in file [D:\Documents\GitHub\QLTTNgoaiNguBackend\target\classes\org\example\qlttngoaingu\security\services\UserDetailsServiceImpl.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'userRepository' defined in org.example.qlttngoaingu.repository.UserRepository defined in @EnableJpaRepositories declared on JpaRepositoriesRegistrar.EnableJpaRepositoriesConfiguration: Cannot resolve reference to bean 'jpaSharedEM_entityManagerFactory' while setting bean property 'entityManager'
-2025-12-08T22:28:50.164+07:00  INFO 22788 --- [QLTTNgoaiNgu] [  restartedMain] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
-2025-12-08T22:28:50.167+07:00  WARN 22788 --- [QLTTNgoaiNgu] [  restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Unable to start web server
-2025-12-08T22:28:50.173+07:00  INFO 22788 --- [QLTTNgoaiNgu] [  restartedMain] .s.b.a.l.ConditionEvaluationReportLogger : 
+2025-12-07T22:15:48.412+07:00  INFO 15972 --- [QLTTNgoaiNgu] [  restartedMain] o.e.q.QlttNgoaiNguApplication            : Starting QlttNgoaiNguApplication using Java 21.0.8 with PID 15972 (D:\Documents\GitHub\QLTTNgoaiNguBackend\target\classes started by ASUS in D:\Documents\GitHub\QLTTNgoaiNguBackend)
+2025-12-07T22:15:48.412+07:00  INFO 15972 --- [QLTTNgoaiNgu] [  restartedMain] o.e.q.QlttNgoaiNguApplication            : No active profile set, falling back to 1 default profile: "default"
+2025-12-07T22:15:48.438+07:00  INFO 15972 --- [QLTTNgoaiNgu] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2025-12-07T22:15:48.438+07:00  INFO 15972 --- [QLTTNgoaiNgu] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2025-12-07T22:15:49.082+07:00  INFO 15972 --- [QLTTNgoaiNgu] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-07T22:15:49.185+07:00  INFO 15972 --- [QLTTNgoaiNgu] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 98 ms. Found 28 JPA repository interfaces.
+2025-12-07T22:15:49.664+07:00  INFO 15972 --- [QLTTNgoaiNgu] [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-12-07T22:15:49.674+07:00  INFO 15972 --- [QLTTNgoaiNgu] [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-12-07T22:15:49.674+07:00  INFO 15972 --- [QLTTNgoaiNgu] [  restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.46]
+2025-12-07T22:15:49.701+07:00  INFO 15972 --- [QLTTNgoaiNgu] [  restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-12-07T22:15:49.701+07:00  INFO 15972 --- [QLTTNgoaiNgu] [  restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1262 ms
+2025-12-07T22:15:49.795+07:00  INFO 15972 --- [QLTTNgoaiNgu] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-12-07T22:15:50.968+07:00 ERROR 15972 --- [QLTTNgoaiNgu] [  restartedMain] o.s.b.web.embedded.tomcat.TomcatStarter  : Error starting Tomcat context. Exception: org.springframework.beans.factory.UnsatisfiedDependencyException. Message: Error creating bean with name 'webSecurityConfig' defined in file [D:\Documents\GitHub\QLTTNgoaiNguBackend\target\classes\org\example\qlttngoaingu\config\WebSecurityConfig.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'userDetailsServiceImpl' defined in file [D:\Documents\GitHub\QLTTNgoaiNguBackend\target\classes\org\example\qlttngoaingu\security\services\UserDetailsServiceImpl.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'userRepository' defined in org.example.qlttngoaingu.repository.UserRepository defined in @EnableJpaRepositories declared on JpaRepositoriesRegistrar.EnableJpaRepositoriesConfiguration: Cannot resolve reference to bean 'jpaSharedEM_entityManagerFactory' while setting bean property 'entityManager'
+2025-12-07T22:15:50.982+07:00  INFO 15972 --- [QLTTNgoaiNgu] [  restartedMain] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+2025-12-07T22:15:50.985+07:00  WARN 15972 --- [QLTTNgoaiNgu] [  restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Unable to start web server
+2025-12-07T22:15:50.991+07:00  INFO 15972 --- [QLTTNgoaiNgu] [  restartedMain] .s.b.a.l.ConditionEvaluationReportLogger : 
 
 Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
-2025-12-08T22:28:50.184+07:00 ERROR 22788 --- [QLTTNgoaiNgu] [  restartedMain] o.s.boot.SpringApplication               : Application run failed
+2025-12-07T22:15:51.001+07:00 ERROR 15972 --- [QLTTNgoaiNgu] [  restartedMain] o.s.boot.SpringApplication               : Application run failed
 
 org.springframework.context.ApplicationContextException: Unable to start web server
 	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.onRefresh(ServletWebServerApplicationContext.java:170) ~[spring-boot-3.5.6.jar:3.5.6]
@@ -177,7 +177,7 @@ Caused by: org.springframework.beans.factory.BeanCreationException: Error creati
 	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202) ~[spring-beans-6.2.11.jar:6.2.11]
 	at org.springframework.beans.factory.support.BeanDefinitionValueResolver.resolveReference(BeanDefinitionValueResolver.java:365) ~[spring-beans-6.2.11.jar:6.2.11]
 	... 93 common frames omitted
-Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'liquibase' defined in class path resource [org/springframework/boot/autoconfigure/liquibase/LiquibaseAutoConfiguration$LiquibaseConfiguration.class]: liquibase.exception.DatabaseException: com.microsoft.sqlserver.jdbc.SQLServerException: Login failed for user 'sa'. ClientConnectionId:349cb23a-48ed-4632-9efd-8986b1cd0040
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'liquibase' defined in class path resource [org/springframework/boot/autoconfigure/liquibase/LiquibaseAutoConfiguration$LiquibaseConfiguration.class]: liquibase.exception.DatabaseException: com.microsoft.sqlserver.jdbc.SQLServerException: Login failed for user 'sa'. ClientConnectionId:449c4bed-0808-474e-b5fd-4927c1eb4f89
 	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1826) ~[spring-beans-6.2.11.jar:6.2.11]
 	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:607) ~[spring-beans-6.2.11.jar:6.2.11]
 	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529) ~[spring-beans-6.2.11.jar:6.2.11]
@@ -189,12 +189,12 @@ Caused by: org.springframework.beans.factory.BeanCreationException: Error creati
 	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202) ~[spring-beans-6.2.11.jar:6.2.11]
 	at org.springframework.beans.factory.support.BeanDefinitionValueResolver.resolveReference(BeanDefinitionValueResolver.java:365) ~[spring-beans-6.2.11.jar:6.2.11]
 	... 105 common frames omitted
-Caused by: liquibase.exception.UnexpectedLiquibaseException: liquibase.exception.DatabaseException: com.microsoft.sqlserver.jdbc.SQLServerException: Login failed for user 'sa'. ClientConnectionId:349cb23a-48ed-4632-9efd-8986b1cd0040
+Caused by: liquibase.exception.UnexpectedLiquibaseException: liquibase.exception.DatabaseException: com.microsoft.sqlserver.jdbc.SQLServerException: Login failed for user 'sa'. ClientConnectionId:449c4bed-0808-474e-b5fd-4927c1eb4f89
 	at liquibase.integration.spring.SpringLiquibase.afterPropertiesSet(SpringLiquibase.java:259) ~[liquibase-core-4.27.0.jar:na]
 	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1873) ~[spring-beans-6.2.11.jar:6.2.11]
 	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1822) ~[spring-beans-6.2.11.jar:6.2.11]
 	... 114 common frames omitted
-Caused by: liquibase.exception.DatabaseException: com.microsoft.sqlserver.jdbc.SQLServerException: Login failed for user 'sa'. ClientConnectionId:349cb23a-48ed-4632-9efd-8986b1cd0040
+Caused by: liquibase.exception.DatabaseException: com.microsoft.sqlserver.jdbc.SQLServerException: Login failed for user 'sa'. ClientConnectionId:449c4bed-0808-474e-b5fd-4927c1eb4f89
 	at liquibase.integration.spring.SpringLiquibase.lambda$afterPropertiesSet$0(SpringLiquibase.java:251) ~[liquibase-core-4.27.0.jar:na]
 	at liquibase.Scope.lambda$child$0(Scope.java:190) ~[liquibase-core-4.27.0.jar:na]
 	at liquibase.Scope.child(Scope.java:199) ~[liquibase-core-4.27.0.jar:na]
@@ -203,7 +203,7 @@ Caused by: liquibase.exception.DatabaseException: com.microsoft.sqlserver.jdbc.S
 	at liquibase.Scope.child(Scope.java:256) ~[liquibase-core-4.27.0.jar:na]
 	at liquibase.integration.spring.SpringLiquibase.afterPropertiesSet(SpringLiquibase.java:242) ~[liquibase-core-4.27.0.jar:na]
 	... 116 common frames omitted
-Caused by: com.microsoft.sqlserver.jdbc.SQLServerException: Login failed for user 'sa'. ClientConnectionId:349cb23a-48ed-4632-9efd-8986b1cd0040
+Caused by: com.microsoft.sqlserver.jdbc.SQLServerException: Login failed for user 'sa'. ClientConnectionId:449c4bed-0808-474e-b5fd-4927c1eb4f89
 	at com.microsoft.sqlserver.jdbc.SQLServerException.makeFromDatabaseError(SQLServerException.java:278) ~[mssql-jdbc-12.10.1.jre11.jar:na]
 	at com.microsoft.sqlserver.jdbc.TDSTokenHandler.onEOF(tdsparser.java:329) ~[mssql-jdbc-12.10.1.jre11.jar:na]
 	at com.microsoft.sqlserver.jdbc.TDSParser.parse(tdsparser.java:137) ~[mssql-jdbc-12.10.1.jre11.jar:na]
@@ -231,6 +231,6 @@ Caused by: com.microsoft.sqlserver.jdbc.SQLServerException: Login failed for use
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  5.027 s
-[INFO] Finished at: 2025-12-08T22:28:50+07:00
+[INFO] Total time:  4.733 s
+[INFO] Finished at: 2025-12-07T22:15:51+07:00
 [INFO] ------------------------------------------------------------------------
