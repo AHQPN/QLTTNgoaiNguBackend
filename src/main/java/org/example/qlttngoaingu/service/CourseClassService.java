@@ -316,6 +316,25 @@ public class CourseClassService {
             if (!sessions.isEmpty()) {
                 info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
             }
+            
+            // Tính số buổi học chưa bù dựa trên tổng số buổi
+            Integer courseStudyHours = cls.getCourse().getStudyHours();
+            Integer minutesPerSession = cls.getMinutesPerSession();
+            int requiredSessions = (courseStudyHours * 60) / minutesPerSession; // Số buổi lý thuyết
+            
+            long canceledCount = sessions.stream()
+                .filter(session -> "Canceled".equalsIgnoreCase(session.getStatus()))
+                .count();
+            
+            // Số buổi có hiệu lực = Tổng buổi - Buổi đã hủy
+            int effectiveSessions = sessions.size() - (int) canceledCount;
+            
+            // Số buổi chưa bù = Số buổi cần thiết - Số buổi có hiệu lực
+            int pendingSessions = Math.max(0, requiredSessions - effectiveSessions);
+            
+            info.setHasPendingMakeup(pendingSessions > 0);
+            info.setCanceledSessionsCount(pendingSessions);
+            
             info.setMaxCapacity(cls.getRoom().getCapacity());
             Integer enrollmentCount = invoiceDetailRepository.countByClassIdAndActiveInvoice(cls.getClassId());
 
@@ -383,6 +402,25 @@ public class CourseClassService {
                     if (!sessions.isEmpty()) {
                         info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
                     }
+                    
+                    // Tính số buổi học chưa bù dựa trên tổng số buổi
+                    Integer courseStudyHours = cls.getCourse().getStudyHours();
+                    Integer minutesPerSession = cls.getMinutesPerSession();
+                    int requiredSessions = (courseStudyHours * 60) / minutesPerSession; // Số buổi lý thuyết
+                    
+                    long canceledCount = sessions.stream()
+                        .filter(session -> "Canceled".equalsIgnoreCase(session.getStatus()))
+                        .count();
+                    
+                    // Số buổi có hiệu lực = Tổng buổi - Buổi đã hủy
+                    int effectiveSessions = sessions.size() - (int) canceledCount;
+                    
+                    // Số buổi chưa bù = Số buổi cần thiết - Số buổi có hiệu lực
+                    int pendingSessions = Math.max(0, requiredSessions - effectiveSessions);
+                    
+                    info.setHasPendingMakeup(pendingSessions > 0);
+                    info.setCanceledSessionsCount(pendingSessions);
+                    
                     info.setMaxCapacity(cls.getRoom().getCapacity());
                     Integer enrollmentCount = invoiceDetailRepository.countByClassIdAndActiveInvoice(cls.getClassId());
                     if (!sessions.isEmpty()) {
@@ -867,11 +905,11 @@ public class CourseClassService {
                 .orElseThrow(() -> new AppException(ErrorCode.CLASS_NOT_FOUND));
         
         // Kiểm tra buổi học đã bị hủy chưa
-        if ("Đã hủy".equals(session.getStatus())) {
+        if (SessionStatus.Canceled.name().equals(session.getStatus())) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
         
-        session.setStatus("Đã hủy");
+        session.setStatus(SessionStatus.Canceled.name());
         sessionRepository.save(session);
         
         // Trả về thông tin session đã hủy
@@ -1006,7 +1044,7 @@ public class CourseClassService {
         
         // Kiểm tra có thể thêm buổi học không
         long canceledCount = allSessions.stream()
-                .filter(s -> "Đã hủy".equals(s.getStatus()))
+                .filter(s -> SessionStatus.Canceled.name().equals(s.getStatus()))
                 .count();
         
         if (canceledCount == 0) {

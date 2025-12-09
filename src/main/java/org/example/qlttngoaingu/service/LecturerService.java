@@ -19,7 +19,14 @@ import org.example.qlttngoaingu.dto.response.AvailableLecturerResponse;
 import org.example.qlttngoaingu.dto.response.LecturerDashboardStatsResponse;
 import org.example.qlttngoaingu.dto.response.LecturerResponse;
 import org.example.qlttngoaingu.dto.response.TeacherInfo;
-import org.example.qlttngoaingu.entity.*;
+import org.example.qlttngoaingu.entity.Attendance;
+import org.example.qlttngoaingu.entity.Course;
+import org.example.qlttngoaingu.entity.CourseClass;
+import org.example.qlttngoaingu.entity.Degree;
+import org.example.qlttngoaingu.entity.Lecturer;
+import org.example.qlttngoaingu.entity.LecturerDegree;
+import org.example.qlttngoaingu.entity.Session;
+import org.example.qlttngoaingu.entity.User;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.repository.AttendanceRepository;
@@ -597,10 +604,8 @@ public class LecturerService {
             long remainingSessions = sessionRepository
                 .findByCourseClass_ClassIdOrderBySessionDate(cls.getClassId())
                 .stream()
-                .filter(s -> !"Completed".equalsIgnoreCase(s.getStatus()) && 
-                            !"Đã hoàn thành".equalsIgnoreCase(s.getStatus()) &&
-                            !"Canceled".equalsIgnoreCase(s.getStatus()) &&
-                            !"Đã hủy".equalsIgnoreCase(s.getStatus()))
+                .filter(s -> !"Completed".equalsIgnoreCase(s.getStatus()) &&
+                            !"Canceled".equalsIgnoreCase(s.getStatus()))
                 .count();
             
             if (remainingSessions > 0 && remainingSessions <= 5) {

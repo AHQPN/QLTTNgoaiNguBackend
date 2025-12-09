@@ -1,10 +1,10 @@
 package org.example.qlttngoaingu.dto.response;
 
-import lombok.Data;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+
+import lombok.Data;
 
 @Data
 public class ClassResponse {
@@ -29,5 +29,7 @@ public class ClassResponse {
         private Integer maxCapacity;
         private Integer currentEnrollment;
         private Double tuitionFee; // Học phí từ Course
+        private Boolean hasPendingMakeup; // Có buổi học bị hủy chưa bù
+        private Integer canceledSessionsCount; // Số buổi đã hủy chưa bù
     }
 }
