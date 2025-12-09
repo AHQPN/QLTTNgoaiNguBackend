@@ -35,41 +35,65 @@ public class VNPayUtil {
         return sb.toString();
     }
 
+    /**
+     * Hash các fields để tạo chữ ký (dùng cho tạo URL - có URL encode)
+     */
     public static String hashAllFields(Map<String, String> fields, String hashSecret) {
+        return hashAllFields(fields, hashSecret, true);
+    }
+
+    /**
+     * Hash các fields để verify chữ ký (dùng cho verify callback - không URL encode)
+     */
+    public static String hashAllFieldsForVerify(Map<String, String> fields, String hashSecret) {
+        return hashAllFields(fields, hashSecret, false);
+    }
+
+    /**
+     * Hash các fields
+     * @param urlEncode true = URL encode giá trị (khi tạo URL), false = không encode (khi verify callback)
+     */
+    public static String hashAllFields(Map<String, String> fields, String hashSecret, boolean urlEncode) {
         List<String> fieldNames = new ArrayList<>(fields.keySet());
         Collections.sort(fieldNames);
         StringBuilder sb = new StringBuilder();
-        Iterator<String> itr = fieldNames.iterator();
-        while (itr.hasNext()) {
-            String fieldName = itr.next();
+        boolean first = true;
+        for (String fieldName : fieldNames) {
             String fieldValue = fields.get(fieldName);
-            if ((fieldValue != null) && (fieldValue.length() > 0)) {
-                sb.append(fieldName);
-                sb.append('=');
-                sb.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
-                if (itr.hasNext()) {
+            if ((fieldValue != null) && (!fieldValue.isEmpty())) {
+                if (!first) {
                     sb.append('&');
                 }
+                sb.append(fieldName);
+                sb.append('=');
+                if (urlEncode) {
+                    sb.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
+                } else {
+                    sb.append(fieldValue);
+                }
+                first = false;
             }
         }
-        return hmacSHA512(hashSecret, sb.toString());
+        String hashData = sb.toString();
+        log.debug("VNPay hash data: {}", hashData);
+        return hmacSHA512(hashSecret, hashData);
     }
 
     public static String getPaymentURL(Map<String, String> params, String baseUrl) {
         List<String> fieldNames = new ArrayList<>(params.keySet());
         Collections.sort(fieldNames);
         StringBuilder query = new StringBuilder();
-        Iterator<String> itr = fieldNames.iterator();
-        while (itr.hasNext()) {
-            String fieldName = itr.next();
+        boolean first = true;
+        for (String fieldName : fieldNames) {
             String fieldValue = params.get(fieldName);
-            if ((fieldValue != null) && (fieldValue.length() > 0)) {
+            if ((fieldValue != null) && (!fieldValue.isEmpty())) {
+                if (!first) {
+                    query.append('&');
+                }
                 query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8));
                 query.append('=');
                 query.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
-                if (itr.hasNext()) {
-                    query.append('&');
-                }
+                first = false;
             }
         }
         return baseUrl + "?" + query.toString();

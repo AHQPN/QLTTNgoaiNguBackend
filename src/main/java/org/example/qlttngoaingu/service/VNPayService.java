@@ -32,7 +32,34 @@ public class VNPayService {
      * @return VNPayCreatePaymentResponse chứa txnRef, amount và payUrl
      */
     public VNPayCreatePaymentResponse createPayment(long amount, String orderInfo, Integer invoiceId, String ipAddress) {
+        return createPayment(amount, orderInfo, invoiceId, ipAddress, false, null);
+    }
+
+    /**
+     * Tạo URL thanh toán VNPay với invoiceId để tracking (có hỗ trợ mobile)
+     * @param amount số tiền (VND)
+     * @param orderInfo thông tin đơn hàng
+     * @param invoiceId mã hóa đơn
+     * @param ipAddress IP của client
+     * @param isMobile true nếu request từ mobile app
+     * @param userRole vai trò người dùng (ADMIN/STUDENT)
+     * @return VNPayCreatePaymentResponse chứa txnRef, amount và payUrl
+     */
+    public VNPayCreatePaymentResponse createPayment(long amount, String orderInfo, Integer invoiceId, String ipAddress, boolean isMobile, String userRole) {
         String txnRef = String.valueOf(invoiceId); // Sử dụng invoiceId làm txnRef để dễ tracking
+        
+        // Add platform=mobile and userRole to return URL if request is from mobile app
+        String returnUrl = vnPayConfig.getReturnUrl();
+        if (isMobile) {
+            returnUrl += (returnUrl.contains("?") ? "&" : "?") + "platform=mobile";
+        }
+        // Always add userRole to return URL for proper navigation after payment
+        if (userRole != null && !userRole.isEmpty()) {
+            returnUrl += (returnUrl.contains("?") ? "&" : "?") + "userRole=" + userRole;
+        }
+        
+        // Chuẩn hóa orderInfo - loại bỏ dấu tiếng Việt và ký tự đặc biệt
+        String safeOrderInfo = "Thanh toan hoa don " + invoiceId;
         
         Map<String, String> vnpParams = new HashMap<>();
         vnpParams.put("vnp_Version", vnPayConfig.getVersion());
@@ -41,10 +68,10 @@ public class VNPayService {
         vnpParams.put("vnp_Amount", String.valueOf(amount * 100)); // VNPay yêu cầu amount * 100
         vnpParams.put("vnp_CurrCode", vnPayConfig.getCurrencyCode());
         vnpParams.put("vnp_TxnRef", txnRef);
-        vnpParams.put("vnp_OrderInfo", orderInfo != null ? orderInfo : "Thanh toan hoa don " + invoiceId);
+        vnpParams.put("vnp_OrderInfo", safeOrderInfo);
         vnpParams.put("vnp_OrderType", vnPayConfig.getOrderType());
         vnpParams.put("vnp_Locale", vnPayConfig.getLocale());
-        vnpParams.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());
+        vnpParams.put("vnp_ReturnUrl", returnUrl);
         vnpParams.put("vnp_IpAddr", ipAddress);
 
         // Sử dụng timezone Việt Nam
@@ -67,10 +94,17 @@ public class VNPayService {
     }
 
     /**
-     * Lấy URL redirect về frontend
+     * Lấy URL redirect về frontend (web)
      */
     public String getFrontendRedirectUrl() {
         return vnPayConfig.getFrontendRedirectUrl();
+    }
+
+    /**
+     * Lấy URL redirect về mobile app (deep link)
+     */
+    public String getMobileRedirectUrl() {
+        return vnPayConfig.getMobileRedirectUrl();
     }
 
     /**
@@ -91,10 +125,17 @@ public class VNPayService {
         String vnpSecureHash = request.getParameter("vnp_SecureHash");
         fields.remove("vnp_SecureHash");
         fields.remove("vnp_SecureHashType");
+        
+        // Remove custom params that we added (not part of VNPay signature)
+        fields.remove("platform");
+        fields.remove("userRole");
 
-        String signValue = VNPayUtil.hashAllFields(fields, vnPayConfig.getHashSecret());
+        // Hash với URL encode vì VNPay tính hash trên chuỗi đã encode
+        String signValue = VNPayUtil.hashAllFields(fields, vnPayConfig.getHashSecret(), true);
+        
+        log.info("VNPay signature verification - Expected: {}, Received: {}", signValue, vnpSecureHash);
 
-        if (signValue.equals(vnpSecureHash)) {
+        if (signValue.equalsIgnoreCase(vnpSecureHash)) {
             String responseCode = request.getParameter("vnp_ResponseCode");
             if ("00".equals(responseCode)) {
                 return 1; // Thanh toán thành công
@@ -102,6 +143,18 @@ public class VNPayService {
                 return 0; // Thanh toán thất bại
             }
         } else {
+            // Thử lại với không encode (một số trường hợp VNPay trả về đã decode)
+            String signValueNoEncode = VNPayUtil.hashAllFields(fields, vnPayConfig.getHashSecret(), false);
+            log.info("VNPay signature retry without encode - Expected: {}, Received: {}", signValueNoEncode, vnpSecureHash);
+            
+            if (signValueNoEncode.equalsIgnoreCase(vnpSecureHash)) {
+                String responseCode = request.getParameter("vnp_ResponseCode");
+                if ("00".equals(responseCode)) {
+                    return 1; // Thanh toán thành công
+                } else {
+                    return 0; // Thanh toán thất bại
+                }
+            }
             return -1; // Chữ ký không hợp lệ
         }
     }

@@ -43,9 +43,10 @@ databaseChangeLog:
       file: db/changelog/changes/20251128142500_create_table_cthdkhuyenmai.yaml
   - include:
       file: db/changelog/changes/20251129100000_create_table_phieudiem.yaml
-  - include:
-      file: db/changelog/changes/20251208104800_create_table_danhgia.yaml
-  - include:
-      file: db/changelog/changes/20251208105500_alter_loaikhuyenmai_ten.yaml
+# Missing files - commented out temporarily
+#  - include:
+#      file: db/changelog/changes/20251208104800_create_table_danhgia.yaml
+#  - include:
+#      file: db/changelog/changes/20251208105500_alter_loaikhuyenmai_ten.yaml
 #  - include:
 #      file: db/changelog/changes/20251030111300_seed_data_gv_phong.yaml

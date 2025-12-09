@@ -24,6 +24,9 @@ public class VNPayConfig {
     @Value("${vnpay.frontend-redirect-url}")
     private String frontendRedirectUrl;
 
+    @Value("${vnpay.mobile-redirect-url:ipumobile://payment/vnpay-return}")
+    private String mobileRedirectUrl;
+
     @Value("${vnpay.version}")
     private String version;
 

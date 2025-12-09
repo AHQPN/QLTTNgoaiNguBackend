@@ -114,13 +114,13 @@ public class AdminDashboardService {
                     hd.mahoadon,
                     hv.hoten,
                     nd.manguoidung,
-                    hd.ngaythanhtoan,
+                    hd.ngaytao,
                     hd.tongtien
                 FROM hoadon hd
                 INNER JOIN hocvien hv ON hd.mahocvien = hv.mahocvien
                 INNER JOIN nguoidung nd ON hv.manguoidung = nd.manguoidung
-                WHERE hd.trangthai = 1 AND hd.ngaythanhtoan IS NOT NULL
-                ORDER BY hd.ngaythanhtoan DESC
+                WHERE hd.trangthai = 1 AND hd.ngaytao IS NOT NULL
+                ORDER BY hd.ngaytao DESC
                 """;
             
             List<Map<String, Object>> payments = jdbcTemplate.queryForList(paymentSql, limit);
@@ -132,7 +132,7 @@ public class AdminDashboardService {
                         .type("payment")
                         .title("Thanh toán thành công")
                         .description(payment.get("hoten") + " đã thanh toán " + formatCurrency(amount))
-                        .timestamp(getLocalDateTime(payment, "ngaythanhtoan"))
+                        .timestamp(getLocalDateTime(payment, "ngaytao"))
                         .userId(String.valueOf(payment.get("manguoidung")))
                         .userName(String.valueOf(payment.get("hoten")))
                         .build());

@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -76,11 +77,22 @@ public class OrderController {
     /**
      * Tạo URL thanh toán VNPay cho hóa đơn
      * Kiểm tra hóa đơn còn trong thời hạn thanh toán không
+     * @param platform "mobile" nếu request từ mobile app, để redirect về deep link
      */
     @PostMapping("/payment/create")
     public ResponseEntity<ApiResponse<VNPayCreatePaymentResponse>> createPayment(
             @RequestBody @Valid VNPayCreatePaymentRequest request,
+            @RequestParam(required = false) String platform,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
             HttpServletRequest httpRequest) {
+
+        // Check if request is from mobile app
+        boolean isMobile = "mobile".equalsIgnoreCase(platform);
+        
+        // Default userRole to ADMIN if not provided
+        if (userRole == null || userRole.isEmpty()) {
+            userRole = "ADMIN";
+        }
 
         // Kiểm tra hóa đơn tồn tại
         Invoice invoice = invoiceRepository.findById(request.getInvoiceId())
@@ -105,14 +117,17 @@ public class OrderController {
         // Parse amount
         long amount = Long.parseLong(request.getAmount());
 
-        // Tạo payment URL với invoiceId
+        // Tạo payment URL với invoiceId (với platform=mobile và userRole nếu từ mobile app)
         VNPayCreatePaymentResponse paymentResponse = vnPayService.createPayment(
                 amount,
                 request.getOrderInfo(),
                 request.getInvoiceId(),
-                ipAddress);
+                ipAddress,
+                isMobile,
+                userRole);
 
-        log.info("Created VNPay payment URL for invoice: {}, amount: {}", request.getInvoiceId(), amount);
+        log.info("Created VNPay payment URL for invoice: {}, amount: {}, platform: {}, userRole: {}", 
+                request.getInvoiceId(), amount, isMobile ? "mobile" : "web", userRole);
 
         return ResponseEntity.ok(ApiResponse.<VNPayCreatePaymentResponse>builder()
                 .data(paymentResponse)
@@ -160,7 +175,8 @@ public class OrderController {
 
     /**
      * Callback từ VNPay sau khi thanh toán
-     * Xác thực chữ ký, cập nhật trạng thái hóa đơn và redirect về frontend
+     * Xác thực chữ ký, cập nhật trạng thái hóa đơn và redirect về frontend hoặc mobile app
+     * Sử dụng query param ?platform=mobile để redirect về deep link của mobile app
      */
     @GetMapping("/payment/vnpay-return")
     public void vnpayReturn(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -170,11 +186,22 @@ public class OrderController {
         String vnpResponseCode = request.getParameter("vnp_ResponseCode");
         String vnpTransactionNo = request.getParameter("vnp_TransactionNo");
         String vnpAmount = request.getParameter("vnp_Amount");
+        
+        // Check if request is from mobile app (via platform param or User-Agent)
+        String platform = request.getParameter("platform");
+        boolean isMobile = "mobile".equalsIgnoreCase(platform);
+        
+        // Get user role from query param (passed when creating payment URL)
+        String userRole = request.getParameter("userRole");
+        if (userRole == null || userRole.isEmpty()) {
+            userRole = "ADMIN"; // Default to ADMIN if not specified
+        }
 
-        log.info("VNPay return - invoiceId: {}, responseCode: {}, transactionNo: {}, status: {}",
-                invoiceId, vnpResponseCode, vnpTransactionNo, paymentStatus);
+        log.info("VNPay return - invoiceId: {}, responseCode: {}, transactionNo: {}, status: {}, platform: {}, userRole: {}",
+                invoiceId, vnpResponseCode, vnpTransactionNo, paymentStatus, isMobile ? "mobile" : "web", userRole);
 
-        String baseUrl = vnPayService.getFrontendRedirectUrl();
+        // Use mobile deep link URL if request is from mobile app
+        String baseUrl = isMobile ? vnPayService.getMobileRedirectUrl() : vnPayService.getFrontendRedirectUrl();
         String redirectUrl;
 
         if (paymentStatus == 1 && invoiceId != null) {
@@ -184,14 +211,16 @@ public class OrderController {
             if (invoice == null) {
                 redirectUrl = baseUrl
                         + "?status=failed"
-                        + "&error=" + URLEncoder.encode("Không tìm thấy hóa đơn", StandardCharsets.UTF_8);
+                        + "&error=" + URLEncoder.encode("Không tìm thấy hóa đơn", StandardCharsets.UTF_8)
+                        + "&userRole=" + userRole;
             } else if (Boolean.TRUE.equals(invoice.getStatus())) {
                 // Hóa đơn đã được thanh toán rồi
                 redirectUrl = baseUrl
                         + "?status=success"
                         + "&invoiceId=" + invoiceId
                         + "&message="
-                        + URLEncoder.encode("Hóa đơn đã được thanh toán trước đó", StandardCharsets.UTF_8);
+                        + URLEncoder.encode("Hóa đơn đã được thanh toán trước đó", StandardCharsets.UTF_8)
+                        + "&userRole=" + userRole;
             } else {
                 // Kiểm tra hóa đơn có hết hạn không
                 LocalDateTime expiryTime = invoice.getDateCreated().plusMinutes(PAYMENT_TIMEOUT_MINUTES);
@@ -199,7 +228,8 @@ public class OrderController {
                     log.warn("Payment for expired invoice {} rejected", invoiceId);
                     redirectUrl = baseUrl
                             + "?status=failed"
-                            + "&error=" + URLEncoder.encode("Hóa đơn đã hết hạn thanh toán", StandardCharsets.UTF_8);
+                            + "&error=" + URLEncoder.encode("Hóa đơn đã hết hạn thanh toán", StandardCharsets.UTF_8)
+                            + "&userRole=" + userRole;
                 } else {
                     // Cập nhật trạng thái hóa đơn
                     invoice.setStatus(true); // true = đã thanh toán
@@ -214,7 +244,8 @@ public class OrderController {
                             + "&invoiceId=" + invoiceId
                             + "&transactionNo=" + (vnpTransactionNo != null ? vnpTransactionNo : "")
                             + "&amount=" + (vnpAmount != null ? Long.parseLong(vnpAmount) / 100 : 0)
-                            + "&responseCode=" + vnpResponseCode;
+                            + "&responseCode=" + vnpResponseCode
+                            + "&userRole=" + userRole;
                 }
             }
         } else {
@@ -224,7 +255,8 @@ public class OrderController {
                     + "?status=failed"
                     + "&invoiceId=" + (invoiceId != null ? invoiceId : "")
                     + "&error=" + URLEncoder.encode(errorMessage, StandardCharsets.UTF_8)
-                    + "&responseCode=" + (vnpResponseCode != null ? vnpResponseCode : "");
+                    + "&responseCode=" + (vnpResponseCode != null ? vnpResponseCode : "")
+                    + "&userRole=" + userRole;
         }
 
         response.sendRedirect(redirectUrl);
@@ -386,6 +418,7 @@ public class OrderController {
         }
 
         return switch (responseCode) {
+            case "00" -> "Thanh toán thành công";
             case "07" -> "Giao dịch bị nghi ngờ gian lận";
             case "09" -> "Thẻ/Tài khoản chưa đăng ký dịch vụ InternetBanking";
             case "10" -> "Xác thực thông tin thẻ/tài khoản không đúng quá 3 lần";

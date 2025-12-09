@@ -53,6 +53,7 @@ public interface CourseClassRepository extends JpaRepository<CourseClass, Intege
     SELECT detail.courseClass.classId
     FROM InvoiceDetail detail
     WHERE detail.invoice.student.id = :studentId
+      AND detail.invoice.status = true
     """)
     List<Integer> findRegisteredClassIds(@Param("studentId") Integer studentId);
 
@@ -60,6 +61,7 @@ public interface CourseClassRepository extends JpaRepository<CourseClass, Intege
     SELECT detail.courseClass
     FROM InvoiceDetail detail
     WHERE detail.invoice.student.id = :studentId
+      AND detail.invoice.status = true
     """)
     List<CourseClass> findRegisteredClasses(@Param("studentId") Integer studentId);
 
