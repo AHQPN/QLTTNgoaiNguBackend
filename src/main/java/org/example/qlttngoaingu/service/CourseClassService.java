@@ -317,12 +317,23 @@ public class CourseClassService {
                 info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
             }
             
-            // Đếm số buổi học bị hủy (chưa bù)
+            // Tính số buổi học chưa bù dựa trên tổng số buổi
+            Integer courseStudyHours = cls.getCourse().getStudyHours();
+            Integer minutesPerSession = cls.getMinutesPerSession();
+            int requiredSessions = (courseStudyHours * 60) / minutesPerSession; // Số buổi lý thuyết
+            
             long canceledCount = sessions.stream()
                 .filter(session -> "Canceled".equalsIgnoreCase(session.getStatus()))
                 .count();
-            info.setHasPendingMakeup(canceledCount > 0);
-            info.setCanceledSessionsCount((int) canceledCount);
+            
+            // Số buổi có hiệu lực = Tổng buổi - Buổi đã hủy
+            int effectiveSessions = sessions.size() - (int) canceledCount;
+            
+            // Số buổi chưa bù = Số buổi cần thiết - Số buổi có hiệu lực
+            int pendingSessions = Math.max(0, requiredSessions - effectiveSessions);
+            
+            info.setHasPendingMakeup(pendingSessions > 0);
+            info.setCanceledSessionsCount(pendingSessions);
             
             info.setMaxCapacity(cls.getRoom().getCapacity());
             Integer enrollmentCount = invoiceDetailRepository.countByClassIdAndActiveInvoice(cls.getClassId());
@@ -392,12 +403,23 @@ public class CourseClassService {
                         info.setEndDate(sessions.get(sessions.size() - 1).getSessionDate());
                     }
                     
-                    // Đếm số buổi học bị hủy (chưa bù)
+                    // Tính số buổi học chưa bù dựa trên tổng số buổi
+                    Integer courseStudyHours = cls.getCourse().getStudyHours();
+                    Integer minutesPerSession = cls.getMinutesPerSession();
+                    int requiredSessions = (courseStudyHours * 60) / minutesPerSession; // Số buổi lý thuyết
+                    
                     long canceledCount = sessions.stream()
                         .filter(session -> "Canceled".equalsIgnoreCase(session.getStatus()))
                         .count();
-                    info.setHasPendingMakeup(canceledCount > 0);
-                    info.setCanceledSessionsCount((int) canceledCount);
+                    
+                    // Số buổi có hiệu lực = Tổng buổi - Buổi đã hủy
+                    int effectiveSessions = sessions.size() - (int) canceledCount;
+                    
+                    // Số buổi chưa bù = Số buổi cần thiết - Số buổi có hiệu lực
+                    int pendingSessions = Math.max(0, requiredSessions - effectiveSessions);
+                    
+                    info.setHasPendingMakeup(pendingSessions > 0);
+                    info.setCanceledSessionsCount(pendingSessions);
                     
                     info.setMaxCapacity(cls.getRoom().getCapacity());
                     Integer enrollmentCount = invoiceDetailRepository.countByClassIdAndActiveInvoice(cls.getClassId());
