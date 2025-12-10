@@ -16,6 +16,10 @@ import org.example.qlttngoaingu.repository.CourseClassRepository;
 import org.example.qlttngoaingu.repository.CourseReviewRepository;
 import org.example.qlttngoaingu.repository.InvoiceDetailRepository;
 import org.example.qlttngoaingu.repository.StudentRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -116,6 +120,20 @@ public class ReviewService {
                     return buildReviewResponse(review, cls, student);
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Lấy danh sách đánh giá của khóa học với phân trang
+     */
+    public Page<ReviewResponse> getCourseReviewsPaginated(Integer courseId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "reviewId"));
+        Page<CourseReview> reviewPage = reviewRepository.findByCourseIdPaginated(courseId, pageable);
+
+        return reviewPage.map(review -> {
+            CourseClass cls = review.getEnrollment().getCourseClass();
+            Student student = review.getEnrollment().getInvoice().getStudent();
+            return buildReviewResponse(review, cls, student);
+        });
     }
 
     // ==================== HELPER METHODS ====================

@@ -27,7 +27,6 @@ import org.example.qlttngoaingu.entity.Course;
 import org.example.qlttngoaingu.entity.CourseCategory;
 import org.example.qlttngoaingu.entity.CourseClass;
 import org.example.qlttngoaingu.entity.CourseSkill;
-import org.example.qlttngoaingu.entity.Module;
 import org.example.qlttngoaingu.entity.Objective;
 import org.example.qlttngoaingu.entity.Promotion;
 import org.example.qlttngoaingu.entity.PromotionDetail;
@@ -36,7 +35,15 @@ import org.example.qlttngoaingu.entity.Skill;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.mapper.CourseMapper;
-import org.example.qlttngoaingu.repository.*;
+import org.example.qlttngoaingu.repository.CourseCategoryRepository;
+import org.example.qlttngoaingu.repository.CourseClassRepository;
+import org.example.qlttngoaingu.repository.CourseRepository;
+import org.example.qlttngoaingu.repository.CourseSkillRepository;
+import org.example.qlttngoaingu.repository.InvoiceDetailRepository;
+import org.example.qlttngoaingu.repository.PromotionDetailRepository;
+import org.example.qlttngoaingu.repository.PromotionRepository;
+import org.example.qlttngoaingu.repository.SessionRepository;
+import org.example.qlttngoaingu.repository.SkillRepository;
 import org.example.qlttngoaingu.service.enums.ClassStatusEnum;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -64,6 +71,7 @@ public class CourseService {
     private final PromotionDetailRepository  promotionDetailRepository;
     private final PromotionRepository promotionRepository;
     private final InvoiceDetailRepository invoiceDetailRepository;
+    private final ReviewService reviewService;
 
     public List<CourseGroupResponse> getCoursesGroupedResponse() {
         return courseRepository.findByStatusTrue()
@@ -379,7 +387,7 @@ public class CourseService {
     }
     private List<ClassResponse.ClassInfo> getClassesForCourse(Integer courseId) {
         Set<CourseClass> classes = courseClassRepository
-                .findByCourse_CourseIdAndStatus(courseId, ClassStatusEnum.InProgress.name());
+                .findByCourse_CourseIdAndStatusAndStartDateAfter(courseId, ClassStatusEnum.InProgress.name(),LocalDate.now());
 
         return classes.stream()
                 .map(this::mapToClassInfo)

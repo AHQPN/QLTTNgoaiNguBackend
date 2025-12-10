@@ -43,7 +43,7 @@ public interface CourseClassRepository extends JpaRepository<CourseClass, Intege
     Page<CourseClass> findAll(Pageable pageable);
 
 
-    Set<CourseClass> findByCourse_CourseIdAndStatus(int courseId, String status);
+    Set<CourseClass> findByCourse_CourseIdAndStatusAndStartDateAfter(Integer courseCourseId, String status, LocalDate startDateAfter);
     CourseClass getCourseClassByClassId(Integer classId);
 
 
@@ -80,4 +80,5 @@ public interface CourseClassRepository extends JpaRepository<CourseClass, Intege
     long countByLecturer_LecturerIdAndStatus(@Param("lecturerId") Integer lecturerId, 
                                               @Param("status") String status);
 
+    Set<CourseClass> findByCourse_CourseIdAndStatus(int courseId, String name);
 }

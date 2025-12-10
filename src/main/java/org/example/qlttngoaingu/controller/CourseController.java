@@ -11,7 +11,6 @@ import org.example.qlttngoaingu.dto.response.ApiResponse;
 import org.example.qlttngoaingu.dto.response.CourseDetailResponse;
 import org.example.qlttngoaingu.dto.response.CourseGroupResponse;
 import org.example.qlttngoaingu.dto.response.CoursePageResponse;
-import org.example.qlttngoaingu.dto.response.ReviewResponse;
 import org.example.qlttngoaingu.entity.Course;
 import org.example.qlttngoaingu.entity.Objective;
 import org.example.qlttngoaingu.service.CourseService;
@@ -132,13 +131,16 @@ public class CourseController {
 
     /**
      * GET /courses/{courseId}/reviews
-     * Lấy tất cả đánh giá của khóa học (từ tất cả lớp)
+     * Lấy danh sách đánh giá của khóa học với phân trang
      */
     @GetMapping("/{courseId}/reviews")
-    public ResponseEntity<ApiResponse> getCourseReviews(@PathVariable Integer courseId) {
-        List<ReviewResponse> reviews = reviewService.getCourseReviews(courseId);
+    public ResponseEntity<ApiResponse> getCourseReviews(
+            @PathVariable Integer courseId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        var reviewPage = reviewService.getCourseReviewsPaginated(courseId, page, size);
         return ResponseEntity.ok(ApiResponse.builder()
-                .data(reviews)
+                .data(reviewPage)
                 .build());
     }
 }

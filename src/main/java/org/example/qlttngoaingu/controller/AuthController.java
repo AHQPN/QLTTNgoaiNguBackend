@@ -73,7 +73,7 @@ public class AuthController {
     })
     @PostMapping("/login")
     public ResponseEntity<ApiResponse> login(@Valid @RequestBody LoginRequest loginRequest,
-            HttpServletResponse response) {
+                                             HttpServletResponse response) {
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getIdentifier(), loginRequest.getPassword()));
@@ -113,7 +113,7 @@ public class AuthController {
     })
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse> signup(@Valid @RequestBody StudentSignupRequest studentSignupRequest,
-            HttpServletRequest request, @Value("${app.site-url}") String siteUrl) {
+                                              HttpServletRequest request, @Value("${app.site-url}") String siteUrl) {
 
         RoleEnum role = RoleEnum.STUDENT;
         StudentInfo user = userService.signUpForStudent(studentSignupRequest, role, true, siteUrl);

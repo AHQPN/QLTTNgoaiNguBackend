@@ -1,5 +1,6 @@
 package org.example.qlttngoaingu.repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -64,5 +65,16 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate,
             Pageable pageable
+    );
+
+    /**
+     * Tìm hóa đơn đã thanh toán trong khoảng thời gian (cho báo cáo tài chính)
+     */
+    @Query("SELECT i FROM Invoice i WHERE i.status = true " +
+           "AND DATE(i.dateCreated) >= :startDate AND DATE(i.dateCreated) <= :endDate " +
+           "ORDER BY i.dateCreated")
+    List<Invoice> findByPaymentDateBetween(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
     );
 }

@@ -1,4 +1,6 @@
 package org.example.qlttngoaingu.specification;
+import java.time.LocalDate;
+
 import org.example.qlttngoaingu.entity.CourseClass;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -29,6 +31,18 @@ public class CourseClassSpec {
             }
             return cb.like(cb.lower(root.get("className")), "%" + className.toLowerCase() + "%");
         };
+    }
+
+    public static Specification<CourseClass> hasStatus(String status) {
+        return (root, query, builder) ->
+                status == null ? null :
+                        builder.equal(root.get("status"), status);
+    }
+
+    public static Specification<CourseClass> hasStartDateGreaterThanOrEqual(LocalDate startDate) {
+        return (root, query, builder) ->
+                startDate == null ? null :
+                        builder.greaterThanOrEqualTo(root.get("startDate"), startDate);
     }
 
 }

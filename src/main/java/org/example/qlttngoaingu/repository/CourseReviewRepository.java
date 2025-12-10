@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.example.qlttngoaingu.entity.CourseReview;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -61,6 +63,20 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Inte
         WHERE course.courseId = :courseId
     """)
     List<CourseReview> findAllByCourseId(@Param("courseId") Integer courseId);
+
+    /**
+     * Lấy đánh giá của khóa học với phân trang
+     */
+    @Query("""
+        SELECT r FROM CourseReview r
+        JOIN FETCH r.enrollment e
+        JOIN FETCH e.courseClass c
+        JOIN FETCH c.course course
+        JOIN e.invoice i
+        JOIN FETCH i.student s
+        WHERE course.courseId = :courseId
+    """)
+    Page<CourseReview> findByCourseIdPaginated(@Param("courseId") Integer courseId, Pageable pageable);
 
     /**
      * Tính điểm đánh giá giảng viên trung bình của giảng viên

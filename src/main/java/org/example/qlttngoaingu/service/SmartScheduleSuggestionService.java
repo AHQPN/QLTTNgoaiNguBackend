@@ -44,7 +44,7 @@ public class SmartScheduleSuggestionService {
         AvailabilityResult initialCheck = checkInitialAvailability(request);
         response.setInitialCheck(initialCheck);
 
-        if (initialCheck.getLecturerConflicts().isEmpty() && initialCheck.getRoomConflicts().isEmpty() && initialCheck.isFullyAvailable()) {
+        if (initialCheck.isFullyAvailable()) {
             // TH1: Cả phòng và GV đều trống → OK
             response.setStatus("AVAILABLE");
             response.setMessage("Lịch học khả dụng! Vui lòng chọn phòng và giảng viên.");
