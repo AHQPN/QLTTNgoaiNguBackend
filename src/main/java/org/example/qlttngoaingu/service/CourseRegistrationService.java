@@ -77,7 +77,8 @@ public class CourseRegistrationService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy học viên: " + request.getStudentId()));
 
         PaymentMethod paymentMethod = paymentMethodRepository.findById(request.getPaymentMethodId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy PT thanh toán: " + request.getPaymentMethodId()));
+                .orElseThrow(
+                        () -> new RuntimeException("Không tìm thấy PT thanh toán: " + request.getPaymentMethodId()));
 
         // 2. Chuẩn bị dữ liệu tính toán
         Boolean isReturningStudent = invoiceRepository.existsByStudentAndStatus(student, true);
@@ -90,16 +91,16 @@ public class CourseRegistrationService {
         // 2.1. Kiểm tra sĩ số lớp học (so với sức chứa phòng)
         for (CourseClass courseClass : selectedClasses) {
             if (courseClass.getRoom() != null && courseClass.getRoom().getCapacity() != null) {
-                Integer currentEnrollment = invoiceDetailRepository.countByClassIdAndActiveInvoice(courseClass.getClassId());
+                Integer currentEnrollment = invoiceDetailRepository
+                        .countByClassIdAndActiveInvoice(courseClass.getClassId());
                 Integer roomCapacity = courseClass.getRoom().getCapacity();
-                
+
                 if (currentEnrollment >= roomCapacity) {
                     throw new RuntimeException(String.format(
                             "Lớp '%s' đã đủ sĩ số (%d/%d học viên). Không thể đăng ký thêm.",
                             courseClass.getClassName(),
                             currentEnrollment,
-                            roomCapacity
-                    ));
+                            roomCapacity));
                 }
             }
         }
@@ -124,7 +125,7 @@ public class CourseRegistrationService {
 
         // CHỈ CỘNG TIỀN GIẢM
         BigDecimal totalCourseDiscount = BigDecimal.ZERO; // Type 1: Giảm từng khóa
-        
+
         // Map lưu các promotion Type 1 đã áp dụng cho từng detail
         Map<InvoiceDetail, List<Promotion>> detailType1Promotions = new HashMap<>();
 
@@ -182,10 +183,10 @@ public class CourseRegistrationService {
         // 5. Bước 2: Xử lý Type 2 - Mỗi khóa chọn combo có % giảm cao nhất
         BigDecimal totalComboDiscount = BigDecimal.ZERO;
         List<Promotion> appliedType2Promos = new ArrayList<>();
-        
+
         // Map để lưu combo nào áp dụng cho khóa nào
         Map<Integer, Promotion> courseComboMap = new HashMap<>();
-        
+
         // Map để tra cứu giá sau Type 1 của từng khóa
         Map<Integer, BigDecimal> coursePriceMap = new HashMap<>();
         for (InvoiceDetail detail : details) {
@@ -195,7 +196,7 @@ public class CourseRegistrationService {
 
         // Tìm tất cả combo khả dụng
         List<ComboInfo> eligibleCombos = new ArrayList<>();
-        
+
         for (Promotion promo : activePromotions) {
             if (promo.getPromotionType().getId() == 2) {
                 List<Integer> promoCourseIds = promotionDetailRepository.findByPromotion(promo)
@@ -206,10 +207,10 @@ public class CourseRegistrationService {
                 // Check combo: tất cả khóa trong promo phải có trong selectedCourseIds
                 if (selectedCourseIds.containsAll(promoCourseIds) && !promoCourseIds.isEmpty()) {
                     eligibleCombos.add(new ComboInfo(promo, promoCourseIds));
-                    
-                    log.info("Combo available: {} ({}%) for courses {}", 
-                            promo.getName(), 
-                            promo.getDiscountPercent(), 
+
+                    log.info("Combo available: {} ({}%) for courses {}",
+                            promo.getName(),
+                            promo.getDiscountPercent(),
                             promoCourseIds);
                 }
             }
@@ -217,11 +218,11 @@ public class CourseRegistrationService {
 
         // Map: courseId -> combo có % giảm cao nhất cho khóa đó
         Map<Integer, Promotion> bestComboPerCourse = new HashMap<>();
-        
+
         for (Integer courseId : selectedCourseIds) {
             Promotion bestPromo = null;
             int maxPercent = 0;
-            
+
             // Tìm combo có % giảm cao nhất chứa khóa này
             for (ComboInfo combo : eligibleCombos) {
                 if (combo.courseIds.contains(courseId)) {
@@ -231,25 +232,25 @@ public class CourseRegistrationService {
                     }
                 }
             }
-            
+
             if (bestPromo != null) {
                 bestComboPerCourse.put(courseId, bestPromo);
-                log.info("Course {} chose combo: {} ({}%)", 
-                        courseId, 
-                        bestPromo.getName(), 
+                log.info("Course {} chose combo: {} ({}%)",
+                        courseId,
+                        bestPromo.getName(),
                         bestPromo.getDiscountPercent());
             }
         }
 
         // Tính tổng tiền giảm và lưu mapping
         java.util.Set<Promotion> countedCombos = new java.util.HashSet<>();
-        
+
         for (Map.Entry<Integer, Promotion> entry : bestComboPerCourse.entrySet()) {
             Integer courseId = entry.getKey();
             Promotion combo = entry.getValue();
-            
+
             courseComboMap.put(courseId, combo);
-            
+
             // Chỉ tính tiền giảm 1 lần cho mỗi combo (tránh tính trùng)
             if (!countedCombos.contains(combo)) {
                 // Lấy danh sách khóa trong combo
@@ -258,23 +259,23 @@ public class CourseRegistrationService {
                         .findFirst()
                         .map(c -> c.courseIds)
                         .orElse(new ArrayList<>());
-                
+
                 // Tính tiền giảm cho combo
                 BigDecimal comboBaseAmount = comboCourseIds.stream()
                         .map(coursePriceMap::get)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
-                
+
                 BigDecimal comboDiscount = comboBaseAmount
                         .multiply(BigDecimal.valueOf(combo.getDiscountPercent()))
                         .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
-                
+
                 totalComboDiscount = totalComboDiscount.add(comboDiscount);
                 appliedType2Promos.add(combo);
                 countedCombos.add(combo);
-                
-                log.info("APPLIED COMBO: {} ({}%) for courses: {} → Discount: {}", 
-                        combo.getName(), 
-                        combo.getDiscountPercent(), 
+
+                log.info("APPLIED COMBO: {} ({}%) for courses: {} → Discount: {}",
+                        combo.getName(),
+                        combo.getDiscountPercent(),
                         comboCourseIds,
                         comboDiscount);
             }
@@ -305,10 +306,11 @@ public class CourseRegistrationService {
         totalAmount = totalAfterComboDiscount.subtract(totalReturningDiscount);
 
         // 7. Cập nhật lại amount cho từng InvoiceDetail
-        // Trừ combo discount (đã tính riêng cho từng khóa) và Type 3 discount (phân bổ đều)
+        // Trừ combo discount (đã tính riêng cho từng khóa) và Type 3 discount (phân bổ
+        // đều)
         for (InvoiceDetail detail : details) {
             BigDecimal currentAmount = detail.getAmount(); // Giá sau Type 1
-            
+
             // Trừ combo discount nếu khóa này có combo
             Integer courseId = detail.getCourseClass().getCourse().getCourseId();
             Promotion combo = courseComboMap.get(courseId);
@@ -318,14 +320,14 @@ public class CourseRegistrationService {
                         .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
                 currentAmount = currentAmount.subtract(comboDiscount);
             }
-            
+
             // Trừ Type 3 discount (phân bổ theo tỷ lệ)
             if (totalAfterComboDiscount.compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal ratio = currentAmount.divide(totalAfterComboDiscount, 10, BigDecimal.ROUND_HALF_UP);
                 BigDecimal type3Discount = totalReturningDiscount.multiply(ratio).setScale(2, BigDecimal.ROUND_HALF_UP);
                 currentAmount = currentAmount.subtract(type3Discount);
             }
-            
+
             detail.setAmount(currentAmount);
         }
 
@@ -340,12 +342,12 @@ public class CourseRegistrationService {
         for (Map.Entry<InvoiceDetail, List<Promotion>> entry : detailType1Promotions.entrySet()) {
             InvoiceDetail detail = entry.getKey();
             BigDecimal originalPrice = BigDecimal.valueOf(detail.getCourseClass().getCourse().getTuitionFee());
-            
+
             for (Promotion promo : entry.getValue()) {
                 BigDecimal discountAmount = originalPrice
                         .multiply(BigDecimal.valueOf(promo.getDiscountPercent()))
                         .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
-                
+
                 InvoiceDetailPromotion idp = new InvoiceDetailPromotion();
                 idp.setInvoiceDetail(detail);
                 idp.setPromotion(promo);
@@ -359,14 +361,14 @@ public class CourseRegistrationService {
             for (InvoiceDetail detail : details) {
                 Integer courseId = detail.getCourseClass().getCourse().getCourseId();
                 Promotion combo = courseComboMap.get(courseId);
-                
+
                 if (combo != null) {
                     // Tính discount amount cho khóa này
                     BigDecimal priceAfterType1 = detail.getAmount(); // Giá sau khi giảm Type 1
                     BigDecimal discountAmount = priceAfterType1
                             .multiply(BigDecimal.valueOf(combo.getDiscountPercent()))
                             .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
-                    
+
                     InvoiceDetailPromotion idp = new InvoiceDetailPromotion();
                     idp.setInvoiceDetail(detail);
                     idp.setPromotion(combo);
@@ -380,13 +382,13 @@ public class CourseRegistrationService {
         if (!appliedType3Promos.isEmpty() && totalAfterComboDiscount.compareTo(BigDecimal.ZERO) > 0) {
             for (InvoiceDetail detail : details) {
                 BigDecimal ratio = detail.getAmount().divide(totalAfterComboDiscount, 10, BigDecimal.ROUND_HALF_UP);
-                
+
                 for (Promotion promo : appliedType3Promos) {
                     BigDecimal discountAmount = totalReturningDiscount
                             .multiply(ratio)
                             .multiply(BigDecimal.valueOf(promo.getDiscountPercent()))
                             .divide(BigDecimal.valueOf(returningDiscountPercent), 2, BigDecimal.ROUND_HALF_UP);
-                    
+
                     InvoiceDetailPromotion idp = new InvoiceDetailPromotion();
                     idp.setInvoiceDetail(detail);
                     idp.setPromotion(promo);
@@ -462,13 +464,14 @@ public class CourseRegistrationService {
      */
     @Transactional
     public InvoiceResponse registerStartedClass(CourseRegistrationRequest request) {
-        
+
         // 1. Kiểm tra thông tin cơ bản
         Student student = studentRepository.findById(request.getStudentId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy học viên: " + request.getStudentId()));
 
         PaymentMethod paymentMethod = paymentMethodRepository.findById(request.getPaymentMethodId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy PT thanh toán: " + request.getPaymentMethodId()));
+                .orElseThrow(
+                        () -> new RuntimeException("Không tìm thấy PT thanh toán: " + request.getPaymentMethodId()));
 
         // 2. Chỉ cho phép đăng ký 1 lớp tại 1 thời điểm cho late registration
         if (request.getClassIds().size() != 1) {
@@ -485,7 +488,8 @@ public class CourseRegistrationService {
         }
 
         // 4. Lấy thông tin buổi học
-        List<Session> allSessions = sessionRepository.findByCourseClass_ClassIdOrderBySessionDate(courseClass.getClassId());
+        List<Session> allSessions = sessionRepository
+                .findByCourseClass_ClassIdOrderBySessionDate(courseClass.getClassId());
         long totalSessions = allSessions.size();
         long completedSessions = allSessions.stream()
                 .filter(s -> s.getSessionDate().isBefore(today))
@@ -497,20 +501,19 @@ public class CourseRegistrationService {
         if (progressPercent > 50) {
             throw new RuntimeException(String.format(
                     "Lớp đã qua %.1f%% tiến độ (%d/%d buổi). Không thể đăng ký muộn (giới hạn 50%%)",
-                    progressPercent, completedSessions, totalSessions
-            ));
+                    progressPercent, completedSessions, totalSessions));
         }
 
         // 6. Kiểm tra sức chứa phòng
         if (courseClass.getRoom() != null && courseClass.getRoom().getCapacity() != null) {
-            Integer currentEnrollment = invoiceDetailRepository.countByClassIdAndActiveInvoice(courseClass.getClassId());
+            Integer currentEnrollment = invoiceDetailRepository
+                    .countByClassIdAndActiveInvoice(courseClass.getClassId());
             Integer roomCapacity = courseClass.getRoom().getCapacity();
-            
+
             if (currentEnrollment >= roomCapacity) {
                 throw new RuntimeException(String.format(
                         "Lớp '%s' đã đủ sĩ số (%d/%d học viên)",
-                        courseClass.getClassName(), currentEnrollment, roomCapacity
-                ));
+                        courseClass.getClassName(), currentEnrollment, roomCapacity));
             }
         }
 
@@ -527,13 +530,13 @@ public class CourseRegistrationService {
                 .multiply(BigDecimal.valueOf(remainingSessions))
                 .divide(BigDecimal.valueOf(totalSessions), 2, BigDecimal.ROUND_HALF_UP);
 
-        log.info("Late registration: Original={}, Adjusted={} ({}/{} sessions remaining)", 
+        log.info("Late registration: Original={}, Adjusted={} ({}/{} sessions remaining)",
                 originalPrice, adjustedPrice, remainingSessions, totalSessions);
 
         // 9. Áp dụng khuyến mãi (nếu có)
         Boolean isReturningStudent = invoiceRepository.existsByStudentAndStatus(student, true);
         List<Promotion> activePromotions = promotionRepository.findAllActivePromotions(LocalDate.now());
-        
+
         BigDecimal totalDiscount = BigDecimal.ZERO;
         List<Promotion> appliedPromotions = new ArrayList<>();
 
@@ -545,7 +548,7 @@ public class CourseRegistrationService {
                         .stream()
                         .map(pd -> pd.getCourse().getCourseId())
                         .toList();
-                
+
                 if (promoCourseIds.contains(course.getCourseId())) {
                     BigDecimal discount = adjustedPrice
                             .multiply(BigDecimal.valueOf(promo.getDiscountPercent()))
@@ -586,7 +589,7 @@ public class CourseRegistrationService {
             BigDecimal discountAmount = adjustedPrice
                     .multiply(BigDecimal.valueOf(promo.getDiscountPercent()))
                     .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
-            
+
             InvoiceDetailPromotion idp = new InvoiceDetailPromotion();
             idp.setInvoiceDetail(detail);
             idp.setPromotion(promo);
@@ -612,7 +615,7 @@ public class CourseRegistrationService {
 
         // 13. Tạo response
         InvoiceResponse response = invoiceMapper.toInvoiceResponse(savedInvoice);
-        
+
         // Bổ sung thông tin chi tiết
         response.setTotalOriginalPrice(originalPrice);
         response.setCourseDiscountAmount(originalPrice.subtract(adjustedPrice)); // Giảm do đăng ký muộn
@@ -630,7 +633,7 @@ public class CourseRegistrationService {
             // So sánh schedule pattern
             String[] existingDays = existing.getSchedule().split("-");
             String[] newDays = newClass.getSchedule().split("-");
-            
+
             // Kiểm tra có ngày trùng không
             for (String existingDay : existingDays) {
                 for (String newDay : newDays) {
@@ -638,11 +641,11 @@ public class CourseRegistrationService {
                         // Có ngày trùng, kiểm tra giờ học
                         LocalTime existingEnd = existing.getStartTime().plusMinutes(existing.getMinutesPerSession());
                         LocalTime newEnd = newClass.getStartTime().plusMinutes(newClass.getMinutesPerSession());
-                        
+
                         // Kiểm tra trùng giờ
-                        boolean timeOverlap = !(newClass.getStartTime().isAfter(existingEnd) || 
-                                                newEnd.isBefore(existing.getStartTime()));
-                        
+                        boolean timeOverlap = !(newClass.getStartTime().isAfter(existingEnd) ||
+                                newEnd.isBefore(existing.getStartTime()));
+
                         if (timeOverlap) {
                             return true;
                         }

@@ -7,7 +7,7 @@ import java.time.LocalDate;
 @Data
 public class StudentInfo {
     private Integer studentId;
-    private String name ;
+    private String name;
     private LocalDate dateOfBirth;
     private Boolean gender;
     private String jobs;

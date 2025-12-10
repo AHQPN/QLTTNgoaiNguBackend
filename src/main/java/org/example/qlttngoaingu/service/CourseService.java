@@ -282,8 +282,13 @@ public class CourseService {
         return course;
     }
 
-    // Get course by ID (details)
+    // Overload for backward compatibility
     public CourseDetailResponse getCourseDetailById(Integer id) {
+        return getCourseDetailById(id, null);
+    }
+
+    // Get course by ID (details)
+    public CourseDetailResponse getCourseDetailById(Integer id, String mode) {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
@@ -316,7 +321,12 @@ public class CourseService {
                 .collect(Collectors.toList());
         response.setSkillModules(skillModules);
 
-        List<ClassResponse.ClassInfo> classInfos = getClassesForCourse(course.getCourseId());
+        List<ClassResponse.ClassInfo> classInfos;
+        if ("all".equalsIgnoreCase(mode)) {
+            classInfos = getAllClassesForCourse(course.getCourseId());
+        } else {
+            classInfos = getClassesForCourse(course.getCourseId());
+        }
         response.setClassInfos(classInfos);
 
         // Thêm thông tin combo promotions
@@ -369,12 +379,9 @@ public class CourseService {
     }
 
     /**
-     * Lấy danh sách lớp có thể đăng ký cho khóa học
-     * Option D: Chỉ hiển thị lớp chưa bắt đầu (startDate >= today)
+     * Strict filtering: Only classes available for enrollment
      */
     private List<ClassResponse.ClassInfo> getClassesForCourse(Integer courseId) {
-        // Use findAvailableClasses which filters: startDate >= today, status <>
-        // 'Completed', has capacity
         List<CourseClass> classes = courseClassRepository
                 .findAvailableClasses(courseId, LocalDate.now());
 
@@ -383,6 +390,21 @@ public class CourseService {
                 .sorted(Comparator
                         .comparing(ClassResponse.ClassInfo::getStatus).reversed()
                         .thenComparing(ClassResponse.ClassInfo::getStartDate))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Loose filtering: All active classes (for display)
+     */
+    private List<ClassResponse.ClassInfo> getAllClassesForCourse(Integer courseId) {
+        Set<CourseClass> classes = courseClassRepository
+                .findByCourse_CourseIdAndStatus(courseId, ClassStatusEnum.InProgress.name());
+
+        return classes.stream()
+                .map(this::mapToClassInfo)
+                .sorted(Comparator
+                        .comparing(ClassResponse.ClassInfo::getStatus).reversed() // Active first
+                        .thenComparing(ClassResponse.ClassInfo::getStartDate).reversed()) // Then by start date
                 .collect(Collectors.toList());
     }
 
