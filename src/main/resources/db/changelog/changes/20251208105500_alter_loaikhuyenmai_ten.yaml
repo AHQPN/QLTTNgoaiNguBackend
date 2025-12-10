@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20251208105500-1
+      author: system
+      changes:
+        - modifyDataType:
+            tableName: loaikhuyenmai
+            columnName: ten
+            newDataType: NVARCHAR(200)
+
+      rollback:
+        - modifyDataType:
+            tableName: loaikhuyenmai
+            columnName: ten
+            newDataType: VARCHAR(255)
