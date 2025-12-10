@@ -155,7 +155,7 @@ public class AuthController {
         refreshTokenService.setRevoked(refreshToken);
         RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user.getUserId());
 
-        String accessToken = jwtUtils.generateTokenFromIdentifier(user.getPhoneNumber());
+        String accessToken = jwtUtils.generateTokenFromIdentifier(user);
 
         // Set new refresh token cookie
         ResponseCookie cookie = ResponseCookie.from("refreshToken", newRefreshToken.getRefreshToken())

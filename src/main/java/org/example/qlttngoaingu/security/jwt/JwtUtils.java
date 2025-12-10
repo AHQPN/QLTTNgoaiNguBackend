@@ -3,6 +3,7 @@ package org.example.qlttngoaingu.security.jwt;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.example.qlttngoaingu.entity.User;
 import org.example.qlttngoaingu.exception.AppException;
 import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.security.model.UserDetailsImpl;
@@ -49,10 +50,14 @@ public class JwtUtils {
                 .parseClaimsJws(token).getBody().getSubject();
     }
 
-    public String generateTokenFromIdentifier(String identifier) {
-        return Jwts.builder().setSubject(identifier).setIssuedAt(new Date())
+    public String generateTokenFromIdentifier(User user) {
+        return Jwts.builder()
+                .setSubject((user.getPhoneNumber()))
+                .claim("userId", user.getUserId())
+                .claim("role", user.getRole())
+                .setIssuedAt(new Date())
                 .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
-                .signWith(SignatureAlgorithm.HS512, jwtSecret)
+                .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
