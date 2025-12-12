@@ -25,11 +25,7 @@ public class SessionScheduler {
 
     private final SessionRepository sessionRepository;
 
-    /**
-     * Chay moi 5 phut de cap nhat trang thai buoi hoc
-     * Cron format: second minute hour day month weekday
-     * Pattern: Chay vao giay 0 cua moi 5 phut
-     */
+   
     @Scheduled(cron = "0 */5 * * * *")
     @Transactional
     public void updateSessionStatus() {
@@ -37,6 +33,12 @@ public class SessionScheduler {
         
         LocalDate today = LocalDate.now();
         LocalTime now = LocalTime.now();
+        
+        // Chi chay trong khung gio 7:00 - 20:30
+        if (now.isBefore(LocalTime.of(7, 0)) || now.isAfter(LocalTime.of(20, 30))) {
+            log.debug("Outside working hours (7:00-20:30), skipping session status update");
+            return;
+        }
         
         // Lay tat ca buoi hoc cua hom nay
         List<Session> todaySessions = sessionRepository.findBySessionDate(today);
@@ -86,28 +88,5 @@ public class SessionScheduler {
         }
         // Mac dinh 8:00 sang
         return LocalTime.of(8, 0);
-    }
-    @Scheduled(cron = "0 55 23 * * *")
-    @Transactional
-    public void closeAllTodaySessions() {
-        log.info("Running scheduled task: close all today's sessions");
-        
-        LocalDate today = LocalDate.now();
-        List<Session> todaySessions = sessionRepository.findBySessionDate(today);
-        
-        int closed = 0;
-        for (Session session : todaySessions) {
-            String currentStatus = session.getStatus();
-            
-            // Chi cap nhat neu chua hoc, khong dong voi da huy
-            if ("Chưa học".equals(currentStatus) || "Chua hoc".equals(currentStatus) || currentStatus == null) {
-                session.setStatus("Đã học");
-                sessionRepository.save(session);
-                closed++;
-                log.info("Auto-closed session {} (was: {})", session.getSessionId(), currentStatus);
-            }
-        }
-        
-        log.info("Completed scheduled task: closed {} sessions", closed);
     }
 }

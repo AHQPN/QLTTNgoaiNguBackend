@@ -92,12 +92,9 @@ public class AuthController {
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
 
         // Set HTTP-only cookie cho refresh token
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken.getRefreshToken())
-                .httpOnly(true)
-                .secure(false)
-                .path("/auth/refreshtoken")
-                .maxAge(Duration.ofDays(7))
-                .build();
+        ResponseCookie cookie = refreshTokenService.createRefreshTokenCookie(
+                refreshToken.getRefreshToken(), 
+                Duration.ofDays(7).getSeconds());
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         LoginResponse loginResponse = new LoginResponse(accessToken, refreshToken.getRefreshToken(),
                 userDetails.getRole(), userDetails.getId());
@@ -158,12 +155,9 @@ public class AuthController {
         String accessToken = jwtUtils.generateTokenFromIdentifier(user);
 
         // Set new refresh token cookie
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", newRefreshToken.getRefreshToken())
-                .httpOnly(true)
-                .secure(false)
-                .path("/auth/refreshtoken")
-                .maxAge(Duration.ofDays(7))
-                .build();
+        ResponseCookie cookie = refreshTokenService.createRefreshTokenCookie(
+                newRefreshToken.getRefreshToken(), 
+                Duration.ofDays(7).getSeconds());
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
         TokenRefreshResponse tokenRefreshResponse = new TokenRefreshResponse(accessToken,
@@ -263,12 +257,7 @@ public class AuthController {
             refreshTokenService.deleteByUserId(user.getUserId());
             SecurityContextHolder.clearContext();
 
-            ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
-                    .httpOnly(true)
-                    .secure(false)
-                    .path("/auth/refreshtoken")
-                    .maxAge(0)
-                    .build();
+            ResponseCookie cookie = refreshTokenService.createDeleteRefreshTokenCookie();
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         }
 

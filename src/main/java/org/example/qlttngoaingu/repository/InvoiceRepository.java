@@ -71,7 +71,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
      * Tìm hóa đơn đã thanh toán trong khoảng thời gian (cho báo cáo tài chính)
      */
     @Query("SELECT i FROM Invoice i WHERE i.status = true " +
-           "AND DATE(i.dateCreated) >= :startDate AND DATE(i.dateCreated) <= :endDate " +
+           "AND CAST(i.dateCreated AS date) >= :startDate AND CAST(i.dateCreated AS date) <= :endDate " +
            "ORDER BY i.dateCreated")
     List<Invoice> findByPaymentDateBetween(
             @Param("startDate") LocalDate startDate,

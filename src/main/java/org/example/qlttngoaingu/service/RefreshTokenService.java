@@ -1,5 +1,10 @@
 package org.example.qlttngoaingu.service;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.example.qlttngoaingu.entity.RefreshToken;
 import org.example.qlttngoaingu.entity.User;
 import org.example.qlttngoaingu.exception.AppException;
@@ -7,17 +12,18 @@ import org.example.qlttngoaingu.exception.ErrorCode;
 import org.example.qlttngoaingu.repository.RefreshTokenRepository;
 import org.example.qlttngoaingu.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class RefreshTokenService {
     @Value("${app.jwtRefreshExpirationMs}")
     private Long refreshTokenDurationMs;
+    
+    @Value("${spring.profiles.active:dev}")
+    private String activeProfile;
+    
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
 
@@ -69,6 +75,43 @@ public class RefreshTokenService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         refreshTokenRepository.deleteAllByUser(user);
+    }
+
+    /**
+     * Tạo ResponseCookie cho refresh token với cấu hình phù hợp theo môi trường
+     * Production: secure=true, sameSite=None
+     * Dev: secure=false, sameSite=Lax (default)
+     * 
+     * @param tokenValue Giá trị của refresh token
+     * @param maxAgeSeconds Thời gian sống của cookie (giây)
+     * @return ResponseCookie đã được cấu hình
+     */
+    public ResponseCookie createRefreshTokenCookie(String tokenValue, long maxAgeSeconds) {
+        boolean isProduction = "prod".equalsIgnoreCase(activeProfile) 
+                            || "production".equalsIgnoreCase(activeProfile);
+        
+        ResponseCookie.ResponseCookieBuilder cookieBuilder = ResponseCookie
+                .from("refreshToken", tokenValue)
+                .httpOnly(true)
+                .path("/auth/refreshtoken")
+                .maxAge(Duration.ofSeconds(maxAgeSeconds));
+        
+        if (isProduction) {
+            cookieBuilder.secure(true).sameSite("None");
+        } else {
+            cookieBuilder.secure(false);
+        }
+        
+        return cookieBuilder.build();
+    }
+
+    /**
+     * Tạo cookie để xóa refresh token (dùng khi logout)
+     * 
+     * @return ResponseCookie với giá trị rỗng và maxAge=0
+     */
+    public ResponseCookie createDeleteRefreshTokenCookie() {
+        return createRefreshTokenCookie("", 0);
     }
 
 }
