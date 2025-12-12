@@ -925,7 +925,7 @@ public class CourseClassService {
     /**
      * Thêm buổi học mới vào lớp
      * Chỉ được thêm khi có buổi học đã bị hủy
-     * Logic: Mỗi lần thêm buổi, kiểm tra có còn "slot" từ buổi đã hủy không
+     * Logic: Số buổi bù (NotCompleted nhưng chưa tới ngày học) <= Số buổi đã hủy
      */
     @Transactional
     public ClassDetailResponse.SessionInfoDetail addSession(
@@ -949,18 +949,26 @@ public class CourseClassService {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
         
+        // Logic đơn giản: Đếm số buổi không phải Canceled
+        long activeSessionCount = allSessions.stream()
+                .filter(s -> !SessionStatus.Canceled.name().equals(s.getStatus()))
+                .count();
+        
         // Lấy số giờ học từ khóa học
         Integer courseStudyHours = courseClass.getCourse().getStudyHours();
         Integer minutesPerSession = courseClass.getMinutesPerSession();
         
+        if (courseStudyHours == null || minutesPerSession == null || minutesPerSession == 0) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+        
         // Tính số buổi học ban đầu dựa trên giờ học
-        // Giả sử: sobuoihoc = (sogiohoc * 60) / sogiohocmoibuoi
         int originalSessionCount = (courseStudyHours * 60) / minutesPerSession;
         
-        // Số buổi đã thêm = tổng số buổi hiện tại - số buổi ban đầu
-        long addedSessions = allSessions.size() - originalSessionCount;
-        
-        if (addedSessions >= canceledCount) {
+        // Số buổi active phải <= số buổi ban đầu
+        // Nghĩa là: (số buổi không hủy) <= (số buổi gốc)
+        // => Có thể thêm buổi bù nếu: activeSessionCount < originalSessionCount
+        if (activeSessionCount >= originalSessionCount) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
         
@@ -1047,18 +1055,43 @@ public class CourseClassService {
                 .filter(s -> SessionStatus.Canceled.name().equals(s.getStatus()))
                 .count();
         
+        // Debug: Log thông tin
+        System.out.println("=== SUGGEST MAKEUP DATES DEBUG ===");
+        System.out.println("Class ID: " + classId);
+        System.out.println("Total sessions: " + allSessions.size());
+        System.out.println("Canceled sessions: " + canceledCount);
+        
         if (canceledCount == 0) {
+            System.out.println("Reason: No canceled sessions");
             return Collections.emptyList(); // Không có buổi nào bị hủy
         }
         
+        // Đếm số buổi active (không phải Canceled)
+        long activeSessionCount = allSessions.stream()
+                .filter(s -> !SessionStatus.Canceled.name().equals(s.getStatus()))
+                .count();
+        
         Integer courseStudyHours = courseClass.getCourse().getStudyHours();
         Integer minutesPerSession = courseClass.getMinutesPerSession();
-        int originalSessionCount = (courseStudyHours * 60) / minutesPerSession;
-        long addedSessions = allSessions.size() - originalSessionCount;
         
-        if (addedSessions >= canceledCount) {
+        System.out.println("Active sessions: " + activeSessionCount);
+        System.out.println("Study hours: " + courseStudyHours);
+        System.out.println("Minutes per session: " + minutesPerSession);
+        
+        if (courseStudyHours == null || minutesPerSession == null || minutesPerSession == 0) {
+            System.out.println("Reason: Missing study hours or minutes per session");
+            return Collections.emptyList();
+        }
+        
+        int originalSessionCount = (courseStudyHours * 60) / minutesPerSession;
+        System.out.println("Original session count (calculated): " + originalSessionCount);
+        
+        if (activeSessionCount >= originalSessionCount) {
+            System.out.println("Reason: Already have enough sessions (" + activeSessionCount + " >= " + originalSessionCount + ")");
             return Collections.emptyList(); // Đã thêm đủ số buổi
         }
+        
+        System.out.println("Can add " + (originalSessionCount - activeSessionCount) + " more sessions");
         
         // Tạo set các ngày đã có buổi học
         Set<LocalDate> existingDates = allSessions.stream()
@@ -1118,6 +1151,9 @@ public class CourseClassService {
             // Thêm vào danh sách nếu không có xung đột
             if (!hasConflict) {
                 suggestions.add(date);
+                System.out.println("Added suggestion: " + date);
+            } else {
+                System.out.println("Skipped " + date + " (has conflict)");
             }
             
             // Giới hạn số lượng gợi ý
@@ -1125,6 +1161,9 @@ public class CourseClassService {
                 break;
             }
         }
+        
+        System.out.println("Total suggestions: " + suggestions.size());
+        System.out.println("==================================");
         
         return suggestions;
     }

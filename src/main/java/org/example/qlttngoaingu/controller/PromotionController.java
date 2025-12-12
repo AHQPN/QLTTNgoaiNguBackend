@@ -44,7 +44,7 @@ public class PromotionController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<PromotionResponse>>> getAllPromotions() {
-        List<PromotionResponse> response = promotionService.getAllPromotionsList();
+        List<PromotionResponse> response = promotionService.getActivePromotions();
         
         return ResponseEntity.ok(ApiResponse.<List<PromotionResponse>>builder()
                 .code(1000)
