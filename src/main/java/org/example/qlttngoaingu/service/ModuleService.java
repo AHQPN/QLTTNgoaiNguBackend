@@ -95,11 +95,7 @@ public class ModuleService {
         Module module = moduleRepository.findById(moduleId)
                 .orElseThrow(() -> new AppException(ErrorCode.MODULE_NOT_FOUND));
 
-        // Update tên module
-        if (request.getModuleName() != null) {
-            module.setModuleName(request.getModuleName());
-            moduleRepository.save(module);
-        }
+
 
         // Xử lý Documents
         if (request.getDocuments() != null) {

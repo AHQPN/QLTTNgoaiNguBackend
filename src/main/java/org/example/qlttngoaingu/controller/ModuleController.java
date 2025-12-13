@@ -3,6 +3,7 @@ package org.example.qlttngoaingu.controller;
 import java.util.List;
 
 import org.example.qlttngoaingu.dto.request.ModuleRequest;
+import org.example.qlttngoaingu.dto.request.ModuleUpdateBasicInfoRequest;
 import org.example.qlttngoaingu.dto.request.ModuleUpdateRequest;
 import org.example.qlttngoaingu.dto.response.ApiResponse;
 import org.example.qlttngoaingu.entity.Module;
@@ -48,12 +49,19 @@ public class ModuleController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_MANAGER')")
-    public ResponseEntity<?> updateModule(@PathVariable Integer id,
+    public ResponseEntity<?> updateModuleDetail(@PathVariable Integer id,
                                                @RequestBody ModuleUpdateRequest request) {
         moduleService.updateModuleDetail(id, request);
         return ResponseEntity.ok().body(ApiResponse.builder().message("Module updated successfully").build());
     }
 
+    @PutMapping("/{id}/info")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_MANAGER')")
+
+    public ResponseEntity<?> updateModuleInfo(@PathVariable Integer id, @RequestBody ModuleUpdateBasicInfoRequest request) {
+        moduleService.updateModuleBasicInfo(id,request.getModuleName(), request.getDuration());
+        return ResponseEntity.ok().body(ApiResponse.builder().message("Module updated successfully").build());
+    }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC_MANAGER')")
